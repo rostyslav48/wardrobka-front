@@ -7,6 +7,10 @@ export const styles = StyleSheet.create({
     padding: 20,
   },
 
+  container__indented: {
+    paddingTop: 60,
+  },
+
   content: {
     height: '100%'
   },

@@ -3,16 +3,17 @@ import { ReactNode } from 'react';
 import { styles } from './styles';
 
 interface Props {
+  indented?: boolean;
   children: ReactNode;
 }
 
-export default function UiPage({ children }: Props) {
+export default function UiPage({ children, indented = true}: Props) {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
   return (
     <Animated.ScrollView
       ref={scrollRef}
-      style={styles.container}
+      style={[styles.container, indented && styles.container__indented]}
       contentContainerStyle={styles.content}
       keyboardDismissMode="on-drag"
     >

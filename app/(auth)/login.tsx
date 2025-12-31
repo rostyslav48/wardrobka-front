@@ -78,7 +78,7 @@ export default function Login() {
   };
 
   return (
-    <UiPage>
+    <UiPage indented={false}>
       <View style={styles.container}>
         <Text style={styles.title}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
