@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { colors } from '@/theme/colors';
-import { catchError, throwError } from 'rxjs';
+import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { ApiError } from '@/services/http.service';
 import { Formik } from 'formik';
 import UiFormField from '@/components/ui/form/UiFormField';
@@ -37,46 +37,44 @@ export default function Login() {
   }, [token]);
 
   const login = (email: string, password: string) => {
-    onLogin(email, password)
-      .pipe(
-        catchError((e: ApiError) => {
-          const statusCode = e.response.statusCode;
+    return onLogin(email, password).pipe(
+      catchError((e: ApiError) => {
+        const statusCode = e.response.statusCode;
 
-          if (statusCode === 401 || statusCode === 404) {
-            setErrorMessage('Wrong email or password');
-            e.handled = true;
-          } else if (statusCode === 400) {
-            setErrorMessage(e.response.message);
-            e.handled = true;
-          }
+        if (statusCode === 401 || statusCode === 404) {
+          setErrorMessage('Wrong email or password');
+          e.handled = true;
+        } else if (statusCode === 400) {
+          setErrorMessage(e.response.message);
+          e.handled = true;
+        }
 
-          return throwError(() => e);
-        }),
-      )
-      .subscribe();
+        return throwError(() => e);
+      }),
+    );
   };
 
   const register = (email: string, password: string, name: string) => {
-    onRegister(email, password, name)
-      .pipe(
-        catchError((e: ApiError) => {
-          const statusCode = e.response.statusCode;
+    return onRegister(email, password, name).pipe(
+      catchError((e: ApiError) => {
+        const statusCode = e.response.statusCode;
 
-          if (statusCode === 400 || statusCode === 409) {
-            setErrorMessage(e.response.message);
-            e.handled = true;
-          }
+        if (statusCode === 400 || statusCode === 409) {
+          setErrorMessage(e.response.message);
+          e.handled = true;
+        }
 
-          return throwError(() => e);
-        }),
-      )
-      .subscribe();
+        return throwError(() => e);
+      }),
+    );
   };
 
-  const onSubmit = (values: LoginForm | RegisterForm) => {
-    isLogin
+  const onSubmit = (values: LoginForm | RegisterForm): Promise<unknown> => {
+    const method = isLogin
       ? login(values.email, values.password)
       : register(values.email, values.password, (values as RegisterForm).name);
+
+    return firstValueFrom(method);
   };
 
   return (
@@ -100,7 +98,7 @@ export default function Login() {
           validateOnChange={false}
           validateOnBlur={false}
         >
-          {({ handleChange, handleSubmit, values, errors }) => (
+          {({ handleChange, handleSubmit, values, errors, isSubmitting }) => (
             <View style={styles.formContent}>
               <UiFormField errorMessage={errors.email}>
                 <UiInput
@@ -144,7 +142,12 @@ export default function Login() {
 
               {errorMessage && <UiError errorMessage={errorMessage} />}
 
-              <UiButton onPress={() => handleSubmit()}>
+              <UiButton
+                onPress={() => {
+                  handleSubmit();
+                }}
+                enableLoader={isSubmitting}
+              >
                 <Text style={styles.buttonText}>
                   {isLogin ? 'Login' : 'Register'}
                 </Text>

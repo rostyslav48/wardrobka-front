@@ -1,19 +1,45 @@
-import { PropsWithChildren } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { PropsWithChildren, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  GestureResponderEvent,
+  TouchableOpacity,
+} from 'react-native';
 import { styles } from './styles';
+import { colors } from '@/theme/colors';
 
 type Props = PropsWithChildren<{
-  onPress?: () => void;
+  onPress: (event?: UiButtonClickEvent) => void;
   secondary?: boolean;
+  enableLoader?: boolean;
 }>;
 
-export default function UiButton({ onPress, children, secondary }: Props) {
+export type UiButtonClickEvent = GestureResponderEvent & {
+  loader: () => void;
+  stopLoader: () => void;
+};
+
+export default function UiButton({ onPress, children, secondary, enableLoader = false }: Props) {
+  const [isLoading, setIsLoading] = useState(enableLoader);
+
+  const handleClick = (event: GestureResponderEvent): void => {
+    const uiButtonEvent = event as UiButtonClickEvent;
+    uiButtonEvent.loader = () => setIsLoading(true);
+    uiButtonEvent.stopLoader = () => setIsLoading(false);
+
+    onPress(uiButtonEvent);
+  };
+
+  useEffect(() => {
+    setIsLoading(enableLoader);
+  }, [enableLoader]);
+
   return (
     <TouchableOpacity
       style={[styles.button, secondary && styles.button__secondary]}
-      onPress={onPress}
+      onPress={handleClick}
+      disabled={isLoading}
     >
-      {children}
+      {isLoading ? <ActivityIndicator color={colors.primary} /> : children}
     </TouchableOpacity>
   );
 }

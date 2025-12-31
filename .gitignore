@@ -40,4 +40,4 @@ yarn-error.*
 app-example
 
 #idea
-.idea
+.idea/
