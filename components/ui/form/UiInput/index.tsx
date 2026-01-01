@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { colors } from '@/theme/colors';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { styles } from './styles';
 
 interface Props {
   value: string;
@@ -33,32 +34,13 @@ export default function UiInput({
           onPress={() => setIsPasswordVisible(!isPasswordVisible)}
           style={styles.icon}
         >
-          <MaterialCommunityIcons
-            name={isPasswordVisible ? 'eye-off' : 'eye'}
+          <IconSymbol
+            name={isPasswordVisible ? 'eye.slash' : 'eye'}
             size={24}
-            color="#aaa"
+            color={colors.placeholder}
           />
         </Pressable>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.placeholder,
-    borderRadius: 10,
-  },
-  input: {
-    color: colors.text,
-    flex: 1,
-    padding: 15,
-    fontSize: 16,
-  },
-  icon: {
-    paddingRight: 15,
-  },
-});
