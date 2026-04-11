@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import { useModal } from '@/context/ModalContext';
 import { useWardrobe } from '@/context/WardrobeContext';
@@ -11,7 +11,7 @@ import FiltersPopup from '@/components/pages/app/items/FiltersPopup';
 import ItemsGrid from '@/components/pages/app/items/ItemsGrid';
 
 export default function Items() {
-  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { show } = useModal();
   const { items, isLoading, activeFiltersCount } = useWardrobe();
 
@@ -38,11 +38,11 @@ export default function Items() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ItemsGrid items={items} isLoading={isLoading} ListHeaderComponent={header} />
 
       <Pressable
-        style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        style={[styles.fab, { bottom: tabBarHeight + 16 }]}
         onPress={() => router.push('/item/new')}
       >
         <IconSymbol name="plus" size={28} color={colors.accentText} />

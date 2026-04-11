@@ -1,4 +1,5 @@
 import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { WardrobeItem, ItemStatus } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
@@ -35,6 +36,7 @@ const STATUS_OPTIONS: ItemStatus[] = [
 export default function ItemCard({ item }: Props) {
   const { upsertItem } = useWardrobe();
   const badgeColor = STATUS_COLOR[item.status];
+  const [imgError, setImgError] = useState(false);
 
   const handleStatusPress = () => {
     Alert.alert(
@@ -73,11 +75,12 @@ export default function ItemCard({ item }: Props) {
       style={styles.container}
       onPress={() => router.push(`/item/${item.id}`)}
     >
-      {item.img_path ? (
+      {item.img_path && !imgError ? (
         <Image
           source={{ uri: item.img_path }}
           style={styles.image}
           resizeMode="cover"
+          onError={() => setImgError(true)}
         />
       ) : (
         <View style={styles.placeholder}>
