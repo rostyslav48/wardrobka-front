@@ -11,6 +11,8 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   button__secondary: {
-    backgroundColor: colors.secondary,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

@@ -18,7 +18,17 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
-  'xmark': 'close'
+  'xmark': 'close',
+  'tshirt.fill': 'checkroom',
+  'magnifyingglass': 'search',
+  'eye': 'visibility',
+  'eye.slash': 'visibility-off',
+  'line.3.horizontal.decrease': 'tune',
+  'plus': 'add',
+  'chevron.left': 'arrow-back',
+  'camera.fill': 'camera-alt',
+  'photo.on.rectangle': 'photo-library',
+  'trash': 'delete',
 } as IconMapping;
 
 /**

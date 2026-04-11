@@ -39,7 +39,7 @@ export default function UiButton({ onPress, children, secondary, enableLoader = 
       onPress={handleClick}
       disabled={isLoading}
     >
-      {isLoading ? <ActivityIndicator color={colors.primary} /> : children}
+      {isLoading ? <ActivityIndicator color={colors.accentText} /> : children}
     </TouchableOpacity>
   );
 }

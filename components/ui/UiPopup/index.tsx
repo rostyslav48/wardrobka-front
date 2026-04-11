@@ -27,7 +27,7 @@ export default function UiPopup({ children, fullScreen = true, title }: Props) {
       <View style={styles.top_bar}>
         <Text style={styles.title}>{title}</Text>
         <Pressable onPress={() => hide()}>
-          <IconSymbol name={'xmark'} color={colors.text} size={24} />
+          <IconSymbol name={'xmark'} color={colors.textPrimary} size={24} />
         </Pressable>
       </View>
       <ScrollView

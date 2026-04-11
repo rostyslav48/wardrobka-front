@@ -1,15 +1,29 @@
 export const colors = {
-  primary: '#000000',
-  accent: '#A3FF00',
-  secondary: '#7F5AF0',
-  background: '#121212',
-  text: '#FFFFFF',
+  // Backgrounds
+  background: '#111111',
+  surface: '#1E1E1E',
 
-  popupBackground: '#1E1E1E',
+  // Text
+  textPrimary: '#F0F0F0',
+  textSecondary: '#888888',
 
-  highlight: '#FF33CC',
-  error: '#FF4D4F',
-  errorBackground: '#330000',
+  // Borders
+  border: '#2E2E2E',
 
-  placeholder: '#FFFFFF99'
+  // Accent (primary CTA)
+  accent: '#F0F0F0',
+  accentText: '#111111',
+
+  // Item status badges
+  statusActive: '#16A34A',
+  statusWashing: '#D97706',
+  statusMissing: '#DC2626',
+  statusNeedRepair: '#9333EA',
+
+  // Error states
+  error: '#EF4444',
+  errorBackground: '#1F0606',
+
+  // Misc
+  placeholder: '#888888',
 };
