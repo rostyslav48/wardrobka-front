@@ -73,9 +73,9 @@ export default function ItemCard({ item }: Props) {
       style={styles.container}
       onPress={() => router.push(`/item/${item.id}`)}
     >
-      {item.img_path ? (
+      {item.img_url ? (
         <Image
-          source={{ uri: item.img_path }}
+          source={{ uri: item.img_url }}
           style={styles.image}
           resizeMode="cover"
         />

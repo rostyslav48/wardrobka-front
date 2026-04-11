@@ -59,7 +59,7 @@ export interface WardrobeItem {
   color: string;
   season: Season;
   status: ItemStatus;
-  img_path: string | null;
+  img_url?: string;
   favourite: boolean;
   fit_type?: FitType;
   material?: string;

@@ -207,7 +207,7 @@ export default function ItemDetail() {
   }
 
   // ── Display photo: prefer newly picked → existing → null ─────────────────
-  const photoSource = newImageUri ?? item.img_path ?? null;
+  const photoSource = newImageUri ?? item.img_url ?? null;
 
   return (
     <Formik
