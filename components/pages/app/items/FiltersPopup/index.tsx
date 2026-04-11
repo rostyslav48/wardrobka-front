@@ -3,14 +3,11 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import UiPopup from '@/components/ui/UiPopup';
 import UiButton from '@/components/ui/UiButton';
 import { useModal } from '@/context/ModalContext';
-import { useWardrobe } from '@/context/WardrobeContext';
 import { colors } from '@/theme/colors';
 import {
-  FitType,
   ItemStatus,
   ItemType,
   Season,
-  Size,
   WardrobeFilters,
 } from '@/types/wardrobe';
 import { styles } from './styles';
@@ -78,11 +75,16 @@ function Chip({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function FiltersPopup() {
-  const { filters, applyFilters, clearFilters } = useWardrobe();
+type Props = {
+  initialFilters: WardrobeFilters;
+  onApply: (filters: WardrobeFilters) => void;
+  onClear: () => void;
+};
+
+export default function FiltersPopup({ initialFilters, onApply, onClear }: Props) {
   const { hide } = useModal();
 
-  const [draft, setDraft] = useState<WardrobeFilters>({ ...filters });
+  const [draft, setDraft] = useState<WardrobeFilters>({ ...initialFilters });
 
   const set = <K extends keyof WardrobeFilters>(
     key: K,
@@ -95,12 +97,12 @@ export default function FiltersPopup() {
   ) => setDraft((prev) => ({ ...prev, [key]: prev[key] === value ? undefined : value }));
 
   const handleApply = () => {
-    applyFilters(draft);
+    onApply(draft);
     hide();
   };
 
   const handleClear = () => {
-    clearFilters();
+    onClear();
     hide();
   };
 
