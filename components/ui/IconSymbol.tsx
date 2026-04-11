@@ -25,6 +25,9 @@ const MAPPING = {
   'eye.slash': 'visibility-off',
   'line.3.horizontal.decrease': 'tune',
   'plus': 'add',
+  'chevron.left': 'arrow-back',
+  'camera.fill': 'camera-alt',
+  'photo.on.rectangle': 'photo-library',
 } as IconMapping;
 
 /**
