@@ -18,7 +18,13 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
-  'xmark': 'close'
+  'xmark': 'close',
+  'tshirt.fill': 'checkroom',
+  'magnifyingglass': 'search',
+  'eye': 'visibility',
+  'eye.slash': 'visibility-off',
+  'line.3.horizontal.decrease': 'tune',
+  'plus': 'add',
 } as IconMapping;
 
 /**
