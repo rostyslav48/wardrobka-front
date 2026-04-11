@@ -15,6 +15,7 @@ export default function AuthLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="item/new" options={{ headerShown: false }} />
         <Stack.Screen name="item/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="chat/[sessionId]" options={{ headerShown: false }} />
       </Stack>
     </WardrobeProvider>
   );
