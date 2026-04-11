@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -10,12 +11,12 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Formik, FormikHelpers } from 'formik';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { wardrobeService } from '@/services/wardrobe.service';
-import { ItemStatus } from '@/types/wardrobe';
+import { ItemStatus, WardrobeItem } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -26,7 +27,6 @@ import UiSelect from '@/components/ui/form/UiSelect';
 import UiTextArea from '@/components/ui/form/UiTextArea';
 import UiError from '@/components/ui/UiError';
 import {
-  EMPTY_FORM_VALUES,
   FIT_OPTIONS,
   ItemFormValues,
   itemFormSchema,
@@ -37,19 +37,61 @@ import {
   TYPE_OPTIONS,
 } from '@/components/pages/app/items/itemForm';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function itemToFormValues(item: WardrobeItem): ItemFormValues {
+  return {
+    name:        item.name,
+    type:        item.type,
+    color:       item.color,
+    season:      item.season,
+    status:      item.status,
+    brand:       item.brand       ?? '',
+    material:    item.material    ?? '',
+    style:       item.style       ?? '',
+    fit_type:    item.fit_type    ?? '',
+    size:        item.size        ?? '',
+    description: item.description ?? '',
+    favourite:   item.favourite,
+  };
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export default function NewItem() {
+export default function ItemDetail() {
   const insets = useSafeAreaInsets();
-  const { upsertItem } = useWardrobe();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { items, upsertItem, removeItem } = useWardrobe();
 
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [item, setItem]           = useState<WardrobeItem | null>(null);
+  const [isLoadingItem, setIsLoadingItem] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  // null = no new photo; string = local URI of newly picked photo
+  const [newImageUri, setNewImageUri] = useState<string | null>(null);
+
+  // Resolve item from context first, then fetch if missing
+  useEffect(() => {
+    const numId = Number(id);
+    const cached = items.find((i) => i.id === numId);
+    if (cached) {
+      setItem(cached);
+      setIsLoadingItem(false);
+      return;
+    }
+    const sub = wardrobeService.getItem(numId).subscribe({
+      next: (data) => { setItem(data); setIsLoadingItem(false); },
+      error: () => { setLoadError('Could not load item.'); setIsLoadingItem(false); },
+    });
+    return () => sub.unsubscribe();
+  }, [id]);
+
+  // ── Image picker ──────────────────────────────────────────────────────────
 
   const showImageOptions = () => {
-    Alert.alert('Add Photo', undefined, [
-      { text: 'Take Photo',           onPress: () => pickImage('camera') },
-      { text: 'Choose from Gallery',  onPress: () => pickImage('gallery') },
+    Alert.alert('Change Photo', undefined, [
+      { text: 'Take Photo',          onPress: () => pickImage('camera') },
+      { text: 'Choose from Gallery', onPress: () => pickImage('gallery') },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
@@ -74,19 +116,47 @@ export default function NewItem() {
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      setNewImageUri(result.assets[0].uri);
     }
   };
 
+  // ── Delete ────────────────────────────────────────────────────────────────
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete this item?',
+      'This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            wardrobeService.deleteItem(Number(id)).subscribe({
+              next: () => {
+                removeItem(Number(id));
+                router.back();
+              },
+              error: () =>
+                Alert.alert('Error', 'Failed to delete item. Please try again.'),
+            });
+          },
+        },
+      ],
+    );
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+
   const onSubmit = (values: ItemFormValues, { setSubmitting }: FormikHelpers<ItemFormValues>) => {
-    setErrorMessage('');
+    setSaveError('');
 
     const formData = new FormData();
-    formData.append('name',     values.name.trim());
-    formData.append('type',     values.type);
-    formData.append('color',    values.color);
-    formData.append('season',   values.season);
-    formData.append('status',   values.status);
+    formData.append('name',      values.name.trim());
+    formData.append('type',      values.type);
+    formData.append('color',     values.color);
+    formData.append('season',    values.season);
+    formData.append('status',    values.status);
     formData.append('favourite', String(values.favourite));
     if (values.brand)       formData.append('brand',       values.brand.trim());
     if (values.material)    formData.append('material',    values.material.trim());
@@ -95,32 +165,57 @@ export default function NewItem() {
     if (values.size)        formData.append('size',        values.size);
     if (values.description) formData.append('description', values.description.trim());
 
-    if (imageUri) {
+    if (newImageUri) {
       formData.append('image', {
-        uri:  imageUri,
+        uri:  newImageUri,
         type: 'image/jpeg',
         name: 'photo.jpg',
       } as unknown as Blob);
     }
 
-    wardrobeService.createItem(formData).subscribe({
-      next: (item) => {
-        upsertItem(item);
+    wardrobeService.updateItem(Number(id), formData).subscribe({
+      next: (updated) => {
+        upsertItem(updated);
         router.back();
       },
       error: () => {
-        setErrorMessage('Failed to save item. Please try again.');
+        setSaveError('Failed to save changes. Please try again.');
         setSubmitting(false);
       },
     });
   };
 
+  // ── Loading / error states ────────────────────────────────────────────────
+
+  if (isLoadingItem) {
+    return (
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <ActivityIndicator color={colors.textPrimary} size="large" />
+      </View>
+    );
+  }
+
+  if (loadError || !item) {
+    return (
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <Text style={styles.errorText}>{loadError || 'Item not found.'}</Text>
+        <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={styles.linkText}>Go back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // ── Display photo: prefer newly picked → existing → null ─────────────────
+  const photoSource = newImageUri ?? item.img_path ?? null;
+
   return (
     <Formik
-      initialValues={EMPTY_FORM_VALUES}
+      initialValues={itemToFormValues(item)}
       validationSchema={itemFormSchema}
       validateOnChange={false}
       validateOnBlur={false}
+      enableReinitialize
       onSubmit={onSubmit}
     >
       {({ values, errors, isSubmitting, handleChange, setFieldValue, handleSubmit }) => (
@@ -131,8 +226,10 @@ export default function NewItem() {
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
               <IconSymbol name="chevron.left" size={24} color={colors.textPrimary} />
             </Pressable>
-            <Text style={styles.title}>Add Item</Text>
-            <View style={styles.headerSpacer} />
+            <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
+            <Pressable onPress={handleDelete} hitSlop={8}>
+              <IconSymbol name="trash" size={22} color={colors.statusMissing} />
+            </Pressable>
           </View>
 
           {/* Form */}
@@ -141,31 +238,23 @@ export default function NewItem() {
             keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
-            {/* Photo picker */}
+            {/* Photo */}
             <Pressable style={styles.photoArea} onPress={showImageOptions}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.photo} resizeMode="cover" />
+              {photoSource ? (
+                <Image source={{ uri: photoSource }} style={styles.photo} resizeMode="cover" />
               ) : (
                 <View style={styles.photoPlaceholder}>
                   <IconSymbol name="camera.fill" size={32} color={colors.textSecondary} />
                   <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
-                  <View style={styles.photoActions}>
-                    <IconSymbol name="camera.fill"         size={16} color={colors.textSecondary} />
-                    <Text style={styles.photoActionText}>Camera</Text>
-                    <IconSymbol name="photo.on.rectangle"  size={16} color={colors.textSecondary} />
-                    <Text style={styles.photoActionText}>Gallery</Text>
-                  </View>
                 </View>
               )}
+              <View style={styles.photoOverlay}>
+                <IconSymbol name="camera.fill" size={18} color={colors.textPrimary} />
+              </View>
             </Pressable>
-            {imageUri && (
-              <Pressable style={styles.changePhotoBtn} onPress={showImageOptions}>
-                <Text style={styles.changePhotoText}>Change photo</Text>
-              </Pressable>
-            )}
 
             {/* ── Required fields ─────────────────────────────── */}
-            <Text style={styles.sectionLabel}>Required</Text>
+            <Text style={styles.sectionLabel}>Details</Text>
 
             <UiFormField errorMessage={errors.name}>
               <UiInput
@@ -278,9 +367,9 @@ export default function NewItem() {
               />
             </UiFormField>
 
-            {/* ── Favourite toggle ─────────────────────────────── */}
+            {/* ── Favourite ────────────────────────────────────── */}
             <View style={styles.favouriteRow}>
-              <Text style={styles.favouriteLabel}>Add to favourites</Text>
+              <Text style={styles.favouriteLabel}>Favourite</Text>
               <Switch
                 value={values.favourite}
                 onValueChange={(v) => setFieldValue('favourite', v)}
@@ -289,11 +378,11 @@ export default function NewItem() {
               />
             </View>
 
-            {/* ── Error + Submit ───────────────────────────────── */}
-            {errorMessage ? <UiError errorMessage={errorMessage} /> : null}
+            {/* ── Error + Save ─────────────────────────────────── */}
+            {saveError ? <UiError errorMessage={saveError} /> : null}
 
             <UiButton onPress={() => handleSubmit()} enableLoader={isSubmitting}>
-              <Text style={styles.submitLabel}>Save Item</Text>
+              <Text style={styles.submitLabel}>Save Changes</Text>
             </UiButton>
           </ScrollView>
 
@@ -310,6 +399,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  centered: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  linkText: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '500',
+  },
 
   // Header
   header: {
@@ -317,19 +422,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: pageInlineIntent,
     paddingVertical: 14,
+    gap: 8,
   },
   backButton: {
-    marginRight: 8,
+    marginRight: 4,
   },
   title: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.textPrimary,
     textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 32,
   },
 
   // Form
@@ -338,7 +441,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  // Photo picker
+  // Photo
   photoArea: {
     borderRadius: 16,
     overflow: 'hidden',
@@ -360,24 +463,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  photoActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  photoActionText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginRight: 8,
-  },
-  changePhotoBtn: {
-    alignSelf: 'center',
-    marginTop: -8,
-  },
-  changePhotoText: {
-    color: colors.textSecondary,
-    fontSize: 14,
+  photoOverlay: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 20,
+    padding: 8,
   },
 
   // Section / field labels

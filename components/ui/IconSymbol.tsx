@@ -28,6 +28,7 @@ const MAPPING = {
   'chevron.left': 'arrow-back',
   'camera.fill': 'camera-alt',
   'photo.on.rectangle': 'photo-library',
+  'trash': 'delete',
 } as IconMapping;
 
 /**
