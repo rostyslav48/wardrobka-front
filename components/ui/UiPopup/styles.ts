@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
   content: {
     paddingInline: pageInlineIntent,
     marginTop: 'auto',
-    backgroundColor: colors.popupBackground,
+    backgroundColor: colors.surface,
     flexShrink: 1
   },
 
@@ -25,6 +25,6 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 700,
-    color: colors.text
+    color: colors.textPrimary
   },
 });

@@ -157,14 +157,10 @@ export default function Login() {
         </Formik>
 
         <UiButton onPress={() => setIsLogin(!isLogin)} secondary>
-          <Text style={[styles.buttonText, { color: colors.text }]}>
+          <Text style={[styles.buttonText, { color: colors.textPrimary }]}>
             {isLogin ? 'Switch to Register' : 'Switch to Login'}
           </Text>
         </UiButton>
-
-        <TouchableOpacity
-          style={{ backgroundColor: colors.secondary }}
-        ></TouchableOpacity>
         {isLogin && (
           <TouchableOpacity>
             <Text style={styles.link}>Forgot Password?</Text>
@@ -183,7 +179,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
-    color: colors.text,
+    color: colors.textPrimary,
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 30,
@@ -200,7 +196,7 @@ const styles = StyleSheet.create({
   },
   link: {
     marginTop: 15,
-    color: colors.highlight,
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: '500',
   },

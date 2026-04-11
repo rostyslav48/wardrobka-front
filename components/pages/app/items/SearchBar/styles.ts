@@ -7,11 +7,11 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.placeholder,
+    borderColor: colors.border,
     borderRadius: 25,
   },
   input: {
-    color: colors.text,
+    color: colors.textPrimary,
     flex: 1,
     paddingBlock: 10,
     paddingRight: 20,
