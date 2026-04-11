@@ -1,19 +1,25 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-import { ReactNode } from 'react';
+import { PropsWithChildren } from 'react';
 import { styles } from './styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface Props {
+type Props = PropsWithChildren<{
   indented?: boolean;
-  children: ReactNode;
-}
+}>;
 
-export default function UiPage({ children, indented = true}: Props) {
+export default function UiPage({ children, indented = true }: Props) {
+  const insets = useSafeAreaInsets();
+
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
   return (
     <Animated.ScrollView
       ref={scrollRef}
-      style={[styles.container, indented && styles.container__indented]}
+      style={[
+        styles.container,
+        indented && styles.container__indented,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
       contentContainerStyle={styles.content}
       keyboardDismissMode="on-drag"
     >

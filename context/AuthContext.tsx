@@ -1,5 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { AuthApiService, UserData } from '@/services/auth.service';
 import { from, map, Observable, switchMap } from 'rxjs';
 
@@ -28,7 +34,7 @@ export const useAuth = (): AuthProps => {
   return context;
 };
 
-export const AuthProvider = ({ children }: any) => {
+export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {

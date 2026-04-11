@@ -11,6 +11,8 @@ export default function AuthLayout() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="item/new" options={{ headerShown: false }} />
+      <Stack.Screen name="item/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -11,6 +11,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '@/context/AuthContext';
 import { Alert } from 'react-native';
+import { ModalProvider } from '@/context/ModalContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -33,8 +34,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Slot />
-        <StatusBar style="auto" />
+        <ModalProvider>
+          <Slot />
+          <StatusBar style="auto" />
+        </ModalProvider>
       </AuthProvider>
     </ThemeProvider>
   );
