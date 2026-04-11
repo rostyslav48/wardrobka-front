@@ -39,5 +39,9 @@ yarn-error.*
 
 app-example
 
-#idea
+# IDEs
 .idea/
+.vscode/
+
+# AI Tooling
+.claude/
