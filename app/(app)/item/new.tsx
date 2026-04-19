@@ -283,7 +283,7 @@ export default function NewItem() {
               <Text style={styles.favouriteLabel}>Add to favourites</Text>
               <Switch
                 value={values.favourite}
-                onValueChange={(v) => setFieldValue('favourite', v)}
+                onValueChange={(v) => void setFieldValue('favourite', v)}
                 trackColor={{ false: colors.border, true: colors.accent }}
                 thumbColor={colors.accentText}
               />

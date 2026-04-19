@@ -29,6 +29,9 @@ const MAPPING = {
   'camera.fill': 'camera-alt',
   'photo.on.rectangle': 'photo-library',
   'trash': 'delete',
+  'sparkles': 'auto-awesome',
+  'arrow.up': 'arrow-upward',
+  'bubble.left.and.bubble.right.fill': 'chat',
 } as IconMapping;
 
 /**
