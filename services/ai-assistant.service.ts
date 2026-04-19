@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { httpService } from '@/services/http.service';
 import {
   AssistantMessageDto,
+  AssistantOutfitSuggestionDto,
   AssistantSessionDto,
   ChatRequest,
   ChatResponse,
@@ -20,5 +21,11 @@ export const aiAssistantService = {
 
   chat(request: ChatRequest): Observable<ChatResponse> {
     return httpService.post<ChatResponse>('ai-assistant/chat', request);
+  },
+
+  getRecentSuggestions(): Observable<AssistantOutfitSuggestionDto[]> {
+    return httpService.get<AssistantOutfitSuggestionDto[]>(
+      'ai-assistant/suggestions/recent',
+    );
   },
 };

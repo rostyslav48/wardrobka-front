@@ -25,3 +25,12 @@ export interface ChatResponse {
   sessionId: string;
   assistantMessageId: string;
 }
+
+export interface AssistantOutfitSuggestionDto {
+  id: string;
+  sessionId: string;
+  sessionTopic: string;
+  summary: string;
+  wardrobeItemIds: number[];
+  createdAt: string;
+}
