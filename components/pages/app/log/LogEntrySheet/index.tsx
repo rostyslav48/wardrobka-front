@@ -76,6 +76,9 @@ export default function LogEntrySheet({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Tracks live selection while the item picker is open
+  const pendingItemIdsRef = useRef<number[]>([]);
+
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   // Reset form state when entry changes
@@ -205,7 +208,14 @@ export default function LogEntrySheet({
               )}
             </View>
             <Pressable
-              onPress={view === 'items' ? () => setView('form') : handleClose}
+              onPress={
+                view === 'items'
+                  ? () => {
+                      setSelectedIds(pendingItemIdsRef.current);
+                      setView('form');
+                    }
+                  : handleClose
+              }
               hitSlop={12}
             >
               <IconSymbol
@@ -221,7 +231,7 @@ export default function LogEntrySheet({
               items={wardrobeItems}
               selectedIds={selectedIds}
               hideHeader
-              confirmLabel={selectedIds.length > 0 ? `Confirm ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}` : 'Done'}
+              onSelectionChange={(ids) => { pendingItemIdsRef.current = ids; }}
               onConfirm={(ids) => {
                 setSelectedIds(ids);
                 setView('form');
@@ -282,7 +292,7 @@ export default function LogEntrySheet({
                       ? ` (${selectedItems.length})`
                       : ''}
                   </Text>
-                  <Pressable onPress={() => setView('items')} hitSlop={8}>
+                  <Pressable onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }} hitSlop={8}>
                     <Text style={styles.changeLink}>
                       {selectedItems.length > 0 ? 'Change' : 'Select'}
                     </Text>
@@ -326,7 +336,7 @@ export default function LogEntrySheet({
                 ) : (
                   <Pressable
                     style={styles.emptyItemsButton}
-                    onPress={() => setView('items')}
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
                   >
                     <IconSymbol
                       name="plus"

@@ -18,6 +18,7 @@ interface Props {
   subtitle?: string;
   confirmLabel?: string;
   hideHeader?: boolean;
+  onSelectionChange?: (ids: number[]) => void;
   onConfirm: (ids: number[]) => void;
 }
 
@@ -28,6 +29,7 @@ export default function ItemPickerSheet({
   subtitle,
   confirmLabel,
   hideHeader = false,
+  onSelectionChange,
   onConfirm,
 }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
@@ -40,6 +42,7 @@ export default function ItemPickerSheet({
       } else {
         next.add(id);
       }
+      onSelectionChange?.(Array.from(next));
       return next;
     });
   };
@@ -65,6 +68,7 @@ export default function ItemPickerSheet({
         numColumns={3}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.grid}
+        style={styles.list}
         renderItem={({ item }) => {
           const isSelected = selected.has(item.id);
           return (
