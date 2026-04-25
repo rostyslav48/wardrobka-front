@@ -1,13 +1,13 @@
 export interface OutfitLog {
   id: string;
-  date: string; // YYYY-MM-DD
+  date: number; // Unix timestamp (seconds)
   wardrobeItemIds: number[];
   notes: string | null;
   createdAt: string;
 }
 
 export interface OutfitLogPayload {
-  date: string;
+  date: number; // Unix timestamp (seconds)
   wardrobeItemIds: number[];
   notes?: string;
 }

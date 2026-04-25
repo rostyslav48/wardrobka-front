@@ -13,7 +13,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OutfitLog, OutfitLogPayload } from '@/types/outfit-log';
@@ -26,19 +28,22 @@ import { styles } from './styles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+function toUnixSeconds(date: Date): number {
+  // Truncate to midnight local time so the backend receives a date-only value
+  const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.floor(midnight.getTime() / 1000);
 }
 
-function parseISODate(isoDate: string): Date {
-  return new Date(isoDate + 'T00:00:00');
+function fromUnixSeconds(unixSeconds: number): Date {
+  return new Date(unixSeconds * 1000);
 }
 
 function formatDisplayDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 interface Props {
@@ -73,14 +78,21 @@ export default function LogEntrySheet({
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
+  // Reset form state when entry changes
   useEffect(() => {
     if (isVisible) {
       setView('form');
-      setDate(isEdit ? parseISODate(entry.date) : new Date());
+      setDate(isEdit ? fromUnixSeconds(entry.date) : new Date());
       setSelectedIds(isEdit ? entry.wardrobeItemIds : []);
       setNotes(isEdit ? (entry.notes ?? '') : '');
       setError(null);
       setIsSaving(false);
+    }
+  }, [isVisible, entry, isEdit]);
+
+  // Animate sheet in/out
+  useEffect(() => {
+    if (isVisible) {
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
@@ -90,8 +102,7 @@ export default function LogEntrySheet({
     } else {
       slideAnim.setValue(SCREEN_HEIGHT);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible, entry]);
+  }, [isVisible, slideAnim]);
 
   const handleClose = () => {
     Animated.timing(slideAnim, {
@@ -110,7 +121,7 @@ export default function LogEntrySheet({
     setIsSaving(true);
 
     const payload: OutfitLogPayload = {
-      date: toISODate(date),
+      date: toUnixSeconds(date),
       wardrobeItemIds: selectedIds,
       ...(notes.trim() ? { notes: notes.trim() } : {}),
     };
@@ -158,7 +169,12 @@ export default function LogEntrySheet({
     .filter(Boolean) as WardrobeItem[];
 
   return (
-    <Modal visible={!!isVisible} transparent animationType="none" onRequestClose={handleClose}>
+    <Modal
+      visible={!!isVisible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
@@ -168,13 +184,20 @@ export default function LogEntrySheet({
         <Animated.View
           style={[
             styles.sheet,
-            { paddingBottom: insets.bottom + 8, transform: [{ translateY: slideAnim }] },
+            {
+              paddingBottom: insets.bottom + 8,
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
           {/* Header */}
           <View style={styles.topBar}>
             <Text style={styles.sheetTitle}>
-              {view === 'items' ? 'Select items' : isEdit ? 'Edit entry' : 'New entry'}
+              {view === 'items'
+                ? 'Select items'
+                : isEdit
+                  ? 'Edit entry'
+                  : 'New entry'}
             </Text>
             <Pressable
               onPress={view === 'items' ? () => setView('form') : handleClose}
@@ -209,9 +232,18 @@ export default function LogEntrySheet({
                 <Text style={styles.sectionLabel}>Date</Text>
                 {Platform.OS === 'android' ? (
                   <>
-                    <Pressable style={styles.dateButton} onPress={() => setShowAndroidPicker(true)}>
-                      <MaterialIcons name="calendar-today" size={16} color={colors.textSecondary} />
-                      <Text style={styles.dateButtonText}>{formatDisplayDate(date)}</Text>
+                    <Pressable
+                      style={styles.dateButton}
+                      onPress={() => setShowAndroidPicker(true)}
+                    >
+                      <MaterialIcons
+                        name="calendar-today"
+                        size={16}
+                        color={colors.textSecondary}
+                      />
+                      <Text style={styles.dateButtonText}>
+                        {formatDisplayDate(date)}
+                      </Text>
                     </Pressable>
                     {showAndroidPicker && (
                       <DateTimePicker
@@ -239,7 +271,10 @@ export default function LogEntrySheet({
               <View style={styles.section}>
                 <View style={styles.sectionRow}>
                   <Text style={styles.sectionLabel}>
-                    Items{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
+                    Items
+                    {selectedItems.length > 0
+                      ? ` (${selectedItems.length})`
+                      : ''}
                   </Text>
                   <Pressable onPress={() => setView('items')} hitSlop={8}>
                     <Text style={styles.changeLink}>
@@ -266,19 +301,35 @@ export default function LogEntrySheet({
                           />
                         ) : (
                           <View style={styles.selectedThumbPlaceholder}>
-                            <IconSymbol name="tshirt.fill" size={18} color={colors.textSecondary} />
+                            <IconSymbol
+                              name="tshirt.fill"
+                              size={18}
+                              color={colors.textSecondary}
+                            />
                           </View>
                         )}
-                        <Text style={styles.selectedThumbName} numberOfLines={1}>
+                        <Text
+                          style={styles.selectedThumbName}
+                          numberOfLines={1}
+                        >
                           {item.name}
                         </Text>
                       </View>
                     ))}
                   </ScrollView>
                 ) : (
-                  <Pressable style={styles.emptyItemsButton} onPress={() => setView('items')}>
-                    <IconSymbol name="plus" size={16} color={colors.textSecondary} />
-                    <Text style={styles.emptyItemsText}>Tap to select items worn</Text>
+                  <Pressable
+                    style={styles.emptyItemsButton}
+                    onPress={() => setView('items')}
+                  >
+                    <IconSymbol
+                      name="plus"
+                      size={16}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={styles.emptyItemsText}>
+                      Tap to select items worn
+                    </Text>
                   </Pressable>
                 )}
               </View>
@@ -302,11 +353,16 @@ export default function LogEntrySheet({
 
               {/* Actions */}
               <Pressable
-                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                style={[
+                  styles.saveButton,
+                  isSaving && styles.saveButtonDisabled,
+                ]}
                 onPress={handleSave}
                 disabled={isSaving}
               >
-                <Text style={styles.saveButtonText}>{isSaving ? 'Saving…' : 'Save entry'}</Text>
+                <Text style={styles.saveButtonText}>
+                  {isSaving ? 'Saving…' : 'Save entry'}
+                </Text>
               </Pressable>
 
               {isEdit && (
@@ -321,4 +377,3 @@ export default function LogEntrySheet({
     </Modal>
   );
 }
-

@@ -7,15 +7,17 @@ import { styles } from './styles';
 
 const THUMB_MAX = 4;
 
-function formatDate(isoDate: string): string {
-  const date = new Date(isoDate + 'T00:00:00');
+function formatDate(unixSeconds: number): string {
+  const date = new Date(unixSeconds * 1000);
   const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  if (isoDate === todayStr) return 'Today';
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(date, today)) return 'Today';
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-  if (isoDate === yStr) return 'Yesterday';
+  if (sameDay(date, yesterday)) return 'Yesterday';
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
