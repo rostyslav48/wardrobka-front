@@ -23,14 +23,20 @@ import LogEntrySheet from '@/components/pages/app/log/LogEntrySheet';
 export default function LogScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { items: wardrobeItems, isLoading: isLoadingItems, refresh: refreshWardrobe } = useWardrobe();
+  const {
+    items: wardrobeItems,
+    isLoading: isLoadingItems,
+    refresh: refreshWardrobe,
+  } = useWardrobe();
 
   const [entries, setEntries] = useState<OutfitLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // undefined = sheet closed, null = add mode, OutfitLog = edit mode
-  const [sheetEntry, setSheetEntry] = useState<OutfitLog | null | undefined>(undefined);
+  const [sheetEntry, setSheetEntry] = useState<OutfitLog | null | undefined>(
+    undefined,
+  );
 
   const fetchEntries = useCallback((silent = false) => {
     if (!silent) setIsLoading(true);
@@ -49,12 +55,14 @@ export default function LogScreen() {
 
   useEffect(() => {
     const sub = fetchEntries();
+    return () => sub.unsubscribe();
+  }, [fetchEntries]);
+
+  useEffect(() => {
     if (wardrobeItems.length === 0 && !isLoadingItems) {
       refreshWardrobe();
     }
-    return () => sub.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [wardrobeItems.length, isLoadingItems, refreshWardrobe]);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -97,7 +105,12 @@ export default function LogScreen() {
 
       {/* List */}
       {isLoading ? (
-        <ScrollView contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + 20 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: tabBarHeight + 20 },
+          ]}
+        >
           <LogEntrySkeleton />
           <LogEntrySkeleton />
           <LogEntrySkeleton />
