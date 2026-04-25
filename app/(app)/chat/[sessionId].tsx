@@ -19,7 +19,7 @@ import { useWardrobe } from '@/context/WardrobeContext';
 import MessageBubble from '@/components/pages/app/chat/MessageBubble';
 import TypingIndicator from '@/components/pages/app/chat/TypingIndicator';
 import ChatInputBar from '@/components/pages/app/chat/ChatInputBar';
-import ItemPickerSheet from '@/components/pages/app/chat/ItemPickerSheet';
+import ItemPickerSheet from '@/components/ui/ItemPickerSheet';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';

@@ -14,10 +14,24 @@ import { styles } from './styles';
 interface Props {
   items: WardrobeItem[];
   selectedIds: number[];
+  title?: string;
+  subtitle?: string;
+  confirmLabel?: string;
+  hideHeader?: boolean;
+  onSelectionChange?: (ids: number[]) => void;
   onConfirm: (ids: number[]) => void;
 }
 
-export default function ItemPickerSheet({ items, selectedIds, onConfirm }: Props) {
+export default function ItemPickerSheet({
+  items,
+  selectedIds,
+  title = 'Select items',
+  subtitle,
+  confirmLabel,
+  hideHeader = false,
+  onSelectionChange,
+  onConfirm,
+}: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
 
   const toggle = (id: number) => {
@@ -28,18 +42,25 @@ export default function ItemPickerSheet({ items, selectedIds, onConfirm }: Props
       } else {
         next.add(id);
       }
+      onSelectionChange?.(Array.from(next));
       return next;
     });
   };
 
+  const derivedSubtitle =
+    subtitle ?? (selected.size > 0 ? `${selected.size} selected` : 'Select items from your wardrobe');
+
+  const derivedConfirmLabel =
+    confirmLabel ?? (selected.size > 0 ? `Confirm ${selected.size} item${selected.size > 1 ? 's' : ''}` : 'Done');
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Add context items</Text>
-        <Text style={styles.subtitle}>
-          {selected.size > 0 ? `${selected.size} selected` : 'Select items to give the AI context'}
-        </Text>
-      </View>
+      {!hideHeader && (
+        <View style={styles.header}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{derivedSubtitle}</Text>
+        </View>
+      )}
 
       <FlatList
         data={items}
@@ -47,6 +68,7 @@ export default function ItemPickerSheet({ items, selectedIds, onConfirm }: Props
         numColumns={3}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.grid}
+        style={styles.list}
         renderItem={({ item }) => {
           const isSelected = selected.has(item.id);
           return (
@@ -84,9 +106,7 @@ export default function ItemPickerSheet({ items, selectedIds, onConfirm }: Props
       />
 
       <Pressable style={styles.confirmButton} onPress={() => onConfirm(Array.from(selected))}>
-        <Text style={styles.confirmLabel}>
-          {selected.size > 0 ? `Attach ${selected.size} item${selected.size > 1 ? 's' : ''}` : 'Done'}
-        </Text>
+        <Text style={styles.confirmLabel}>{derivedConfirmLabel}</Text>
       </Pressable>
     </View>
   );

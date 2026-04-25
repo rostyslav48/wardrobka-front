@@ -33,6 +33,8 @@ export default function UiPopup({ children, fullScreen = true, title }: Props) {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         {children}
       </ScrollView>
