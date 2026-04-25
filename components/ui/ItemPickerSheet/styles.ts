@@ -1,16 +1,16 @@
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 
 const CELL_GAP = 8;
+const LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.52;
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingBottom: 8,
   },
   list: {
-    flex: 1,
+    maxHeight: LIST_MAX_HEIGHT,
   },
   header: {
     paddingHorizontal: pageInlineIntent,

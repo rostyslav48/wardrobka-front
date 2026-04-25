@@ -11,8 +11,7 @@ export const styles = StyleSheet.create({
   },
 
   content__fullScreen: {
-    height: '100%',
-    flex: 1
+    flex: 1,
   },
 
   top_bar: {

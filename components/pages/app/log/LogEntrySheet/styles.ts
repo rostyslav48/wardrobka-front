@@ -15,8 +15,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    // Fixed height so flex children (FlatList + confirm button) always have a bounded container
-    height: '88%',
+    maxHeight: '88%',
   },
   topBar: {
     flexDirection: 'row',

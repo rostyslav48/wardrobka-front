@@ -241,6 +241,8 @@ export default function LogEntrySheet({
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
               contentContainerStyle={styles.formContent}
             >
               {/* Date section */}
