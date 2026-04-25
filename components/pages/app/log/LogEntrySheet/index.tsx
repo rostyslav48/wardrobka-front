@@ -192,13 +192,18 @@ export default function LogEntrySheet({
         >
           {/* Header */}
           <View style={styles.topBar}>
-            <Text style={styles.sheetTitle}>
-              {view === 'items'
-                ? 'Select items'
-                : isEdit
-                  ? 'Edit entry'
-                  : 'New entry'}
-            </Text>
+            <View>
+              <Text style={styles.sheetTitle}>
+                {view === 'items'
+                  ? 'Select items worn'
+                  : isEdit
+                    ? 'Edit entry'
+                    : 'New entry'}
+              </Text>
+              {view === 'items' && selectedIds.length > 0 && (
+                <Text style={styles.sheetSubtitle}>{selectedIds.length} selected</Text>
+              )}
+            </View>
             <Pressable
               onPress={view === 'items' ? () => setView('form') : handleClose}
               hitSlop={12}
@@ -215,7 +220,8 @@ export default function LogEntrySheet({
             <ItemPickerSheet
               items={wardrobeItems}
               selectedIds={selectedIds}
-              title="Select items worn"
+              hideHeader
+              confirmLabel={selectedIds.length > 0 ? `Confirm ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}` : 'Done'}
               onConfirm={(ids) => {
                 setSelectedIds(ids);
                 setView('form');

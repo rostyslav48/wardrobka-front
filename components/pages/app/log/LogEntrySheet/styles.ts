@@ -30,6 +30,11 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
+  sheetSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
 
   formContent: {
     paddingHorizontal: pageInlineIntent,

@@ -17,6 +17,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   confirmLabel?: string;
+  hideHeader?: boolean;
   onConfirm: (ids: number[]) => void;
 }
 
@@ -26,6 +27,7 @@ export default function ItemPickerSheet({
   title = 'Select items',
   subtitle,
   confirmLabel,
+  hideHeader = false,
   onConfirm,
 }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
@@ -50,10 +52,12 @@ export default function ItemPickerSheet({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{derivedSubtitle}</Text>
-      </View>
+      {!hideHeader && (
+        <View style={styles.header}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{derivedSubtitle}</Text>
+        </View>
+      )}
 
       <FlatList
         data={items}
