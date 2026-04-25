@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Animated,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -13,6 +12,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -28,8 +35,9 @@ import { styles } from './styles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 function toUnixSeconds(date: Date): number {
-  // Truncate to midnight local time so the backend receives a date-only value
   const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   return Math.floor(midnight.getTime() / 1000);
 }
@@ -76,10 +84,18 @@ export default function LogEntrySheet({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Tracks live selection while the item picker is open
   const pendingItemIdsRef = useRef<number[]>([]);
 
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const translateY = useSharedValue(SCREEN_HEIGHT);
+  const backdropOpacity = useSharedValue(0);
+
+  const animatedSheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const animatedBackdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
 
   // Reset form state when entry changes
   useEffect(() => {
@@ -96,23 +112,29 @@ export default function LogEntrySheet({
   // Animate sheet in/out
   useEffect(() => {
     if (isVisible) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 12,
-      }).start();
+      backdropOpacity.value = withTiming(1, { duration: 300 });
+      translateY.value = withSpring(0, {
+        mass: 0.8,
+        damping: 26,
+        stiffness: 300,
+        overshootClamping: true,
+      });
     } else {
-      slideAnim.setValue(SCREEN_HEIGHT);
+      translateY.value = SCREEN_HEIGHT;
+      backdropOpacity.value = 0;
     }
-  }, [isVisible, slideAnim]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible]);
 
   const handleClose = () => {
-    Animated.timing(slideAnim, {
-      toValue: SCREEN_HEIGHT,
-      duration: 260,
-      useNativeDriver: true,
-    }).start(onClose);
+    backdropOpacity.value = withTiming(0, { duration: 260 });
+    translateY.value = withTiming(
+      SCREEN_HEIGHT,
+      { duration: 280, easing: Easing.in(Easing.cubic) },
+      (finished) => {
+        if (finished) runOnJS(onClose)();
+      },
+    );
   };
 
   const handleSave = () => {
@@ -182,15 +204,16 @@ export default function LogEntrySheet({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
       >
-        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <AnimatedPressable
+          style={[styles.backdrop, animatedBackdropStyle]}
+          onPress={handleClose}
+        />
 
         <Animated.View
           style={[
             styles.sheet,
-            {
-              paddingBottom: insets.bottom + 8,
-              transform: [{ translateY: slideAnim }],
-            },
+            { paddingBottom: insets.bottom + 8 },
+            animatedSheetStyle,
           ]}
         >
           {/* Header */}
@@ -289,12 +312,12 @@ export default function LogEntrySheet({
               <View style={styles.section}>
                 <View style={styles.sectionRow}>
                   <Text style={styles.sectionLabel}>
-                    Items
-                    {selectedItems.length > 0
-                      ? ` (${selectedItems.length})`
-                      : ''}
+                    Items{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
                   </Text>
-                  <Pressable onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }} hitSlop={8}>
+                  <Pressable
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
+                    hitSlop={8}
+                  >
                     <Text style={styles.changeLink}>
                       {selectedItems.length > 0 ? 'Change' : 'Select'}
                     </Text>
@@ -326,10 +349,7 @@ export default function LogEntrySheet({
                             />
                           </View>
                         )}
-                        <Text
-                          style={styles.selectedThumbName}
-                          numberOfLines={1}
-                        >
+                        <Text style={styles.selectedThumbName} numberOfLines={1}>
                           {item.name}
                         </Text>
                       </View>
@@ -340,14 +360,8 @@ export default function LogEntrySheet({
                     style={styles.emptyItemsButton}
                     onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
                   >
-                    <IconSymbol
-                      name="plus"
-                      size={16}
-                      color={colors.textSecondary}
-                    />
-                    <Text style={styles.emptyItemsText}>
-                      Tap to select items worn
-                    </Text>
+                    <IconSymbol name="plus" size={16} color={colors.textSecondary} />
+                    <Text style={styles.emptyItemsText}>Tap to select items worn</Text>
                   </Pressable>
                 )}
               </View>
@@ -369,12 +383,8 @@ export default function LogEntrySheet({
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-              {/* Actions */}
               <Pressable
-                style={[
-                  styles.saveButton,
-                  isSaving && styles.saveButtonDisabled,
-                ]}
+                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
                 onPress={handleSave}
                 disabled={isSaving}
               >
