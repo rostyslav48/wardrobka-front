@@ -18,4 +18,11 @@ export const styles = StyleSheet.create({
   icon: {
     paddingRight: 15,
   },
+  container__readonly: {
+    borderColor: colors.surface,
+    backgroundColor: colors.surface,
+  },
+  input__readonly: {
+    color: colors.textSecondary,
+  },
 });

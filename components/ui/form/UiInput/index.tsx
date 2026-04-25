@@ -9,6 +9,7 @@ interface Props {
   onChange: (value: string) => void;
   placeholder?: string;
   isSecureText?: boolean;
+  readonly?: boolean;
 }
 
 export default function UiInput({
@@ -16,18 +17,20 @@ export default function UiInput({
   onChange,
   placeholder,
   isSecureText,
+  readonly,
 }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, readonly && styles.container__readonly]}>
       <TextInput
-        style={styles.input}
+        style={[styles.input, readonly && styles.input__readonly]}
         placeholder={placeholder}
         placeholderTextColor={colors.placeholder}
         value={value}
         onChangeText={onChange}
         secureTextEntry={isSecureText && !isPasswordVisible}
+        editable={!readonly}
       />
       {isSecureText && (
         <Pressable
