@@ -1,10 +1,10 @@
 import { Text, View } from 'react-native';
 import { Formik } from 'formik';
-import * as Yup from 'yup';
 import UiInput from '@/components/ui/form/UiInput';
 import UiFormField from '@/components/ui/form/UiFormField';
 import UiButton from '@/components/ui/UiButton';
 import { ProfileData, UpdateProfilePayload } from '@/services/auth.service';
+import { profileSchema } from './validators/profileValidation';
 import { styles } from './styles';
 
 interface Props {
@@ -16,19 +16,11 @@ interface Props {
   ) => void;
 }
 
-const schema = Yup.object({
-  name: Yup.string()
-    .required('Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be at most 100 characters'),
-  city: Yup.string().max(100, 'City must be at most 100 characters').nullable(),
-});
-
 export default function ProfileSection({ profile, onSave }: Props) {
   return (
     <Formik
       initialValues={{ name: profile.name, city: profile.city ?? '' }}
-      validationSchema={schema}
+      validationSchema={profileSchema}
       onSubmit={(values, helpers) => {
         const payload: UpdateProfilePayload = {};
         if (values.name !== profile.name) payload.name = values.name;

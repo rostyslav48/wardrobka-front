@@ -52,6 +52,11 @@ config.ts     # reads EXPO_PUBLIC_* env vars
 - **Modules**: ESM throughout — no `require()` except in config files
 - **Exports**: default export from `index.tsx` per component folder
 
+## Forms & Validation
+- Formik + Yup validation schemas live in a co-located `validators/` subfolder, never inline in the component
+- Named export from the validator file (e.g. `export const profileSchema = Yup.object(…)`)
+- File extension is `.ts` (no JSX), e.g. `ProfileSection/validators/profileValidation.ts`
+
 ## Component Conventions
 - Each UI component lives in its own folder: `components/ui/ComponentName/index.tsx` + `styles.ts`
 - Styles are always in a co-located `styles.ts` using `StyleSheet.create()`
