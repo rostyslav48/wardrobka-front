@@ -13,6 +13,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { aiAssistantService } from '@/services/ai-assistant.service';
 import { AssistantSessionDto } from '@/types/ai-assistant';
 import SessionListItem from '@/components/pages/app/chat/SessionListItem';
+import UiTitle from '@/components/ui/UiTitle';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
@@ -57,7 +58,7 @@ export default function ChatList() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Chats</Text>
+        <UiTitle sizeL>Chats</UiTitle>
       </View>
 
       {isLoading ? (
@@ -112,11 +113,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: pageInlineIntent,
     paddingVertical: 16,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
+
   centered: {
     flex: 1,
     alignItems: 'center',

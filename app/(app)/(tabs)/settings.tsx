@@ -7,6 +7,7 @@ import { AuthApiService, ProfileData, UpdateProfilePayload } from '@/services/au
 import ProfileSection from '@/components/pages/app/settings/ProfileSection';
 import SignOutSection from '@/components/pages/app/settings/SignOutSection';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
+import UiTitle from '@/components/ui/UiTitle';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 
@@ -55,7 +56,7 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
+        <UiTitle>Settings</UiTitle>
       </View>
 
       <ScrollView
@@ -95,11 +96,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: pageInlineIntent,
     paddingBottom: 16,
     paddingTop: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
   },
   content: {
     paddingHorizontal: pageInlineIntent,

@@ -21,6 +21,7 @@ import TypingIndicator from '@/components/pages/app/chat/TypingIndicator';
 import ChatInputBar from '@/components/pages/app/chat/ChatInputBar';
 import ItemPickerSheet from '@/components/ui/ItemPickerSheet';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import UiTitle from '@/components/ui/UiTitle';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 
@@ -173,9 +174,9 @@ export default function ChatScreen() {
         <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
           <IconSymbol name="chevron.left" size={24} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>
+        <UiTitle sizeXS style={styles.headerTitle} numberOfLines={1}>
           {sessionTopic || (activeSessionId ? 'Chat' : 'New Chat')}
-        </Text>
+        </UiTitle>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -251,9 +252,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.textPrimary,
     textAlign: 'center',
   },
   headerSpacer: {

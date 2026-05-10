@@ -21,6 +21,7 @@ import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import UiButton from '@/components/ui/UiButton';
+import UiTitle from '@/components/ui/UiTitle';
 import UiFormField from '@/components/ui/form/UiFormField';
 import UiInput from '@/components/ui/form/UiInput';
 import UiSelect from '@/components/ui/form/UiSelect';
@@ -226,7 +227,7 @@ export default function ItemDetail() {
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
               <IconSymbol name="chevron.left" size={24} color={colors.textPrimary} />
             </Pressable>
-            <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
+            <UiTitle sizeS style={styles.title} numberOfLines={1}>{item.name}</UiTitle>
             <Pressable onPress={handleDelete} hitSlop={8}>
               <IconSymbol name="trash" size={22} color={colors.statusMissing} />
             </Pressable>
@@ -429,9 +430,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
     textAlign: 'center',
   },
 

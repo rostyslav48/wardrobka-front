@@ -13,6 +13,7 @@ import { LoginSchema } from '@/components/pages/login/validators/loginValidation
 import { RegisterSchema } from '@/components/pages/login/validators/registerValidation';
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
+import UiTitle from '@/components/ui/UiTitle';
 
 interface LoginForm {
   email: string;
@@ -80,9 +81,9 @@ export default function Login() {
   return (
     <UiPage indented={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>
+        <UiTitle sizeL style={styles.title}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
-        </Text>
+        </UiTitle>
 
         <Formik
           enableReinitialize={true}
@@ -179,9 +180,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
-    color: colors.textPrimary,
-    fontSize: 28,
-    fontWeight: 'bold',
     marginBottom: 30,
   },
   formContent: {

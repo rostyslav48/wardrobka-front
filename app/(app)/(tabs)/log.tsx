@@ -19,6 +19,7 @@ import LogEntryCard from '@/components/pages/app/log/LogEntryCard';
 import LogEntrySkeleton from '@/components/pages/app/log/LogEntrySkeleton';
 import LogEmptyState from '@/components/pages/app/log/LogEmptyState';
 import LogEntrySheet from '@/components/pages/app/log/LogEntrySheet';
+import UiTitle from '@/components/ui/UiTitle';
 
 export default function LogScreen() {
   const insets = useSafeAreaInsets();
@@ -96,7 +97,7 @@ export default function LogScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Outfit Log</Text>
+        <UiTitle>Outfit Log</UiTitle>
         <Pressable style={styles.addButton} onPress={handleOpenAdd} hitSlop={8}>
           <MaterialIcons name="add" size={22} color={colors.accentText} />
           <Text style={styles.addButtonText}>Add entry</Text>
@@ -169,11 +170,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: pageInlineIntent,
     paddingBottom: 16,
     paddingTop: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
   },
   addButton: {
     flexDirection: 'row',

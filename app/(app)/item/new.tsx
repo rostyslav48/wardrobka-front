@@ -20,6 +20,7 @@ import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import UiButton from '@/components/ui/UiButton';
+import UiTitle from '@/components/ui/UiTitle';
 import UiFormField from '@/components/ui/form/UiFormField';
 import UiInput from '@/components/ui/form/UiInput';
 import UiSelect from '@/components/ui/form/UiSelect';
@@ -131,7 +132,7 @@ export default function NewItem() {
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
               <IconSymbol name="chevron.left" size={24} color={colors.textPrimary} />
             </Pressable>
-            <Text style={styles.title}>Add Item</Text>
+            <UiTitle sizeM style={styles.title}>Add Item</UiTitle>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -323,9 +324,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
     textAlign: 'center',
   },
   headerSpacer: {
