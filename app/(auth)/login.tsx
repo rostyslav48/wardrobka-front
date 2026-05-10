@@ -156,7 +156,7 @@ export default function Login() {
           )}
         </Formik>
 
-        <UiButton onPress={() => setIsLogin(!isLogin)} secondary>
+        <UiButton onPress={() => setIsLogin(!isLogin)} secondary style={styles.switchButton}>
           <Text style={[styles.buttonText, { color: colors.textPrimary }]}>
             {isLogin ? 'Switch to Register' : 'Switch to Login'}
           </Text>
@@ -189,6 +189,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
+  },
+  switchButton: {
+    marginTop: 8,
   },
   buttonText: {
     fontWeight: 'bold',

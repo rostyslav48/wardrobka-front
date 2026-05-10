@@ -1,4 +1,4 @@
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import UiInput from '@/components/ui/form/UiInput';
@@ -47,8 +47,15 @@ export default function ProfileSection({ profile, onSave }: Props) {
         );
       }}
     >
-      {({ values, errors, touched, handleChange, handleSubmit, isSubmitting }) => (
-        <>
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        handleSubmit,
+        isSubmitting,
+      }) => (
+        <View style={styles.container}>
           <UiFormField errorMessage={touched.name ? errors.name : undefined}>
             <UiInput
               value={values.name}
@@ -66,9 +73,6 @@ export default function ProfileSection({ profile, onSave }: Props) {
             />
           </UiFormField>
 
-          <Text style={styles.cityLabel}>
-            Used for weather-aware outfit suggestions
-          </Text>
           <UiFormField errorMessage={touched.city ? errors.city : undefined}>
             <UiInput
               value={values.city}
@@ -77,13 +81,10 @@ export default function ProfileSection({ profile, onSave }: Props) {
             />
           </UiFormField>
 
-          <UiButton
-            enableLoader={isSubmitting}
-            onPress={() => handleSubmit()}
-          >
+          <UiButton enableLoader={isSubmitting} onPress={() => handleSubmit()}>
             <Text style={styles.saveButtonText}>Save</Text>
           </UiButton>
-        </>
+        </View>
       )}
     </Formik>
   );

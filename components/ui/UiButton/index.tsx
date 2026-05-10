@@ -2,7 +2,9 @@ import { PropsWithChildren, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   GestureResponderEvent,
+  StyleProp,
   TouchableOpacity,
+  ViewStyle,
 } from 'react-native';
 import { styles } from './styles';
 import { colors } from '@/theme/colors';
@@ -11,6 +13,7 @@ type Props = PropsWithChildren<{
   onPress: (event?: UiButtonClickEvent) => void;
   secondary?: boolean;
   enableLoader?: boolean;
+  style?: StyleProp<ViewStyle>;
 }>;
 
 export type UiButtonClickEvent = GestureResponderEvent & {
@@ -18,7 +21,13 @@ export type UiButtonClickEvent = GestureResponderEvent & {
   stopLoader: () => void;
 };
 
-export default function UiButton({ onPress, children, secondary, enableLoader = false }: Props) {
+export default function UiButton({
+  onPress,
+  children,
+  secondary,
+  enableLoader = false,
+  style,
+}: Props) {
   const [isLoading, setIsLoading] = useState(enableLoader);
 
   const handleClick = (event: GestureResponderEvent): void => {
@@ -35,7 +44,7 @@ export default function UiButton({ onPress, children, secondary, enableLoader = 
 
   return (
     <TouchableOpacity
-      style={[styles.button, secondary && styles.button__secondary]}
+      style={[styles.button, secondary && styles.button__secondary, style]}
       onPress={handleClick}
       disabled={isLoading}
     >

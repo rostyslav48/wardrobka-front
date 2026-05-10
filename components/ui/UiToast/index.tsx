@@ -1,17 +1,18 @@
-import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
-import { Animated, Text } from 'react-native';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { Animated, StyleProp, Text, ViewStyle } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { styles } from './styles';
 
 export interface UiToastRef {
   show: (message: string, type: 'success' | 'error') => void;
 }
 
-const UiToast = forwardRef<UiToastRef>((_, ref) => {
+interface Props {
+  style?: StyleProp<ViewStyle>;
+}
+
+const UiToast = forwardRef<UiToastRef, Props>(({ style }, ref) => {
+  const tabBarHeight = useBottomTabBarHeight();
   const opacity = useRef(new Animated.Value(0)).current;
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'success' | 'error'>('success');
@@ -46,8 +47,10 @@ const UiToast = forwardRef<UiToastRef>((_, ref) => {
     <Animated.View
       style={[
         styles.container,
+        { bottom: tabBarHeight + 16 },
         type === 'error' ? styles.container__error : styles.container__success,
         { opacity },
+        style,
       ]}
       pointerEvents="none"
     >

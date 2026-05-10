@@ -4,7 +4,6 @@ import { colors } from '@/theme/colors';
 export const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 32,
     left: 20,
     right: 20,
     borderRadius: 10,
