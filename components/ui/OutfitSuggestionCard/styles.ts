@@ -9,12 +9,20 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 10,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 16,
+  },
   topic: {
+    flex: 1,
     fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+    marginRight: 8,
   },
   thumbRow: {
     flexDirection: 'row',
@@ -53,6 +61,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
     lineHeight: 20,
+  },
+  namesRow: {
+    gap: 0,
+    flexDirection: 'row',
+  },
+  itemName: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  itemNameDeleted: {
+    color: colors.border,
+    fontStyle: 'italic',
   },
   footer: {
     flexDirection: 'row',

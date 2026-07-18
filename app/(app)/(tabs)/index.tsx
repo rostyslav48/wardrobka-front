@@ -1,4 +1,4 @@
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import { AssistantOutfitSuggestionDto } from '@/types/ai-assistant';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { PROMPT_SHORTCUTS } from '@/constants/promptShortcuts';
-import OutfitSuggestionCard from '@/components/pages/app/home/OutfitSuggestionCard';
+import OutfitSuggestionCard from '@/components/ui/OutfitSuggestionCard';
 import SuggestionSkeleton from '@/components/pages/app/home/SuggestionSkeleton';
 import EmptyState from '@/components/pages/app/home/EmptyState';
 import PromptShortcutChips from '@/components/pages/app/home/PromptShortcutChips';
@@ -116,7 +116,12 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Suggestions</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Suggestions</Text>
+            <Pressable onPress={() => router.push('/outfit-history')} hitSlop={8}>
+              <Text style={styles.seeAll}>See all</Text>
+            </Pressable>
+          </View>
 
           {isLoadingSuggestions ? (
             <>
@@ -139,7 +144,9 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ask Wardropka</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ask Wardropka</Text>
+          </View>
           <PromptShortcutChips
             shortcuts={PROMPT_SHORTCUTS}
             onSelect={handleChipSelect}
@@ -183,10 +190,20 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 28,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: 14,
+  },
+  seeAll: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
   },
 });

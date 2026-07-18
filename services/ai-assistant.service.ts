@@ -28,4 +28,20 @@ export const aiAssistantService = {
       'ai-assistant/suggestions/recent',
     );
   },
+
+  getOutfitSuggestions(
+    limit: number,
+    offset: number,
+  ): Observable<AssistantOutfitSuggestionDto[]> {
+    return httpService.get<AssistantOutfitSuggestionDto[]>(
+      'ai-assistant/outfit-suggestions',
+      { limit, offset },
+    );
+  },
+
+  deleteOutfitSuggestion(id: string): Observable<{ deleted: boolean }> {
+    return httpService.delete<{ deleted: boolean }>(
+      `ai-assistant/outfit-suggestions/${id}`,
+    );
+  },
 };
