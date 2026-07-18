@@ -1,6 +1,12 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useContext,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { Animated, StyleProp, Text, ViewStyle } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { styles } from './styles';
 
 export interface UiToastRef {
@@ -12,7 +18,9 @@ interface Props {
 }
 
 const UiToast = forwardRef<UiToastRef, Props>(({ style }, ref) => {
-  const tabBarHeight = useBottomTabBarHeight();
+  // Read the tab-bar height via context so the toast can also be used on
+  // screens rendered outside a bottom-tab navigator (where the hook throws).
+  const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
   const opacity = useRef(new Animated.Value(0)).current;
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'success' | 'error'>('success');

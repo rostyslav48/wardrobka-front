@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -18,6 +17,7 @@ import OutfitSuggestionCard from '@/components/ui/OutfitSuggestionCard';
 import SuggestionSkeleton from '@/components/pages/app/home/SuggestionSkeleton';
 import HistoryEmptyState from '@/components/pages/app/outfit-history/HistoryEmptyState';
 import UiTitle from '@/components/ui/UiTitle';
+import UiToast, { UiToastRef } from '@/components/ui/UiToast';
 
 const PAGE_SIZE = 20;
 
@@ -33,6 +33,26 @@ export default function OutfitHistoryScreen() {
 
   const offsetRef = useRef(0);
   const isFetchingRef = useRef(false);
+  const toastRef = useRef<UiToastRef>(null);
+
+  // Track which sessions still exist so a tap on a suggestion whose
+  // originating conversation was deleted shows a toast instead of navigating
+  // into a dead route.
+  const [validSessionIds, setValidSessionIds] = useState<Set<string> | null>(
+    null,
+  );
+
+  const fetchSessions = useCallback(() => {
+    const sub = aiAssistantService.getSessions().subscribe({
+      next: (sessions) => {
+        setValidSessionIds(new Set(sessions.map((s) => s.id)));
+      },
+      error: () => {
+        // Leave the set unknown (null) so navigation stays optimistic on error.
+      },
+    });
+    return () => sub.unsubscribe();
+  }, []);
 
   const fetchPage = useCallback(
     (offset: number, silent = false) => {
@@ -75,15 +95,21 @@ export default function OutfitHistoryScreen() {
   );
 
   useEffect(() => {
-    return fetchPage(0);
-  }, [fetchPage]);
+    const unsubscribePage = fetchPage(0);
+    const unsubscribeSessions = fetchSessions();
+    return () => {
+      unsubscribePage?.();
+      unsubscribeSessions();
+    };
+  }, [fetchPage, fetchSessions]);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
     setHasMore(true);
     offsetRef.current = 0;
     fetchPage(0, true);
-  }, [fetchPage]);
+    fetchSessions();
+  }, [fetchPage, fetchSessions]);
 
   const handleLoadMore = useCallback(() => {
     if (!hasMore || isLoadingMore || isLoading) return;
@@ -97,10 +123,29 @@ export default function OutfitHistoryScreen() {
         offsetRef.current = Math.max(0, offsetRef.current - 1);
       },
       error: () => {
-        Alert.alert('Error', 'Failed to remove the suggestion. Please try again.');
+        toastRef.current?.show(
+          'Failed to remove the suggestion. Please try again.',
+          'error',
+        );
       },
     });
   }, []);
+
+  const handleOpenSession = useCallback(
+    (sessionId: string) => {
+      // Only block navigation when we positively know the session is gone;
+      // if the sessions list hasn't loaded yet, stay optimistic.
+      if (validSessionIds && !validSessionIds.has(sessionId)) {
+        toastRef.current?.show(
+          'This conversation is no longer available',
+          'error',
+        );
+        return;
+      }
+      router.push(`/chat/${sessionId}`);
+    },
+    [validSessionIds],
+  );
 
   const resolveThumbnails = (wardrobeItemIds: number[]) =>
     wardrobeItemIds.map(
@@ -141,7 +186,7 @@ export default function OutfitHistoryScreen() {
             suggestion={item}
             thumbnails={resolveThumbnails(item.wardrobeItemIds)}
             itemNames={resolveItemNames(item.wardrobeItemIds)}
-            onPress={() => router.push(`/chat/${item.sessionId}`)}
+            onPress={() => handleOpenSession(item.sessionId)}
             onDelete={() => handleDelete(item.id)}
           />
         )}
@@ -170,6 +215,8 @@ export default function OutfitHistoryScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      <UiToast ref={toastRef} style={{ bottom: insets.bottom + 16 }} />
     </View>
   );
 }
