@@ -41,6 +41,16 @@ export const AuthApiService = {
     return httpService.patch<ProfileData>('auth/profile', data);
   },
 
+  // Upserts (or clears, when null) the device's Expo push token on the
+  // authenticated user's account, so a future server-side sender can reach it.
+  registerPushToken(
+    expoPushToken: string | null,
+  ): Observable<{ success: boolean }> {
+    return httpService.patch<{ success: boolean }>('auth/push-token', {
+      expoPushToken,
+    });
+  },
+
   addAuthHeader(token: string): void {
     httpService.addDefaultHeader('Authorization', `Bearer ${token}`);
   },

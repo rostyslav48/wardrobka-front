@@ -11,7 +11,7 @@ React Native / Expo app for wardrobe management. Targets iOS, Android, and Web v
 - **HTTP**: RxJS Ajax (`services/http.service.ts`)
 - **Styling**: React Native `StyleSheet` only — no CSS-in-JS libraries
 - **Animations**: `react-native-reanimated`
-- **Storage**: `expo-secure-store` (tokens)
+- **Storage**: `expo-secure-store` (auth tokens); `@react-native-async-storage/async-storage` (non-secret device state, e.g. push token cache, notification prefs)
 - **Icons**: `@expo/vector-icons` + `expo-symbols`
 - **Language**: TypeScript (strict mode)
 - **New Architecture**: enabled (`newArchEnabled: true` in `app.json`)
@@ -67,7 +67,8 @@ config.ts     # reads EXPO_PUBLIC_* env vars
 
 ## Services & Data Fetching
 - All HTTP goes through `services/http.service.ts` (RxJS Ajax)
-- Services return `Observable<T>` — subscribe at the call site (usually in context or component)
+- HTTP services return `Observable<T>` — subscribe at the call site (usually in context or component)
+- Device-facing services that wrap Promise-based Expo SDKs (e.g. `services/notifications.service.ts`) are plain async modules; when they need an HTTP call, they go through the Observable services via `firstValueFrom`
 - Auth token is managed by `context/AuthContext.tsx` via `expo-secure-store`
 - Add auth header via `AuthApiService.addAuthHeader(token)` — it mutates `httpService` defaults
 - API base URL is `EXPO_PUBLIC_API_BASE_URL` (see `.env.example`)
