@@ -5,10 +5,12 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthApiService } from '@/services/auth.service';
 import {
+  buildMorningNotificationContent,
   DEFAULT_NOTIFICATION_PREFS,
   EXPO_PUSH_TOKEN_KEY,
   NOTIFICATION_PREFS_KEY,
   NotificationPrefs,
+  parseTime,
 } from '@/constants/notifications';
 
 /**
@@ -46,6 +48,16 @@ export const notificationsService = {
 
     const requested = await Notifications.requestPermissionsAsync();
     return requested.granted;
+  },
+
+  /**
+   * Reports whether notification permission is currently granted, WITHOUT
+   * prompting. Used on startup and when rendering the settings toggle, where
+   * showing a system dialog would be wrong.
+   */
+  async hasPermission(): Promise<boolean> {
+    const current = await Notifications.getPermissionsAsync();
+    return current.granted;
   },
 
   /**
@@ -107,6 +119,47 @@ export const notificationsService = {
 
   async getStoredPushToken(): Promise<string | null> {
     return AsyncStorage.getItem(EXPO_PUSH_TOKEN_KEY);
+  },
+
+  // ---- Local scheduling ----
+
+  /**
+   * Schedules the recurring daily morning notification at the given "HH:MM"
+   * device-local time. Cancels any existing schedule first so repeated calls
+   * (e.g. changing the time) never stack duplicates.
+   */
+  async scheduleDaily(time: string, name?: string | null): Promise<void> {
+    await this.cancelAll();
+
+    const { hour, minute } = parseTime(time);
+    await Notifications.scheduleNotificationAsync({
+      content: buildMorningNotificationContent(name),
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+  },
+
+  async cancelAll(): Promise<void> {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  },
+
+  /**
+   * Single entry point for reconciling the device schedule with the stored
+   * preference — schedule when enabled, cancel when not. Used by the Settings
+   * UI and on app startup.
+   */
+  async applyPrefs(
+    prefs: NotificationPrefs,
+    name?: string | null,
+  ): Promise<void> {
+    if (prefs.enabled) {
+      await this.scheduleDaily(prefs.time, name);
+    } else {
+      await this.cancelAll();
+    }
   },
 
   // ---- Preference persistence (device-local, used by the Settings UI later) ----

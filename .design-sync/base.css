@@ -1,0 +1,10 @@
+/* React Native styles are injected at runtime by react-native-web, so this is
+   the only static CSS the design system ships. The app ground is dark and the
+   text tokens are light, so a design that does not set a background renders
+   light-on-light; this establishes the correct default. */
+body {
+  margin: 0;
+  background: var(--wa-background);
+  color: var(--wa-text-primary);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
