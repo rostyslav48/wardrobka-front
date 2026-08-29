@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import {
   createContext,
   PropsWithChildren,
@@ -8,6 +9,22 @@ import {
 } from 'react';
 import { AuthApiService, UserData } from '@/services/auth.service';
 import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
+
+// expo-secure-store has no web implementation — SecureStore.getValueWithKeyAsync
+// throws on web (BUG-F02). Fall back to localStorage there.
+const Storage =
+  Platform.OS === 'web'
+    ? {
+        getItemAsync: async (key: string) =>
+          typeof localStorage === 'undefined' ? null : localStorage.getItem(key),
+        setItemAsync: async (key: string, value: string) => {
+          if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+        },
+        deleteItemAsync: async (key: string) => {
+          if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+        },
+      }
+    : SecureStore;
 
 interface AuthProps {
   token: string | null;
@@ -42,8 +59,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     forkJoin({
-      storedToken: from(SecureStore.getItemAsync(TOKEN_KEY)),
-      storedUser: from(SecureStore.getItemAsync(USER_DATA_KEY)),
+      storedToken: from(Storage.getItemAsync(TOKEN_KEY)),
+      storedUser: from(Storage.getItemAsync(USER_DATA_KEY)),
     }).subscribe(({ storedToken, storedUser }) => {
       if (storedToken) {
         setToken(storedToken);
@@ -59,8 +76,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const persistUser = (ud: UserData): Observable<UserData> =>
     forkJoin([
-      from(SecureStore.setItemAsync(TOKEN_KEY, ud.accessToken)),
-      from(SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(ud))),
+      from(Storage.setItemAsync(TOKEN_KEY, ud.accessToken)),
+      from(Storage.setItemAsync(USER_DATA_KEY, JSON.stringify(ud))),
     ]).pipe(map(() => ud));
 
   const register = (
@@ -92,8 +109,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     setUserData(null);
     AuthApiService.removeAuthHeader();
     return forkJoin([
-      from(SecureStore.deleteItemAsync(TOKEN_KEY)),
-      from(SecureStore.deleteItemAsync(USER_DATA_KEY)),
+      from(Storage.deleteItemAsync(TOKEN_KEY)),
+      from(Storage.deleteItemAsync(USER_DATA_KEY)),
     ]).pipe(map(() => undefined));
   };
 

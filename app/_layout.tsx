@@ -5,6 +5,7 @@ import {
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
+import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
@@ -33,6 +34,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Head>
+        <title>Wardrobe Assistant</title>
+      </Head>
       <AuthProvider>
         <ModalProvider>
           <Slot />

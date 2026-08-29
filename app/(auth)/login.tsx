@@ -40,15 +40,18 @@ export default function Login() {
   const login = (email: string, password: string) => {
     return onLogin(email, password).pipe(
       catchError((e: ApiError) => {
-        const statusCode = e.response.statusCode;
+        const statusCode = e.response?.statusCode;
 
         if (statusCode === 401 || statusCode === 404) {
           setErrorMessage('Wrong email or password');
-          e.handled = true;
         } else if (statusCode === 400) {
           setErrorMessage(e.response.message);
-          e.handled = true;
+        } else if (statusCode === 429) {
+          setErrorMessage('Too many attempts. Please wait a moment and try again.');
+        } else {
+          setErrorMessage('Something went wrong, please try again.');
         }
+        e.handled = true;
 
         return throwError(() => e);
       }),
@@ -58,12 +61,16 @@ export default function Login() {
   const register = (email: string, password: string, name: string) => {
     return onRegister(email, password, name).pipe(
       catchError((e: ApiError) => {
-        const statusCode = e.response.statusCode;
+        const statusCode = e.response?.statusCode;
 
         if (statusCode === 400 || statusCode === 409) {
           setErrorMessage(e.response.message);
-          e.handled = true;
+        } else if (statusCode === 429) {
+          setErrorMessage('Too many attempts. Please wait a moment and try again.');
+        } else {
+          setErrorMessage('Something went wrong, please try again.');
         }
+        e.handled = true;
 
         return throwError(() => e);
       }),
@@ -141,7 +148,7 @@ export default function Login() {
                 </>
               )}
 
-              {errorMessage && <UiError errorMessage={errorMessage} />}
+              {errorMessage ? <UiError errorMessage={errorMessage} /> : null}
 
               <UiButton
                 onPress={() => {
@@ -163,7 +170,7 @@ export default function Login() {
           </Text>
         </UiButton>
         {isLogin && (
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/forgot-password')}>
             <Text style={styles.link}>Forgot Password?</Text>
           </TouchableOpacity>
         )}

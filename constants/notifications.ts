@@ -28,6 +28,22 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   time: DEFAULT_NOTIFICATION_TIME,
 };
 
+/** Parses an "HH:MM" preference string into schedulable components. */
+export function parseTime(time: string): { hour: number; minute: number } {
+  const [rawHour, rawMinute] = time.split(':');
+  const hour = Number(rawHour);
+  const minute = Number(rawMinute);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
+    return parseTime(DEFAULT_NOTIFICATION_TIME);
+  }
+  return { hour, minute };
+}
+
+/** Formats schedulable components back into an "HH:MM" preference string. */
+export function formatTime(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
 /** Builds the morning notification content; name comes from AuthContext. */
 export function buildMorningNotificationContent(name?: string | null) {
   return {
