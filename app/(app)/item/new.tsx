@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -44,6 +45,22 @@ import {
 // touched by it, so they are not tracked here.
 type AnalyzableField = keyof AnalyzedItemAttributes;
 
+// On web, expo-image-picker hands back a real `File` (asset.file) alongside
+// the blob: URI — the browser's FormData spec stringifies a {uri,type,name}
+// object instead of sending file bytes, so that native-only shape only works
+// on iOS/Android and the real File must be used on web.
+function appendImageAsset(formData: FormData, asset: ImagePicker.ImagePickerAsset) {
+  if (Platform.OS === 'web' && asset.file) {
+    formData.append('image', asset.file, asset.fileName ?? 'photo.jpg');
+  } else {
+    formData.append('image', {
+      uri:  asset.uri,
+      type: asset.mimeType ?? 'image/jpeg',
+      name: asset.fileName ?? 'photo.jpg',
+    } as unknown as Blob);
+  }
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function NewItem() {
@@ -60,6 +77,10 @@ export default function NewItem() {
   // Formik's own `touched`, and this must be readable synchronously from
   // inside the analysis callback without waiting on a re-render.
   const editedFieldsRef = useRef<Set<AnalyzableField>>(new Set());
+  // The picked asset, kept alongside imageUri (used only for display) so
+  // both submit and analysis can build a correctly-shaped FormData part —
+  // see appendImageAsset.
+  const imageAssetRef = useRef<ImagePicker.ImagePickerAsset | null>(null);
 
   const onSubmit = (values: ItemFormValues, { setSubmitting }: FormikHelpers<ItemFormValues>) => {
     setErrorMessage('');
@@ -78,12 +99,8 @@ export default function NewItem() {
     if (values.size)        formData.append('size',        values.size);
     if (values.description) formData.append('description', values.description.trim());
 
-    if (imageUri) {
-      formData.append('image', {
-        uri:  imageUri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
-      } as unknown as Blob);
+    if (imageAssetRef.current) {
+      appendImageAsset(formData, imageAssetRef.current);
     }
 
     wardrobeService.createItem(formData).subscribe({
@@ -119,16 +136,12 @@ export default function NewItem() {
           });
         };
 
-        const runAnalysis = (uri: string) => {
+        const runAnalysis = (asset: ImagePicker.ImagePickerAsset) => {
           setAnalyzing(true);
           setAnalysisMessage('');
 
           const formData = new FormData();
-          formData.append('image', {
-            uri,
-            type: 'image/jpeg',
-            name: 'photo.jpg',
-          } as unknown as Blob);
+          appendImageAsset(formData, asset);
 
           wardrobeService.analyzeImage(formData).subscribe({
             next: (attributes) => {
@@ -162,13 +175,21 @@ export default function NewItem() {
               : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
 
           if (!result.canceled) {
-            const uri = result.assets[0].uri;
-            setImageUri(uri);
-            runAnalysis(uri);
+            const asset = result.assets[0];
+            imageAssetRef.current = asset;
+            setImageUri(asset.uri);
+            runAnalysis(asset);
           }
         };
 
+        // Alert.alert's action sheet is a no-op on react-native-web, so the
+        // camera/gallery choice would never appear in a browser — go straight
+        // to the gallery picker there instead.
         const showImageOptions = () => {
+          if (Platform.OS === 'web') {
+            void pickImage('gallery');
+            return;
+          }
           Alert.alert('Add Photo', undefined, [
             { text: 'Take Photo',           onPress: () => pickImage('camera') },
             { text: 'Choose from Gallery',  onPress: () => pickImage('gallery') },
@@ -195,7 +216,12 @@ export default function NewItem() {
             showsVerticalScrollIndicator={false}
           >
             {/* Photo picker */}
-            <Pressable style={styles.photoArea} onPress={showImageOptions} disabled={analyzing}>
+            <Pressable
+              testID="item-photo-picker"
+              style={styles.photoArea}
+              onPress={showImageOptions}
+              disabled={analyzing}
+            >
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.photo} resizeMode="cover" />
               ) : (
@@ -211,8 +237,8 @@ export default function NewItem() {
                 </View>
               )}
               {analyzing && (
-                <View style={styles.photoAnalyzingOverlay}>
-                  <ActivityIndicator color={colors.accentText} />
+                <View testID="item-photo-analyzing" style={styles.photoAnalyzingOverlay}>
+                  <ActivityIndicator color={colors.textPrimary} />
                   <Text style={styles.photoAnalyzingText}>Analyzing photo…</Text>
                 </View>
               )}
@@ -223,7 +249,9 @@ export default function NewItem() {
               </Pressable>
             )}
             {analysisMessage ? (
-              <Text style={styles.analysisMessage}>{analysisMessage}</Text>
+              <Text testID="item-analysis-message" style={styles.analysisMessage}>
+                {analysisMessage}
+              </Text>
             ) : null}
 
             {/* ── Required fields ─────────────────────────────── */}
@@ -231,6 +259,7 @@ export default function NewItem() {
 
             <UiFormField errorMessage={errors.name}>
               <UiInput
+                testID="item-name-input"
                 value={values.name}
                 onChange={(text) => { markEdited('name'); handleChange('name')(text); }}
                 placeholder="Item name"
@@ -293,6 +322,7 @@ export default function NewItem() {
 
             <UiFormField>
               <UiInput
+                testID="item-brand-input"
                 value={values.brand}
                 onChange={(text) => { markEdited('brand'); handleChange('brand')(text); }}
                 placeholder="Brand"
@@ -355,7 +385,7 @@ export default function NewItem() {
             {/* ── Error + Submit ───────────────────────────────── */}
             {errorMessage ? <UiError errorMessage={errorMessage} /> : null}
 
-            <UiButton onPress={() => handleSubmit()} enableLoader={isSubmitting}>
+            <UiButton testID="item-submit-button" onPress={() => handleSubmit()} enableLoader={isSubmitting}>
               <Text style={styles.submitLabel}>Save Item</Text>
             </UiButton>
           </ScrollView>
@@ -419,7 +449,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   photoAnalyzingText: {
-    color: colors.accentText,
+    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: '500',
   },
