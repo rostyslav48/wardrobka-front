@@ -59,7 +59,7 @@ export default function Items() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="items-screen">
       <ItemsGrid
         items={items}
         isLoading={isLoading}

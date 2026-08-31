@@ -6,12 +6,13 @@
  */
 import { test, expect } from '@playwright/test';
 import { openApp } from './support/app';
+import { testIds } from './support/testIds';
 
 test('BUG-F01 the web build crashes on boot instead of rendering the login screen', async ({
   page,
 }) => {
   await openApp(page, '/');
-  await expect(page.getByText('Welcome Back')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId(testIds.login.heading)).toBeVisible({ timeout: 60_000 });
 });
 
 test('BUG-F02 expo-secure-store is called unguarded on web', async ({ page }) => {
@@ -37,13 +38,13 @@ test('BUG-F03 expo-notifications is called unguarded on web', async ({ page }) =
 test('BUG-F04 the "Forgot Password?" link is inert', async ({ page }) => {
   await openApp(page, '/');
   const booted = await page
-    .getByText('Welcome Back')
+    .getByTestId(testIds.login.heading)
     .isVisible()
     .catch(() => false);
   test.skip(!booted, 'blocked by BUG-F01');
 
   const before = page.url();
-  await page.getByText('Forgot Password?', { exact: true }).click();
+  await page.getByTestId(testIds.login.forgotPasswordLink).click();
   await page.waitForTimeout(1_000);
   expect(page.url(), 'the link must navigate somewhere').not.toBe(before);
 });

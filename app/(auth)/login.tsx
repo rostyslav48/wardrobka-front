@@ -88,7 +88,7 @@ export default function Login() {
   return (
     <UiPage indented={false}>
       <View style={styles.container}>
-        <UiTitle sizeL style={styles.title}>
+        <UiTitle sizeL style={styles.title} testID="login-heading">
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </UiTitle>
 
@@ -113,6 +113,7 @@ export default function Login() {
                   value={values.email}
                   onChange={handleChange('email')}
                   placeholder="Email"
+                  testID="login-email-input"
                 />
               </UiFormField>
 
@@ -122,6 +123,7 @@ export default function Login() {
                     value={values.name}
                     onChange={handleChange('name')}
                     placeholder="Name"
+                    testID="login-name-input"
                   />
                 </UiFormField>
               )}
@@ -132,6 +134,7 @@ export default function Login() {
                   onChange={handleChange('password')}
                   placeholder="Password"
                   isSecureText={true}
+                  testID="login-password-input"
                 />
               </UiFormField>
 
@@ -143,6 +146,7 @@ export default function Login() {
                       onChange={handleChange('confirmPassword')}
                       placeholder="Confirm password"
                       isSecureText={true}
+                      testID="login-confirm-password-input"
                     />
                   </UiFormField>
                 </>
@@ -155,6 +159,7 @@ export default function Login() {
                   handleSubmit();
                 }}
                 enableLoader={isSubmitting}
+                testID="login-submit-button"
               >
                 <Text style={styles.buttonText}>
                   {isLogin ? 'Login' : 'Register'}
@@ -164,13 +169,21 @@ export default function Login() {
           )}
         </Formik>
 
-        <UiButton onPress={() => setIsLogin(!isLogin)} secondary style={styles.switchButton}>
+        <UiButton
+          onPress={() => setIsLogin(!isLogin)}
+          secondary
+          style={styles.switchButton}
+          testID="login-switch-mode-link"
+        >
           <Text style={[styles.buttonText, { color: colors.textPrimary }]}>
             {isLogin ? 'Switch to Register' : 'Switch to Login'}
           </Text>
         </UiButton>
         {isLogin && (
-          <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+          <TouchableOpacity
+            onPress={() => router.push('/forgot-password')}
+            testID="login-forgot-password-link"
+          >
             <Text style={styles.link}>Forgot Password?</Text>
           </TouchableOpacity>
         )}

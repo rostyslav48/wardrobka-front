@@ -1,4 +1,5 @@
 import { Page, expect, APIRequestContext } from '@playwright/test';
+import { testIds } from './testIds';
 
 export const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:3000';
 
@@ -59,11 +60,11 @@ export async function openApp(page: Page, path = '/') {
  */
 export async function loginThroughUi(page: Page, user: WebUser) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    await page.getByPlaceholder('Email', { exact: true }).fill(user.email);
-    await page.getByPlaceholder('Password', { exact: true }).fill(user.password);
-    await page.getByText('Login', { exact: true }).click();
+    await page.getByTestId(testIds.login.emailInput).fill(user.email);
+    await page.getByTestId(testIds.login.passwordInput).fill(user.password);
+    await page.getByTestId(testIds.login.submitButton).click();
 
-    const loggedIn = await expect(page.getByText('Welcome Back'))
+    const loggedIn = await expect(page.getByTestId(testIds.login.heading))
       .toBeHidden({ timeout: 20_000 })
       .then(() => true)
       .catch(() => false);
@@ -72,7 +73,10 @@ export async function loginThroughUi(page: Page, user: WebUser) {
     // Rate limited — wait for the 60s window to roll over and try again.
     await page.waitForTimeout(45_000);
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByText('Welcome Back').waitFor({ timeout: 45_000 });
+    await page.getByTestId(testIds.login.heading).waitFor({ timeout: 45_000 });
   }
-  await expect(page.getByText('Welcome Back'), 'login never completed').toBeHidden();
+  await expect(
+    page.getByTestId(testIds.login.heading),
+    'login never completed',
+  ).toBeHidden();
 }

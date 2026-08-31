@@ -111,13 +111,19 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.greetingSection}>
-          <Text style={styles.greeting}>{getGreeting(userData?.name)}</Text>
-          <Text style={styles.greetingSubtitle}>What are you wearing today?</Text>
+          <Text style={styles.greeting} testID="home-greeting">
+            {getGreeting(userData?.name)}
+          </Text>
+          <Text style={styles.greetingSubtitle} testID="home-greeting-subtitle">
+            What are you wearing today?
+          </Text>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Suggestions</Text>
+            <Text style={styles.sectionTitle} testID="home-recent-suggestions-header">
+              Recent Suggestions
+            </Text>
             <Pressable onPress={() => router.push('/outfit-history')} hitSlop={8}>
               <Text style={styles.seeAll}>See all</Text>
             </Pressable>
@@ -145,7 +151,9 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Ask Wardropka</Text>
+            <Text style={styles.sectionTitle} testID="home-ask-wardropka-header">
+              Ask Wardropka
+            </Text>
           </View>
           <PromptShortcutChips
             shortcuts={PROMPT_SHORTCUTS}

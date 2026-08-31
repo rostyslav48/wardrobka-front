@@ -29,6 +29,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarButtonTestID: 'tab-home',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="home" color={color} />
           ),
@@ -38,6 +39,7 @@ export default function TabLayout() {
         name="items"
         options={{
           title: 'Items',
+          tabBarButtonTestID: 'tab-items',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="tshirt.fill" color={color} />
           ),
@@ -47,6 +49,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: 'Chat',
+          tabBarButtonTestID: 'tab-chat',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="bubble.left.and.bubble.right.fill" color={color} />
           ),
@@ -56,6 +59,7 @@ export default function TabLayout() {
         name="log"
         options={{
           title: 'Log',
+          tabBarButtonTestID: 'tab-log',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="calendar-today" color={color} />
           ),
@@ -65,6 +69,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          tabBarButtonTestID: 'tab-settings',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="settings" color={color} />
           ),

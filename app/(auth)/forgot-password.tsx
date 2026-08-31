@@ -9,14 +9,18 @@ export default function ForgotPassword() {
   return (
     <UiPage indented={false}>
       <View style={styles.container}>
-        <UiTitle sizeL style={styles.title}>
+        <UiTitle sizeL style={styles.title} testID="forgot-password-heading">
           Forgot Password?
         </UiTitle>
         <Text style={styles.body}>
           Self-service password reset isn&apos;t available yet. Contact
           support to regain access to your account.
         </Text>
-        <UiButton onPress={() => router.back()} style={styles.button}>
+        <UiButton
+          onPress={() => router.back()}
+          style={styles.button}
+          testID="forgot-password-submit-button"
+        >
           <Text style={styles.buttonText}>Back to Login</Text>
         </UiButton>
       </View>
