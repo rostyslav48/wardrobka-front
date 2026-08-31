@@ -56,7 +56,7 @@ export default function ChatList() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="chat-screen">
       <View style={styles.header}>
         <UiTitle sizeL>Chats</UiTitle>
       </View>

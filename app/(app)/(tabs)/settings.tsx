@@ -55,7 +55,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="settings-screen">
       <View style={styles.header}>
         <UiTitle>Settings</UiTitle>
       </View>

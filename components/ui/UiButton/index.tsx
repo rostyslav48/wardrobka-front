@@ -14,6 +14,7 @@ type Props = PropsWithChildren<{
   secondary?: boolean;
   enableLoader?: boolean;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }>;
 
 export type UiButtonClickEvent = GestureResponderEvent & {
@@ -27,6 +28,7 @@ export default function UiButton({
   secondary,
   enableLoader = false,
   style,
+  testID,
 }: Props) {
   const [isLoading, setIsLoading] = useState(enableLoader);
 
@@ -47,6 +49,7 @@ export default function UiButton({
       style={[styles.button, secondary && styles.button__secondary, style]}
       onPress={handleClick}
       disabled={isLoading}
+      testID={testID}
     >
       {isLoading ? <ActivityIndicator color={colors.accentText} /> : children}
     </TouchableOpacity>

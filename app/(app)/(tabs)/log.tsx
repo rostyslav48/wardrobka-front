@@ -94,7 +94,7 @@ export default function LogScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="log-screen">
       {/* Header */}
       <View style={styles.header}>
         <UiTitle>Outfit Log</UiTitle>
