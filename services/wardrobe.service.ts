@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 import { httpService } from '@/services/http.service';
 import { WardrobeFilters, WardrobeItem } from '@/types/wardrobe';
+import { AnalyzedItemAttributes } from '@/components/pages/app/items/itemForm';
 
 export const wardrobeService = {
   getItems(filters?: WardrobeFilters): Observable<WardrobeItem[]> {
@@ -21,5 +22,9 @@ export const wardrobeService = {
 
   deleteItem(id: number): Observable<void> {
     return httpService.delete<void>(`wardrobe/${id}`);
+  },
+
+  analyzeImage(formData: FormData): Observable<AnalyzedItemAttributes> {
+    return httpService.post<AnalyzedItemAttributes>('wardrobe/analyze-image', formData);
   },
 };

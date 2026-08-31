@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +29,7 @@ import UiSelect from '@/components/ui/form/UiSelect';
 import UiTextArea from '@/components/ui/form/UiTextArea';
 import UiError from '@/components/ui/UiError';
 import {
+  AnalyzedItemAttributes,
   EMPTY_FORM_VALUES,
   FIT_OPTIONS,
   ItemFormValues,
@@ -38,6 +41,26 @@ import {
   TYPE_OPTIONS,
 } from '@/components/pages/app/items/itemForm';
 
+// Fields analysis is allowed to fill — status and favourite are never
+// touched by it, so they are not tracked here.
+type AnalyzableField = keyof AnalyzedItemAttributes;
+
+// On web, expo-image-picker hands back a real `File` (asset.file) alongside
+// the blob: URI — the browser's FormData spec stringifies a {uri,type,name}
+// object instead of sending file bytes, so that native-only shape only works
+// on iOS/Android and the real File must be used on web.
+function appendImageAsset(formData: FormData, asset: ImagePicker.ImagePickerAsset) {
+  if (Platform.OS === 'web' && asset.file) {
+    formData.append('image', asset.file, asset.fileName ?? 'photo.jpg');
+  } else {
+    formData.append('image', {
+      uri:  asset.uri,
+      type: asset.mimeType ?? 'image/jpeg',
+      name: asset.fileName ?? 'photo.jpg',
+    } as unknown as Blob);
+  }
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function NewItem() {
@@ -46,38 +69,18 @@ export default function NewItem() {
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-
-  const showImageOptions = () => {
-    Alert.alert('Add Photo', undefined, [
-      { text: 'Take Photo',           onPress: () => pickImage('camera') },
-      { text: 'Choose from Gallery',  onPress: () => pickImage('gallery') },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
-
-  const pickImage = async (source: 'camera' | 'gallery') => {
-    const permission =
-      source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permission.status !== 'granted') {
-      Alert.alert(
-        'Permission required',
-        `Allow access to your ${source === 'camera' ? 'camera' : 'photo library'} in Settings.`,
-      );
-      return;
-    }
-
-    const result =
-      source === 'camera'
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisMessage, setAnalysisMessage] = useState('');
+  // Tracks fields the user has personally changed, so an analysis result
+  // arriving afterwards never overwrites them. A ref (not state) because
+  // Formik's setFieldValue-driven controls (swatches, selects) never flip
+  // Formik's own `touched`, and this must be readable synchronously from
+  // inside the analysis callback without waiting on a re-render.
+  const editedFieldsRef = useRef<Set<AnalyzableField>>(new Set());
+  // The picked asset, kept alongside imageUri (used only for display) so
+  // both submit and analysis can build a correctly-shaped FormData part —
+  // see appendImageAsset.
+  const imageAssetRef = useRef<ImagePicker.ImagePickerAsset | null>(null);
 
   const onSubmit = (values: ItemFormValues, { setSubmitting }: FormikHelpers<ItemFormValues>) => {
     setErrorMessage('');
@@ -96,12 +99,8 @@ export default function NewItem() {
     if (values.size)        formData.append('size',        values.size);
     if (values.description) formData.append('description', values.description.trim());
 
-    if (imageUri) {
-      formData.append('image', {
-        uri:  imageUri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
-      } as unknown as Blob);
+    if (imageAssetRef.current) {
+      appendImageAsset(formData, imageAssetRef.current);
     }
 
     wardrobeService.createItem(formData).subscribe({
@@ -124,7 +123,81 @@ export default function NewItem() {
       validateOnBlur={false}
       onSubmit={onSubmit}
     >
-      {({ values, errors, isSubmitting, handleChange, setFieldValue, handleSubmit }) => (
+      {({ values, errors, isSubmitting, handleChange, setFieldValue, handleSubmit }) => {
+        const markEdited = (field: AnalyzableField) => {
+          editedFieldsRef.current.add(field);
+        };
+
+        const applyAnalyzedAttributes = (attributes: AnalyzedItemAttributes) => {
+          (Object.keys(attributes) as AnalyzableField[]).forEach((field) => {
+            const value = attributes[field];
+            if (value === undefined || editedFieldsRef.current.has(field)) return;
+            setFieldValue(field, value);
+          });
+        };
+
+        const runAnalysis = (asset: ImagePicker.ImagePickerAsset) => {
+          setAnalyzing(true);
+          setAnalysisMessage('');
+
+          const formData = new FormData();
+          appendImageAsset(formData, asset);
+
+          wardrobeService.analyzeImage(formData).subscribe({
+            next: (attributes) => {
+              applyAnalyzedAttributes(attributes);
+              setAnalyzing(false);
+            },
+            error: () => {
+              setAnalysisMessage("Couldn't analyze the photo — you can still fill in the details manually.");
+              setAnalyzing(false);
+            },
+          });
+        };
+
+        const pickImage = async (source: 'camera' | 'gallery') => {
+          const permission =
+            source === 'camera'
+              ? await ImagePicker.requestCameraPermissionsAsync()
+              : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+          if (permission.status !== 'granted') {
+            Alert.alert(
+              'Permission required',
+              `Allow access to your ${source === 'camera' ? 'camera' : 'photo library'} in Settings.`,
+            );
+            return;
+          }
+
+          const result =
+            source === 'camera'
+              ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
+              : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+
+          if (!result.canceled) {
+            const asset = result.assets[0];
+            imageAssetRef.current = asset;
+            setImageUri(asset.uri);
+            runAnalysis(asset);
+          }
+        };
+
+        // Alert.alert's action sheet is a no-op on react-native-web, so the
+        // camera/gallery choice would never appear in a browser — go straight
+        // to the gallery picker there instead.
+        const showImageOptions = () => {
+          if (Platform.OS === 'web') {
+            void pickImage('gallery');
+            return;
+          }
+          Alert.alert('Add Photo', undefined, [
+            { text: 'Take Photo',           onPress: () => pickImage('camera') },
+            { text: 'Choose from Gallery',  onPress: () => pickImage('gallery') },
+            { text: 'Cancel', style: 'cancel' },
+          ]);
+        };
+
+        return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
 
           {/* Header */}
@@ -143,7 +216,12 @@ export default function NewItem() {
             showsVerticalScrollIndicator={false}
           >
             {/* Photo picker */}
-            <Pressable style={styles.photoArea} onPress={showImageOptions}>
+            <Pressable
+              testID="item-photo-picker"
+              style={styles.photoArea}
+              onPress={showImageOptions}
+              disabled={analyzing}
+            >
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.photo} resizeMode="cover" />
               ) : (
@@ -158,20 +236,32 @@ export default function NewItem() {
                   </View>
                 </View>
               )}
+              {analyzing && (
+                <View testID="item-photo-analyzing" style={styles.photoAnalyzingOverlay}>
+                  <ActivityIndicator color={colors.textPrimary} />
+                  <Text style={styles.photoAnalyzingText}>Analyzing photo…</Text>
+                </View>
+              )}
             </Pressable>
-            {imageUri && (
+            {imageUri && !analyzing && (
               <Pressable style={styles.changePhotoBtn} onPress={showImageOptions}>
                 <Text style={styles.changePhotoText}>Change photo</Text>
               </Pressable>
             )}
+            {analysisMessage ? (
+              <Text testID="item-analysis-message" style={styles.analysisMessage}>
+                {analysisMessage}
+              </Text>
+            ) : null}
 
             {/* ── Required fields ─────────────────────────────── */}
             <Text style={styles.sectionLabel}>Required</Text>
 
             <UiFormField errorMessage={errors.name}>
               <UiInput
+                testID="item-name-input"
                 value={values.name}
-                onChange={handleChange('name')}
+                onChange={(text) => { markEdited('name'); handleChange('name')(text); }}
                 placeholder="Item name"
               />
             </UiFormField>
@@ -181,7 +271,7 @@ export default function NewItem() {
               <UiSelect
                 options={TYPE_OPTIONS}
                 value={values.type || undefined}
-                onChange={(v) => setFieldValue('type', v ?? '')}
+                onChange={(v) => { markEdited('type'); setFieldValue('type', v ?? ''); }}
                 required
                 horizontal
               />
@@ -198,9 +288,10 @@ export default function NewItem() {
                       { backgroundColor: hex },
                       values.color === hex && styles.swatch__active,
                     ]}
-                    onPress={() =>
-                      setFieldValue('color', values.color === hex ? '' : hex)
-                    }
+                    onPress={() => {
+                      markEdited('color');
+                      setFieldValue('color', values.color === hex ? '' : hex);
+                    }}
                   />
                 ))}
               </View>
@@ -211,7 +302,7 @@ export default function NewItem() {
               <UiSelect
                 options={SEASON_OPTIONS}
                 value={values.season || undefined}
-                onChange={(v) => setFieldValue('season', v ?? '')}
+                onChange={(v) => { markEdited('season'); setFieldValue('season', v ?? ''); }}
                 required
               />
             </UiFormField>
@@ -231,8 +322,9 @@ export default function NewItem() {
 
             <UiFormField>
               <UiInput
+                testID="item-brand-input"
                 value={values.brand}
-                onChange={handleChange('brand')}
+                onChange={(text) => { markEdited('brand'); handleChange('brand')(text); }}
                 placeholder="Brand"
               />
             </UiFormField>
@@ -240,7 +332,7 @@ export default function NewItem() {
             <UiFormField>
               <UiInput
                 value={values.material}
-                onChange={handleChange('material')}
+                onChange={(text) => { markEdited('material'); handleChange('material')(text); }}
                 placeholder="Material"
               />
             </UiFormField>
@@ -248,7 +340,7 @@ export default function NewItem() {
             <UiFormField>
               <UiInput
                 value={values.style}
-                onChange={handleChange('style')}
+                onChange={(text) => { markEdited('style'); handleChange('style')(text); }}
                 placeholder="Style (e.g. casual, formal)"
               />
             </UiFormField>
@@ -258,7 +350,7 @@ export default function NewItem() {
               <UiSelect
                 options={FIT_OPTIONS}
                 value={values.fit_type || undefined}
-                onChange={(v) => setFieldValue('fit_type', v ?? '')}
+                onChange={(v) => { markEdited('fit_type'); setFieldValue('fit_type', v ?? ''); }}
               />
             </UiFormField>
 
@@ -267,14 +359,14 @@ export default function NewItem() {
               <UiSelect
                 options={SIZE_OPTIONS}
                 value={values.size || undefined}
-                onChange={(v) => setFieldValue('size', v ?? '')}
+                onChange={(v) => { markEdited('size'); setFieldValue('size', v ?? ''); }}
               />
             </UiFormField>
 
             <UiFormField>
               <UiTextArea
                 value={values.description}
-                onChange={handleChange('description')}
+                onChange={(text) => { markEdited('description'); handleChange('description')(text); }}
                 placeholder="Description"
               />
             </UiFormField>
@@ -293,13 +385,14 @@ export default function NewItem() {
             {/* ── Error + Submit ───────────────────────────────── */}
             {errorMessage ? <UiError errorMessage={errorMessage} /> : null}
 
-            <UiButton onPress={() => handleSubmit()} enableLoader={isSubmitting}>
+            <UiButton testID="item-submit-button" onPress={() => handleSubmit()} enableLoader={isSubmitting}>
               <Text style={styles.submitLabel}>Save Item</Text>
             </UiButton>
           </ScrollView>
 
         </View>
-      )}
+        );
+      }}
     </Formik>
   );
 }
@@ -342,10 +435,29 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.surface,
     aspectRatio: 3 / 2,
+    position: 'relative',
   },
   photo: {
     width: '100%',
     height: '100%',
+  },
+  photoAnalyzingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  photoAnalyzingText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  analysisMessage: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: -8,
   },
   photoPlaceholder: {
     flex: 1,

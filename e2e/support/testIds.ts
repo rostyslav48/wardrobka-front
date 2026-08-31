@@ -38,4 +38,12 @@ export const testIds = Object.freeze({
     log: 'log-screen',
     settings: 'settings-screen',
   }),
+  item: Object.freeze({
+    photoPicker: 'item-photo-picker',
+    photoAnalyzing: 'item-photo-analyzing',
+    analysisMessage: 'item-analysis-message',
+    nameInput: 'item-name-input',
+    brandInput: 'item-brand-input',
+    submitButton: 'item-submit-button',
+  }),
 });
