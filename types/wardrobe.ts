@@ -43,6 +43,16 @@ export enum Season {
   Autumn = 'autumn',
 }
 
+/**
+ * Generation state of the item's product image. Unrelated to `ItemStatus` —
+ * an item can be `active` and still have a `pending` image.
+ */
+export enum ImageStatus {
+  Pending = 'pending',
+  Ready = 'ready',
+  Failed = 'failed',
+}
+
 export enum Size {
   S = 's',
   M = 'm',
@@ -67,6 +77,7 @@ export interface WardrobeItem {
   style?: string;
   size?: Size;
   brand?: string;
+  image_status?: ImageStatus;
 }
 
 export interface WardrobeFilters {

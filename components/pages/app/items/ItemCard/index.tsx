@@ -1,6 +1,6 @@
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { WardrobeItem, ItemStatus } from '@/types/wardrobe';
+import { ImageStatus, WardrobeItem, ItemStatus } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useWardrobe } from '@/context/WardrobeContext';
@@ -73,7 +73,14 @@ export default function ItemCard({ item }: Props) {
       style={styles.container}
       onPress={() => router.push(`/item/${item.id}`)}
     >
-      {item.img_url ? (
+      {/* While a product image is being generated the item has no img_url yet,
+          so the placeholder stands in until a poll picks up image_status:ready. */}
+      {item.image_status === ImageStatus.Pending ? (
+        <View testID="item-card-generating" style={styles.placeholder}>
+          <ActivityIndicator color={colors.textSecondary} />
+          <Text style={styles.placeholderText}>Generating…</Text>
+        </View>
+      ) : item.img_url ? (
         <Image
           source={{ uri: item.img_url }}
           style={styles.image}

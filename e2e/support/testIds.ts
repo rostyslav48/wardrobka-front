@@ -45,5 +45,7 @@ export const testIds = Object.freeze({
     nameInput: 'item-name-input',
     brandInput: 'item-brand-input',
     submitButton: 'item-submit-button',
+    generateImageToggle: 'item-generate-image-toggle',
+    cardGenerating: 'item-card-generating',
   }),
 });
