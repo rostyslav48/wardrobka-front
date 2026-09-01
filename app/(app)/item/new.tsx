@@ -304,6 +304,9 @@ export default function NewItem() {
                 {SWATCHES.map(({ label, hex }) => (
                   <Pressable
                     key={label}
+                    // The swatch is a bare colour block with no text, so this is
+                    // the only handle a test has on it.
+                    testID={`item-color-swatch-${label}`}
                     style={[
                       styles.swatch,
                       { backgroundColor: hex },
