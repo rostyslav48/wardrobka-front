@@ -117,6 +117,7 @@ test('re-picking the same unchanged photo does not trigger a second analysis cal
   });
 
   await pickPhoto(page);
+  await expect(page.getByTestId(testIds.item.photoAnalyzing)).toBeVisible();
   await expect(page.getByTestId(testIds.item.photoAnalyzing)).toBeHidden({ timeout: 15_000 });
   expect(calls).toBe(1);
 
