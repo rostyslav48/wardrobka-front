@@ -53,6 +53,15 @@ export enum ImageStatus {
   Failed = 'failed',
 }
 
+/**
+ * Error code the retry endpoint answers with when the original photo it would
+ * re-run from is no longer in storage. Mirrors
+ * `IMAGE_ORIGINAL_EXPIRED_CODE` in the backend's
+ * `apps/wardrobe/src/constants/image-generation.ts` — keyed on rather than the
+ * message text, which is free to change.
+ */
+export const IMAGE_ORIGINAL_EXPIRED_CODE = 'IMAGE_ORIGINAL_EXPIRED';
+
 export enum Size {
   S = 's',
   M = 'm',

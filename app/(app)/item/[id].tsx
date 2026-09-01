@@ -16,7 +16,7 @@ import { Formik, FormikHelpers } from 'formik';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { wardrobeService } from '@/services/wardrobe.service';
-import { ItemStatus, WardrobeItem } from '@/types/wardrobe';
+import { ImageStatus, ItemStatus, WardrobeItem } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -27,6 +27,11 @@ import UiInput from '@/components/ui/form/UiInput';
 import UiSelect from '@/components/ui/form/UiSelect';
 import UiTextArea from '@/components/ui/form/UiTextArea';
 import UiError from '@/components/ui/UiError';
+import {
+  ORIGINAL_EXPIRED_MESSAGE,
+  ORIGINAL_EXPIRED_TITLE,
+  useRetryImageGeneration,
+} from '@/components/pages/app/items/useRetryImageGeneration';
 import {
   FIT_OPTIONS,
   ItemFormValues,
@@ -74,6 +79,11 @@ export default function ItemDetail() {
   const [saveError, setSaveError] = useState('');
   // null = no new photo; string = local URI of newly picked photo
   const [newImageUri, setNewImageUri] = useState<string | null>(null);
+  // Set only on the "your original expired" path: the replacement photo is
+  // meant to be generated from, not just stored as-is.
+  const [regenerateFromNewPhoto, setRegenerateFromNewPhoto] = useState(false);
+
+  const { isRetrying, originalExpired, retry } = useRetryImageGeneration();
 
   // Resolve item from context first, then fetch if missing
   useEffect(() => {
@@ -90,6 +100,30 @@ export default function ItemDetail() {
     });
     return () => sub.unsubscribe();
   }, [id]);
+
+  // ── Generation retry ──────────────────────────────────────────────────────
+
+  const handleRetry = () => {
+    if (!item) return;
+
+    retry(item, {
+      onQueued: (updated) => setItem(updated),
+      // The retained original is gone, so there is nothing to re-run from —
+      // the only way forward is a new photo, and saying so beats a second
+      // failure ten seconds later.
+      onOriginalExpired: () =>
+        Alert.alert(ORIGINAL_EXPIRED_TITLE, ORIGINAL_EXPIRED_MESSAGE, [
+          { text: 'Not now', style: 'cancel' },
+          {
+            text: 'Pick a photo',
+            onPress: () => {
+              setRegenerateFromNewPhoto(true);
+              showImageOptions();
+            },
+          },
+        ]),
+    });
+  };
 
   // ── Image picker ──────────────────────────────────────────────────────────
 
@@ -176,6 +210,12 @@ export default function ItemDetail() {
         type: 'image/jpeg',
         name: 'photo.jpg',
       } as unknown as Blob);
+
+      // Only on the expired-original path: the replacement photo goes back
+      // through the generator instead of becoming the item's image.
+      if (regenerateFromNewPhoto) {
+        formData.append('generate_image', 'true');
+      }
     }
 
     wardrobeService.updateItem(Number(id), formData).subscribe({
@@ -243,6 +283,49 @@ export default function ItemDetail() {
             keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
+            {/* Generation state. A failed job leaves the item with no image
+                and nothing on screen explaining why, so the banner carries
+                both the explanation and the way out. */}
+            {item.image_status === ImageStatus.Pending ? (
+              <View testID="item-detail-generating" style={styles.imageStateBanner}>
+                <ActivityIndicator color={colors.textSecondary} size="small" />
+                <Text style={styles.imageStateText}>
+                  Generating a clean product image…
+                </Text>
+              </View>
+            ) : item.image_status === ImageStatus.Failed ? (
+              <View testID="item-detail-image-failed" style={styles.imageStateBanner}>
+                <Text style={styles.imageStateText}>
+                  {originalExpired
+                    ? ORIGINAL_EXPIRED_MESSAGE
+                    : 'We couldn’t generate a clean product image for this item.'}
+                </Text>
+                <Pressable
+                  testID={
+                    originalExpired ? 'item-detail-pick-photo' : 'item-detail-retry'
+                  }
+                  style={styles.imageStateButton}
+                  onPress={
+                    originalExpired
+                      ? () => {
+                          setRegenerateFromNewPhoto(true);
+                          showImageOptions();
+                        }
+                      : handleRetry
+                  }
+                  disabled={isRetrying}
+                >
+                  {isRetrying ? (
+                    <ActivityIndicator color={colors.textPrimary} size="small" />
+                  ) : (
+                    <Text style={styles.imageStateButtonText}>
+                      {originalExpired ? 'Pick a photo' : 'Generate again'}
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            ) : null}
+
             {/* Photo */}
             <Pressable style={styles.photoArea} onPress={showImageOptions}>
               {photoSource ? (
@@ -441,6 +524,30 @@ const styles = StyleSheet.create({
   form: {
     paddingHorizontal: pageInlineIntent,
     gap: 16,
+  },
+
+  // Image generation state
+  imageStateBanner: {
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    padding: 12,
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  imageStateText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  imageStateButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: colors.border,
+  },
+  imageStateButtonText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // Photo

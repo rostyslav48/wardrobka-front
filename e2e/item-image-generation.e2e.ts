@@ -45,6 +45,8 @@ const READY_ITEM = {
   image_status: 'ready',
 };
 
+const FAILED_ITEM = { ...PENDING_ITEM, image_status: 'failed' };
+
 test.beforeAll(async ({ request }) => {
   test.setTimeout(200_000);
   user = await createApiUser(request, 'Image Generation User');
@@ -210,5 +212,117 @@ test.describe('the polling reveal', () => {
 
     // An idle wardrobe issues no further list requests at all.
     expect(listRequests).toBe(afterFirstLoad);
+  });
+});
+
+test.describe('the failed state', () => {
+  /** Serves the wardrobe list from a mutable holder, on both list URLs. */
+  async function stubList(page: Page, current: () => unknown) {
+    const respond = async (route: import('@playwright/test').Route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([current()]),
+      });
+    };
+    await page.route('**/wardrobe?**', respond);
+    await page.route('**/wardrobe', respond);
+  }
+
+  test('a failed item offers "Generate again" and re-queues the job', async ({ page }) => {
+    let item: unknown = FAILED_ITEM;
+    await stubList(page, () => item);
+
+    let retryRequests = 0;
+    await page.route('**/wardrobe/9001/generate-image', async (route) => {
+      retryRequests += 1;
+      item = PENDING_ITEM;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(PENDING_ITEM),
+      });
+    });
+
+    await signIn(page);
+    await page.getByTestId(testIds.tabs.items).click();
+
+    // A failed item must not look like an item that simply has no photo.
+    await expect(page.getByTestId(testIds.item.cardFailed)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText('Couldn’t generate')).toBeVisible();
+
+    await page.getByTestId(testIds.item.cardRetry).click();
+
+    await expect.poll(() => retryRequests).toBe(1);
+    // The item goes straight back to the generating state the poll watches.
+    await expect(page.getByTestId(testIds.item.cardGenerating)).toBeVisible({
+      timeout: 20_000,
+    });
+  });
+
+  test('keeps the photo a failed item still has instead of the placeholder', async ({ page }) => {
+    // A regeneration leaves img_path in place, so a failure can land on an item
+    // that still has a good photo. Swapping it for the placeholder would read
+    // as "your picture is gone".
+    const FAILED_WITH_IMAGE = {
+      ...FAILED_ITEM,
+      img_url: 'https://example.invalid/existing.jpg',
+    };
+    await page.route('**/existing.jpg', (route) =>
+      route.fulfill({ status: 200, contentType: 'image/png', body: ONE_PIXEL_PNG }),
+    );
+    await stubList(page, () => FAILED_WITH_IMAGE);
+
+    await signIn(page);
+    await page.getByTestId(testIds.tabs.items).click();
+
+    await expect(page.getByTestId(testIds.item.cardFailed)).toBeVisible({
+      timeout: 20_000,
+    });
+    // The image is still on the card, and the retry is offered over it.
+    await expect
+      .poll(() => page.content().then((html) => html.includes('existing.jpg')))
+      .toBe(true);
+    await expect(page.getByTestId(testIds.item.cardRetry)).toBeVisible();
+  });
+
+  test('an expired original asks for a new photo instead of failing silently', async ({ page }) => {
+    await stubList(page, () => FAILED_ITEM);
+
+    await page.route('**/wardrobe/9001/generate-image', (route) =>
+      route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          statusCode: 409,
+          error: 'Conflict',
+          message: 'The photo this item was created from is no longer available.',
+          code: 'IMAGE_ORIGINAL_EXPIRED',
+        }),
+      }),
+    );
+
+    await signIn(page);
+    await page.getByTestId(testIds.tabs.items).click();
+    await expect(page.getByTestId(testIds.item.cardFailed)).toBeVisible({
+      timeout: 20_000,
+    });
+
+    await page.getByTestId(testIds.item.cardRetry).click();
+
+    // `Alert` is a no-op under react-native-web, so the card itself has to say
+    // what happened — otherwise the button looks broken.
+    await expect(page.getByTestId(testIds.item.cardPickPhoto)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText('Photo expired')).toBeVisible();
+
+    await page.getByTestId(testIds.item.cardPickPhoto).click();
+    await expect(page.getByTestId(testIds.item.detailImageFailed)).toBeVisible({
+      timeout: 20_000,
+    });
   });
 });

@@ -47,6 +47,12 @@ export const testIds = Object.freeze({
     submitButton: 'item-submit-button',
     generateImageToggle: 'item-generate-image-toggle',
     cardGenerating: 'item-card-generating',
+    cardFailed: 'item-card-failed',
+    cardRetry: 'item-card-retry',
+    cardPickPhoto: 'item-card-pick-photo',
+    detailImageFailed: 'item-detail-image-failed',
+    detailRetry: 'item-detail-retry',
+    detailPickPhoto: 'item-detail-pick-photo',
     colorSwatch: (label: string) => `item-color-swatch-${label}`,
   }),
 });
