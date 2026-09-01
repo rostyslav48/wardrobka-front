@@ -92,6 +92,8 @@ export default function NewItem() {
     formData.append('season',   values.season);
     formData.append('status',   values.status);
     formData.append('favourite', String(values.favourite));
+    // Only meaningful with a photo attached; the backend ignores it otherwise.
+    formData.append('generate_image', String(values.generate_image));
     if (values.brand)       formData.append('brand',       values.brand.trim());
     if (values.material)    formData.append('material',    values.material.trim());
     if (values.style)       formData.append('style',       values.style.trim());
@@ -254,6 +256,25 @@ export default function NewItem() {
               </Text>
             ) : null}
 
+            {/* ── Generate clean product image ─────────────────── */}
+            <View style={styles.generateRow}>
+              <View style={styles.generateCopy}>
+                <Text style={styles.generateLabel}>Generate clean product image</Text>
+                <Text style={styles.generateHint}>
+                  {values.generate_image
+                    ? 'Your photo is straightened and the background removed. It appears once ready.'
+                    : 'Your photo is used as-is.'}
+                </Text>
+              </View>
+              <Switch
+                testID="item-generate-image-toggle"
+                value={values.generate_image}
+                onValueChange={(v) => void setFieldValue('generate_image', v)}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor={colors.accentText}
+              />
+            </View>
+
             {/* ── Required fields ─────────────────────────────── */}
             <Text style={styles.sectionLabel}>Required</Text>
 
@@ -283,6 +304,9 @@ export default function NewItem() {
                 {SWATCHES.map(({ label, hex }) => (
                   <Pressable
                     key={label}
+                    // The swatch is a bare colour block with no text, so this is
+                    // the only handle a test has on it.
+                    testID={`item-color-swatch-${label}`}
                     style={[
                       styles.swatch,
                       { backgroundColor: hex },
@@ -458,6 +482,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     marginTop: -8,
+  },
+
+  // Generate clean product image
+  generateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  generateCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  generateLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  generateHint: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
   photoPlaceholder: {
     flex: 1,

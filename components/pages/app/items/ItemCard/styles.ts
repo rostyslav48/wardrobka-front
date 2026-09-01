@@ -18,6 +18,12 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+  },
+  placeholderText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
   },
   info: {
     padding: 8,

@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import ItemCard from '@/components/pages/app/items/ItemCard';
 import ItemSkeleton from '@/components/pages/app/items/ItemSkeleton';
+import { usePendingImagePolling } from '@/components/pages/app/items/usePendingImagePolling';
 import { styles } from './styles';
 
 interface Props {
@@ -42,7 +43,12 @@ function EmptyState() {
 }
 
 export default function ItemsGrid({ items, isLoading, ListHeaderComponent }: Props) {
-  if (isLoading) {
+  usePendingImagePolling(items);
+
+  // Only the very first load shows skeletons: a background poll flips
+  // isLoading too, and swapping the grid for skeletons every few seconds
+  // would hide the images the poll exists to reveal.
+  if (isLoading && items.length === 0) {
     return (
       <View style={styles.list}>
         {ListHeaderComponent}

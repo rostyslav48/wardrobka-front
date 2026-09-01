@@ -54,6 +54,10 @@ function itemToFormValues(item: WardrobeItem): ItemFormValues {
     size:        item.size        ?? '',
     description: item.description ?? '',
     favourite:   item.favourite,
+    // The edit screen offers no generation toggle and never sends the field —
+    // re-running the generator on an existing item is Phase 3's "Generate
+    // again", not an edit.
+    generate_image: false,
   };
 }
 
