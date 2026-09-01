@@ -52,11 +52,17 @@ import {
 type AnalyzableField = keyof AnalyzedItemAttributes;
 
 // Identifies a picked photo well enough to tell "the same photo, picked
-// again" from "a different photo" without hashing bytes: assetId is stable
-// for a gallery pick, fileSize/dimensions disambiguate the rare case it's
-// missing (e.g. a camera capture).
+// again" from "a different photo" without hashing bytes. `asset.uri` cannot
+// be used as a fallback: on web it is a fresh `URL.createObjectURL()` blob
+// URL minted on every pick, so it never matches even for the identical file.
+// assetId is stable for a native gallery pick; on web, `asset.file` (a real
+// File) has name/size/lastModified, which is stable across re-picking the
+// same file from disk. Falling back to fileSize/dimensions alone (e.g. a
+// camera capture with neither) is the last resort.
 function assetSignature(asset: ImagePicker.ImagePickerAsset): string {
-  return [asset.assetId ?? asset.uri, asset.fileSize ?? '', asset.width, asset.height].join('|');
+  if (asset.assetId) return `assetId:${asset.assetId}`;
+  if (asset.file) return `webFile:${asset.file.name}|${asset.file.size}|${asset.file.lastModified}`;
+  return `dims:${asset.fileSize ?? ''}|${asset.width}|${asset.height}`;
 }
 
 function friendlyErrorMessage(error: ApiError, fallback: string): string {

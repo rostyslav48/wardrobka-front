@@ -102,3 +102,26 @@ test('a failed analysis shows a non-blocking message and the form stays usable',
   await page.getByTestId(testIds.item.nameInput).fill('Manual Item');
   await expect(page.getByTestId(testIds.item.nameInput)).toHaveValue('Manual Item');
 });
+
+test('re-picking the same unchanged photo does not trigger a second analysis call', async ({
+  page,
+}) => {
+  let calls = 0;
+  await page.route('**/wardrobe/analyze-image', async (route) => {
+    calls += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ name: 'Analyzed Hoodie', brand: 'Nike' }),
+    });
+  });
+
+  await pickPhoto(page);
+  await expect(page.getByTestId(testIds.item.photoAnalyzing)).toBeHidden({ timeout: 15_000 });
+  expect(calls).toBe(1);
+
+  await pickPhoto(page);
+  // Give a would-be second call time to land before asserting it didn't.
+  await page.waitForTimeout(2_000);
+  expect(calls).toBe(1);
+});
