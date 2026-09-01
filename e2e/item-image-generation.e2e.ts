@@ -263,6 +263,32 @@ test.describe('the failed state', () => {
     });
   });
 
+  test('keeps the photo a failed item still has instead of the placeholder', async ({ page }) => {
+    // A regeneration leaves img_path in place, so a failure can land on an item
+    // that still has a good photo. Swapping it for the placeholder would read
+    // as "your picture is gone".
+    const FAILED_WITH_IMAGE = {
+      ...FAILED_ITEM,
+      img_url: 'https://example.invalid/existing.jpg',
+    };
+    await page.route('**/existing.jpg', (route) =>
+      route.fulfill({ status: 200, contentType: 'image/png', body: ONE_PIXEL_PNG }),
+    );
+    await stubList(page, () => FAILED_WITH_IMAGE);
+
+    await signIn(page);
+    await page.getByTestId(testIds.tabs.items).click();
+
+    await expect(page.getByTestId(testIds.item.cardFailed)).toBeVisible({
+      timeout: 20_000,
+    });
+    // The image is still on the card, and the retry is offered over it.
+    await expect
+      .poll(() => page.content().then((html) => html.includes('existing.jpg')))
+      .toBe(true);
+    await expect(page.getByTestId(testIds.item.cardRetry)).toBeVisible();
+  });
+
   test('an expired original asks for a new photo instead of failing silently', async ({ page }) => {
     await stubList(page, () => FAILED_ITEM);
 

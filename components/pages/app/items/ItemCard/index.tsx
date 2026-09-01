@@ -85,6 +85,26 @@ export default function ItemCard({ item }: Props) {
     });
   };
 
+  const hasFailed = item.image_status === ImageStatus.Failed;
+  const failedLabel = originalExpired ? 'Photo expired' : 'Couldn’t generate';
+  const failedAction = (
+    <Pressable
+      testID={originalExpired ? 'item-card-pick-photo' : 'item-card-retry'}
+      style={styles.retryButton}
+      onPress={originalExpired ? () => router.push(`/item/${item.id}`) : handleRetry}
+      disabled={isRetrying}
+      hitSlop={4}
+    >
+      {isRetrying ? (
+        <ActivityIndicator color={colors.textPrimary} size="small" />
+      ) : (
+        <Text style={styles.retryButtonText}>
+          {originalExpired ? 'Pick a photo' : 'Generate again'}
+        </Text>
+      )}
+    </Pressable>
+  );
+
   return (
     <Pressable
       style={styles.container}
@@ -97,41 +117,35 @@ export default function ItemCard({ item }: Props) {
           <ActivityIndicator color={colors.textSecondary} />
           <Text style={styles.placeholderText}>Generating…</Text>
         </View>
-      ) : item.image_status === ImageStatus.Failed ? (
+      ) : hasFailed && !item.img_url ? (
         /* A failed job leaves the item with no image at all — without saying
            so the card is indistinguishable from an item added without a
            photo, and the user never learns there is anything to retry. */
         <View testID="item-card-failed" style={styles.placeholder}>
           <IconSymbol name="sparkles" size={28} color={colors.textSecondary} />
-          <Text style={styles.placeholderText}>
-            {originalExpired ? 'Photo expired' : 'Couldn’t generate'}
-          </Text>
-          <Pressable
-            testID={originalExpired ? 'item-card-pick-photo' : 'item-card-retry'}
-            style={styles.retryButton}
-            onPress={
-              originalExpired
-                ? () => router.push(`/item/${item.id}`)
-                : handleRetry
-            }
-            disabled={isRetrying}
-            hitSlop={4}
-          >
-            {isRetrying ? (
-              <ActivityIndicator color={colors.textPrimary} size="small" />
-            ) : (
-              <Text style={styles.retryButtonText}>
-                {originalExpired ? 'Pick a photo' : 'Generate again'}
-              </Text>
-            )}
-          </Pressable>
+          <Text style={styles.placeholderText}>{failedLabel}</Text>
+          {failedAction}
         </View>
       ) : item.img_url ? (
-        <Image
-          source={{ uri: item.img_url }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        /* A regeneration keeps the item's existing image, so a failure can
+           land on an item that still has a perfectly good photo. Hiding it
+           behind the placeholder would look like the photo was lost, so the
+           image stays and the retry is offered over it. */
+        <View style={styles.imageFrame}>
+          <Image
+            source={{ uri: item.img_url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          {hasFailed ? (
+            <View testID="item-card-failed" style={styles.failedOverlay}>
+              <Text style={styles.failedOverlayText} numberOfLines={1}>
+                {failedLabel}
+              </Text>
+              {failedAction}
+            </View>
+          ) : null}
+        </View>
       ) : (
         <View style={styles.placeholder}>
           <IconSymbol name="tshirt.fill" size={40} color={colors.textSecondary} />
