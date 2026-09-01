@@ -25,6 +25,18 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  retryButton: {
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  retryButtonText: {
+    color: colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   info: {
     padding: 8,
     gap: 4,
