@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import { Formik, FormikHelpers } from 'formik';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { wardrobeService } from '@/services/wardrobe.service';
+import { ApiError } from '@/services/http.service';
 import { ImageStatus, ItemStatus, WardrobeItem } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
@@ -32,6 +33,12 @@ import {
   ORIGINAL_EXPIRED_TITLE,
   useRetryImageGeneration,
 } from '@/components/pages/app/items/useRetryImageGeneration';
+import { PENDING_IMAGE_POLL_INTERVAL_MS } from '@/components/pages/app/items/usePendingImagePolling';
+import {
+  appendPreparedImage,
+  downscaleIfNeeded,
+  PreparedImage,
+} from '@/components/pages/app/items/imageUpload';
 import {
   FIT_OPTIONS,
   ItemFormValues,
@@ -85,6 +92,11 @@ export default function ItemDetail() {
 
   const { isRetrying, originalExpired, retry } = useRetryImageGeneration();
 
+  // The prepared (possibly downscaled) replacement photo; submit awaits any
+  // in-flight preparation instead of racing it — same reasoning as new.tsx.
+  const preparedImageRef = useRef<PreparedImage | null>(null);
+  const pendingPrepareRef = useRef<Promise<PreparedImage> | null>(null);
+
   // Resolve item from context first, then fetch if missing
   useEffect(() => {
     const numId = Number(id);
@@ -100,6 +112,33 @@ export default function ItemDetail() {
     });
     return () => sub.unsubscribe();
   }, [id]);
+
+  // This screen has its own `item` state instead of reading the grid's, so a
+  // "Generate again" from here needs its own reveal: without this, the
+  // generating… banner stays up until the user leaves and comes back, even
+  // though the backend finishes in 10–30s (see usePendingImagePolling, which
+  // only covers the grid). The id is derived to a primitive so the effect's
+  // dependency array can stay honest without re-subscribing on every poll
+  // tick's `setItem` (a new `item` object every time).
+  const pendingItemId =
+    item?.image_status === ImageStatus.Pending ? item.id : null;
+
+  useEffect(() => {
+    if (pendingItemId === null) return;
+
+    const interval = setInterval(() => {
+      wardrobeService.getItem(pendingItemId).subscribe({
+        next: (updated) => {
+          setItem(updated);
+          upsertItem(updated);
+        },
+        // A transient poll failure is not fatal — the next tick tries again.
+        error: () => {},
+      });
+    }, PENDING_IMAGE_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [pendingItemId, upsertItem]);
 
   // ── Generation retry ──────────────────────────────────────────────────────
 
@@ -154,9 +193,20 @@ export default function ItemDetail() {
         ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
 
-    if (!result.canceled) {
-      setNewImageUri(result.assets[0].uri);
-    }
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setNewImageUri(asset.uri);
+
+    const preparePromise = downscaleIfNeeded(asset).catch(
+      (): PreparedImage => ({
+        uri: asset.uri,
+        mimeType: asset.mimeType ?? 'image/jpeg',
+        fileName: asset.fileName ?? 'photo.jpg',
+      }),
+    );
+    pendingPrepareRef.current = preparePromise;
+    preparedImageRef.current = await preparePromise;
   };
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -187,9 +237,19 @@ export default function ItemDetail() {
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
+  // Kept as a plain (non-async) function — same reasoning as new.tsx: an
+  // async onSubmit would hand Formik a Promise that resolves as soon as the
+  // function body finishes awaiting, clearing `isSubmitting` well before the
+  // request completes.
   const onSubmit = (values: ItemFormValues, { setSubmitting }: FormikHelpers<ItemFormValues>) => {
     setSaveError('');
+    void submitForm(values, setSubmitting);
+  };
 
+  const submitForm = async (
+    values: ItemFormValues,
+    setSubmitting: (submitting: boolean) => void,
+  ) => {
     const formData = new FormData();
     formData.append('name',      values.name.trim());
     formData.append('type',      values.type);
@@ -205,11 +265,12 @@ export default function ItemDetail() {
     if (values.description) formData.append('description', values.description.trim());
 
     if (newImageUri) {
-      formData.append('image', {
-        uri:  newImageUri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
-      } as unknown as Blob);
+      if (pendingPrepareRef.current) {
+        preparedImageRef.current = await pendingPrepareRef.current;
+      }
+      if (preparedImageRef.current) {
+        await appendPreparedImage(formData, preparedImageRef.current);
+      }
 
       // Only on the expired-original path: the replacement photo goes back
       // through the generator instead of becoming the item's image.
@@ -223,8 +284,12 @@ export default function ItemDetail() {
         upsertItem(updated);
         router.back();
       },
-      error: () => {
-        setSaveError('Failed to save changes. Please try again.');
+      error: (error: ApiError) => {
+        setSaveError(
+          error?.status === 429
+            ? "You're doing that a bit too fast — wait a few seconds and try again."
+            : 'Failed to save changes. Please try again.',
+        );
         setSubmitting(false);
       },
     });

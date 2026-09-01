@@ -17,6 +17,7 @@ import { Formik, FormikHelpers } from 'formik';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { wardrobeService } from '@/services/wardrobe.service';
+import { ApiError } from '@/services/http.service';
 import { ItemStatus } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
@@ -28,6 +29,11 @@ import UiInput from '@/components/ui/form/UiInput';
 import UiSelect from '@/components/ui/form/UiSelect';
 import UiTextArea from '@/components/ui/form/UiTextArea';
 import UiError from '@/components/ui/UiError';
+import {
+  appendPreparedImage,
+  downscaleIfNeeded,
+  PreparedImage,
+} from '@/components/pages/app/items/imageUpload';
 import {
   AnalyzedItemAttributes,
   EMPTY_FORM_VALUES,
@@ -45,20 +51,25 @@ import {
 // touched by it, so they are not tracked here.
 type AnalyzableField = keyof AnalyzedItemAttributes;
 
-// On web, expo-image-picker hands back a real `File` (asset.file) alongside
-// the blob: URI — the browser's FormData spec stringifies a {uri,type,name}
-// object instead of sending file bytes, so that native-only shape only works
-// on iOS/Android and the real File must be used on web.
-function appendImageAsset(formData: FormData, asset: ImagePicker.ImagePickerAsset) {
-  if (Platform.OS === 'web' && asset.file) {
-    formData.append('image', asset.file, asset.fileName ?? 'photo.jpg');
-  } else {
-    formData.append('image', {
-      uri:  asset.uri,
-      type: asset.mimeType ?? 'image/jpeg',
-      name: asset.fileName ?? 'photo.jpg',
-    } as unknown as Blob);
+// Identifies a picked photo well enough to tell "the same photo, picked
+// again" from "a different photo" without hashing bytes. `asset.uri` cannot
+// be used as a fallback: on web it is a fresh `URL.createObjectURL()` blob
+// URL minted on every pick, so it never matches even for the identical file.
+// assetId is stable for a native gallery pick; on web, `asset.file` (a real
+// File) has name/size/lastModified, which is stable across re-picking the
+// same file from disk. Falling back to fileSize/dimensions alone (e.g. a
+// camera capture with neither) is the last resort.
+function assetSignature(asset: ImagePicker.ImagePickerAsset): string {
+  if (asset.assetId) return `assetId:${asset.assetId}`;
+  if (asset.file) return `webFile:${asset.file.name}|${asset.file.size}|${asset.file.lastModified}`;
+  return `dims:${asset.fileSize ?? ''}|${asset.width}|${asset.height}`;
+}
+
+function friendlyErrorMessage(error: ApiError, fallback: string): string {
+  if (error?.status === 429) {
+    return "You're doing that a bit too fast — wait a few seconds and try again.";
   }
+  return fallback;
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -77,14 +88,29 @@ export default function NewItem() {
   // Formik's own `touched`, and this must be readable synchronously from
   // inside the analysis callback without waiting on a re-render.
   const editedFieldsRef = useRef<Set<AnalyzableField>>(new Set());
-  // The picked asset, kept alongside imageUri (used only for display) so
-  // both submit and analysis can build a correctly-shaped FormData part —
-  // see appendImageAsset.
-  const imageAssetRef = useRef<ImagePicker.ImagePickerAsset | null>(null);
+  // The prepared (possibly downscaled) image, kept alongside imageUri (used
+  // only for display) so both submit and analysis send the same bytes.
+  const preparedImageRef = useRef<PreparedImage | null>(null);
+  // Downscaling runs in the background as soon as a photo is picked; submit
+  // awaits this instead of racing it, in case Save is tapped before it settles.
+  const pendingPrepareRef = useRef<Promise<PreparedImage> | null>(null);
+  // The signature of the last photo actually sent for analysis, so picking
+  // the exact same one again is a no-op rather than a second network call.
+  const lastAnalyzedSignatureRef = useRef<string | null>(null);
 
+  // Kept as a plain (non-async) function so Formik never sees a Promise back
+  // from onSubmit — it would otherwise auto-clear `isSubmitting` as soon as
+  // the function body finishes awaiting, well before the request completes.
+  // Manual setSubmitting calls below stay in full control, same as before.
   const onSubmit = (values: ItemFormValues, { setSubmitting }: FormikHelpers<ItemFormValues>) => {
     setErrorMessage('');
+    void submitForm(values, setSubmitting);
+  };
 
+  const submitForm = async (
+    values: ItemFormValues,
+    setSubmitting: (submitting: boolean) => void,
+  ) => {
     const formData = new FormData();
     formData.append('name',     values.name.trim());
     formData.append('type',     values.type);
@@ -101,8 +127,11 @@ export default function NewItem() {
     if (values.size)        formData.append('size',        values.size);
     if (values.description) formData.append('description', values.description.trim());
 
-    if (imageAssetRef.current) {
-      appendImageAsset(formData, imageAssetRef.current);
+    if (pendingPrepareRef.current) {
+      preparedImageRef.current = await pendingPrepareRef.current;
+    }
+    if (preparedImageRef.current) {
+      await appendPreparedImage(formData, preparedImageRef.current);
     }
 
     wardrobeService.createItem(formData).subscribe({
@@ -110,8 +139,8 @@ export default function NewItem() {
         upsertItem(item);
         router.back();
       },
-      error: () => {
-        setErrorMessage('Failed to save item. Please try again.');
+      error: (error: ApiError) => {
+        setErrorMessage(friendlyErrorMessage(error, 'Failed to save item. Please try again.'));
         setSubmitting(false);
       },
     });
@@ -138,20 +167,25 @@ export default function NewItem() {
           });
         };
 
-        const runAnalysis = (asset: ImagePicker.ImagePickerAsset) => {
+        const runAnalysis = async (image: PreparedImage) => {
           setAnalyzing(true);
           setAnalysisMessage('');
 
           const formData = new FormData();
-          appendImageAsset(formData, asset);
+          await appendPreparedImage(formData, image);
 
           wardrobeService.analyzeImage(formData).subscribe({
             next: (attributes) => {
               applyAnalyzedAttributes(attributes);
               setAnalyzing(false);
             },
-            error: () => {
-              setAnalysisMessage("Couldn't analyze the photo — you can still fill in the details manually.");
+            error: (error: ApiError) => {
+              setAnalysisMessage(
+                friendlyErrorMessage(
+                  error,
+                  "Couldn't analyze the photo — you can still fill in the details manually.",
+                ),
+              );
               setAnalyzing(false);
             },
           });
@@ -176,12 +210,30 @@ export default function NewItem() {
               ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
               : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
 
-          if (!result.canceled) {
-            const asset = result.assets[0];
-            imageAssetRef.current = asset;
-            setImageUri(asset.uri);
-            runAnalysis(asset);
-          }
+          if (result.canceled) return;
+
+          const asset = result.assets[0];
+          const signature = assetSignature(asset);
+          setImageUri(asset.uri);
+
+          const preparePromise = downscaleIfNeeded(asset).catch(
+            (): PreparedImage => ({
+              uri: asset.uri,
+              mimeType: asset.mimeType ?? 'image/jpeg',
+              fileName: asset.fileName ?? 'photo.jpg',
+            }),
+          );
+          pendingPrepareRef.current = preparePromise;
+
+          const prepared = await preparePromise;
+          preparedImageRef.current = prepared;
+
+          // Re-picking the exact same photo (assetId/size/dimensions all
+          // match the last one that was actually sent for analysis) must not
+          // waste another call — the fields it would fill are already filled.
+          if (signature === lastAnalyzedSignatureRef.current) return;
+          lastAnalyzedSignatureRef.current = signature;
+          void runAnalysis(prepared);
         };
 
         // Alert.alert's action sheet is a no-op on react-native-web, so the
