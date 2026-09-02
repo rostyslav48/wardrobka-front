@@ -34,5 +34,10 @@ Three more props exist for tab screens:
 - `contentStyle` — a React Native style object applied to the scroll content
   container after the defaults.
 
+Taps reach children while the keyboard is up: the scroll view sets
+`keyboardShouldPersistTaps="handled"` rather than React Native's `'never'` default, so
+a screen can put a text input and its submit button in the same page without the first
+tap being swallowed. It still dismisses the keyboard on drag.
+
 Content taller than the viewport scrolls: the content container grows rather than
 being pinned to one screen height.

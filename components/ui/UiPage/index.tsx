@@ -54,6 +54,11 @@ function PageScrollView({
         ]}
         refreshControl={refreshControl}
         keyboardDismissMode="on-drag"
+        // Not React Native's 'never' default, under which a child does not
+        // receive the tap that dismisses the keyboard. Every screen built on
+        // UiPage puts its inputs and buttons in this scroll view, so the first
+        // tap on a send button would otherwise be swallowed on iOS/Android.
+        keyboardShouldPersistTaps="handled"
       >
         {children}
       </Animated.ScrollView>
