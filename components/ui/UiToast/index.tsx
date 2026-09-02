@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Animated, StyleProp, Text, ViewStyle } from 'react-native';
 import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
+import { spacing } from '@/theme/layout';
 import { styles } from './styles';
 
 export interface UiToastRef {
@@ -55,7 +56,7 @@ const UiToast = forwardRef<UiToastRef, Props>(({ style }, ref) => {
     <Animated.View
       style={[
         styles.container,
-        { bottom: tabBarHeight + 16 },
+        { bottom: tabBarHeight + spacing.xl },
         type === 'error' ? styles.container__error : styles.container__success,
         { opacity },
         style,

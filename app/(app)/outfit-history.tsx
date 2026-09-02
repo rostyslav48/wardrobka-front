@@ -14,7 +14,7 @@ import { useWardrobe } from '@/context/WardrobeContext';
 import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import OutfitSuggestionCard from '@/components/ui/OutfitSuggestionCard';
-import SuggestionSkeleton from '@/components/pages/app/home/SuggestionSkeleton';
+import UiSkeletonCard from '@/components/ui/UiSkeletonCard';
 import HistoryEmptyState from '@/components/pages/app/outfit-history/HistoryEmptyState';
 import UiTitle from '@/components/ui/UiTitle';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
@@ -164,9 +164,9 @@ export default function OutfitHistoryScreen() {
           <UiTitle>Outfit History</UiTitle>
         </View>
         <View style={styles.skeletonList}>
-          <SuggestionSkeleton />
-          <SuggestionSkeleton />
-          <SuggestionSkeleton />
+          <UiSkeletonCard />
+          <UiSkeletonCard />
+          <UiSkeletonCard />
         </View>
       </View>
     );

@@ -20,8 +20,9 @@ numbers, no shorthand strings.
 <UiButton style={{ margin: '24px 0' }}>…</UiButton>
 ```
 
-Only `UiButton`, `UiTitle`, and `UiToast` accept `style`. The rest are styled
-entirely by their own props.
+Only `UiButton`, `UiTitle`, and `UiToast` accept `style`, and `UiPage` accepts
+`contentStyle` for its scroll content. The rest are styled entirely by their own
+props.
 
 ### Wrap the tree in both providers
 
@@ -64,8 +65,13 @@ ground to `--wa-background`; anything you paint yourself must stay on that footi
 ### Text is always UiTitle
 
 There is no separate heading/body/caption component. `UiTitle` is every string, and
-its size is a boolean flag — `sizeXS` (14) · `sizeS` (16) · `sizeM` (20) · `sizeL`
-(28), or none for the 24px default. Pass exactly one.
+its size is a boolean flag. Each flag is one of the measured type roles, so it
+carries a weight as well as a size — `sizeXS` (14.5 / 500, chat session title) ·
+`sizeS` (18 / 600, button label) · `sizeM` (20 / 700, stat numeral) · `sizeL`
+(28 / 400, screen title), or none for the 22 / 400 sheet-title default. Pass
+exactly one. The two largest roles are serif in the design and are therefore set
+at weight 400: reach for `sizeL` when you want a screen title, not when you want
+bold.
 
 ### UiButton does not colour its own label
 
@@ -88,11 +94,14 @@ inverted by the caller or it renders invisible:
 'error')`, and fades itself out after ~2.7s. `UiPopup` does not present itself —
 `useModal().show({ content: <UiPopup …/> })` does.
 
-### Known defect
+### Known defects
 
-`UiPage`'s `indented` prop is inert. It is meant to add a 60px top offset, but the
-component's style array ends with `{ paddingTop: insets.top }`, which overrides it
-in both directions. Do not use it for spacing; add your own.
+None outstanding. `UiPage`'s `indented` prop used to be inert — its 60px top offset
+was always overridden by the `paddingTop: insets.top` that followed it in the style
+array. It has been replaced by `topInset?: number`, which is *added* to the
+safe-area inset and defaults to 62px; pass `topInset={0}` for a flush screen. The
+same change lifted the `height: '100%'` cap on the scroll content, so a `UiPage`
+taller than one viewport now scrolls.
 
 ### Read before styling
 

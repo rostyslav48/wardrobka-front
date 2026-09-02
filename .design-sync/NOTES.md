@@ -74,7 +74,7 @@ of that.
 - `UiToast` fades itself out ~2.7s after `show()`, well before the screenshot. Its
   preview pins `style={{ opacity: 1 }}` — the component applies `style` last in its
   style array, so this holds it open without touching the animation.
-- 11 of 12 components are `cardMode: "column"` (`cfg.overrides`). They render wider
+- 15 of 16 components are `cardMode: "column"` (`cfg.overrides`). They render wider
   than a grid cell at their natural width; only `UiTitle` fits the default grid.
 
 ## The `.design-sync/overrides/bundle.mjs` fork
@@ -103,12 +103,22 @@ None. The final validate run is warning-free.
 
 ## Findings worth acting on (app source, not sync config)
 
-- **`UiPage`'s `indented` prop is inert.** `components/ui/UiPage/index.tsx` ends its
-  style array with `{ paddingTop: insets.top, … }`, which overrides
-  `container__indented`'s `paddingTop: 60` whether the prop is true or false. Both
-  settings render identically. Documented as a known defect in `conventions.md` and
-  `UiPage.prompt.md`; the preview ships one cell instead of two because a second
-  would be pixel-identical.
+- **`UiPage`'s `indented` prop was inert; fixed.** The old style array ended with
+  `{ paddingTop: insets.top, … }`, which overrode `container__indented`'s
+  `paddingTop: 60` whether the prop was true or false, so both settings rendered
+  identically. The prop is now `topInset?: number`, composed as
+  `paddingTop: insets.top + topInset` and defaulting to 62 (spec section 6.1's
+  measured scroll-region top padding). `conventions.md`, `docs/UiPage.md` and
+  `cfg.dtsPropsFor.UiPage` all describe the new prop, and `previews/UiPage.tsx`
+  now ships the second cell it was previously denied for being pixel-identical.
+- **`UiPage`'s content container was capped at one viewport; fixed.**
+  `contentContainerStyle: { height: '100%' }` made content taller than the screen
+  unreachable. It is now `flexGrow: 1`. Login and forgot-password were short enough
+  never to hit it; the tab screens adopted in later phases are not.
+- **`IconSymbol` warns on an unmapped name.** `MAPPING[name]` being `undefined`
+  used to render as a blank box on Android and web with no other signal. It now
+  emits a `__DEV__`-guarded `console.warn`. The `.ios.tsx` variant goes through
+  `expo-symbols` and needs no mapping, so it is unchanged.
 - `components/ui/UiStatusBadge/` and `components/ui/WardrobeItemCard/` are empty,
   untracked directories. Left in place, excluded from the sync.
 
@@ -116,7 +126,7 @@ None. The final validate run is warning-free.
 
 - `IconSymbol` and `TabBarBackground` are not synced. `TabBarBackground` is native
   chrome (`expo-blur`, `@react-navigation/bottom-tabs`); `IconSymbol` is an internal
-  dependency of four synced components and bundles fine, but is not a design-system
+  dependency of six synced components and bundles fine, but is not a design-system
   component in its own right. Its `.ios.tsx` variant (`expo-symbols`) is never
   bundled — esbuild picks the plain `.tsx`, which uses `@expo/vector-icons`.
 
@@ -148,10 +158,16 @@ None. The final validate run is warning-free.
   (`--wa-radius-card`), and `typography` emits `--wa-type-<role>-size` /
   `-weight` / `-line-height`. `pageInlineIntent` stays a bare number export
   precisely so it keeps emitting as `--wa-page-inline-intent`.
-- **`dtsPropsFor` holds all 12 prop contracts by hand**, because there is no shipped
+- **`dtsPropsFor` holds all 16 prop contracts by hand**, because there is no shipped
   `.d.ts` to extract from. They will rot the moment a component's props change and
   nothing will warn you. Diff `components/ui/**` against
-  `cfg.dtsPropsFor` on any re-sync where component source moved.
+  `cfg.dtsPropsFor` on any re-sync where component source moved. A component's
+  contract is written down in four places — `cfg.componentSrcMap`,
+  `cfg.dtsPropsFor`, `docs/<Name>.md` and `previews/<Name>.tsx`, plus its
+  `entry.tsx` export — and nothing cross-checks them. Change all five together.
+  Audited in full on the Phase 3 pass: all 16 entries match their component's props,
+  with one deliberate omission — `testID` (on `UiButton`, `UiTitle` and `UiInput`) is
+  a React Native test hook, not a design-system prop, and is left out of every entry.
 - **The `bundle.mjs` fork is a full copy.** Diff it against the staged
   `.ds-sync/lib/bundle.mjs` on every re-sync and merge upstream changes; only
   `sharedBuildOptions` should differ.

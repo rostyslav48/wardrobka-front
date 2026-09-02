@@ -1,9 +1,7 @@
 import { UiButton, UiTitle, UiPage } from 'wardrobe-assistant-front';
 
 // UiPage is the screen-level scroll container - it fills its parent, so the
-// cell gives it a phone-sized frame to fill. There is no `indented={false}`
-// cell: the prop has no observable effect (see UiPage.prompt.md), so a second
-// cell would be a pixel-identical duplicate.
+// cell gives it a phone-sized frame to fill.
 const screen: React.CSSProperties = {
   background: 'var(--wa-background)',
   width: 340,
@@ -27,9 +25,25 @@ const items = [
   ['White oxford shirt', 'Shirts · All year'],
 ];
 
-export const Indented = () => (
+// The default: 62px above the safe-area inset, so the title clears the status bar.
+export const DefaultTopInset = () => (
   <div style={screen}>
     <UiPage>
+      <UiTitle sizeL>Wardrobe</UiTitle>
+      {items.map(([name, meta]) => (
+        <div key={name} style={row}>
+          <UiTitle sizeS>{name}</UiTitle>
+          <UiTitle sizeXS style={{ color: 'var(--wa-text-secondary)' }}>{meta}</UiTitle>
+        </div>
+      ))}
+    </UiPage>
+  </div>
+);
+
+// Flush: what the auth screens pass, and 62px higher than the cell above it.
+export const NoTopInset = () => (
+  <div style={screen}>
+    <UiPage topInset={0}>
       <UiTitle sizeL>Wardrobe</UiTitle>
       {items.map(([name, meta]) => (
         <div key={name} style={row}>

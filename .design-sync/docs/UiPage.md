@@ -12,9 +12,24 @@ the standard horizontal page padding (`--wa-page-inline-intent`, 20px).
 </UiPage>
 ```
 
-**`indented` currently has no observable effect.** It is meant to add a 60px top
-offset, but the component's style array ends with `{ paddingTop: insets.top }`,
-which overrides that value whether the prop is true or false. Both settings render
-identically. Treat the prop as inert until the component is fixed upstream — do not
-reach for it to control spacing, and do not assume `indented={false}` removes the
-horizontal page padding, which it never did.
+**`topInset` controls the space above the title.** It defaults to 62px — the scroll
+region's measured top padding — and is added to the safe-area top inset, so a screen
+that should sit flush under the status bar passes `topInset={0}`:
+
+```jsx
+<UiPage topInset={0}>…</UiPage>
+```
+
+It replaces the old `indented` boolean, which never had an observable effect.
+
+Three more props exist for tab screens:
+
+- `refreshControl` — a `<RefreshControl/>`, handed straight to the scroll view.
+- `tabBarInset` — adds the bottom tab bar's height to the content's bottom padding.
+  It defaults to `false` and is **only valid inside a bottom-tab navigator**; setting
+  it anywhere else throws.
+- `contentStyle` — a React Native style object applied to the scroll content
+  container after the defaults.
+
+Content taller than the viewport scrolls: the content container grows rather than
+being pinned to one screen height.

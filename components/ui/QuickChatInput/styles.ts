@@ -1,25 +1,28 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { border, radius, spacing, typography } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 10,
+    gap: spacing.md,
   },
   inputWrapper: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: radius.cardSm,
+    borderWidth: border.hairline,
     borderColor: colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.cardPad,
+    paddingVertical: spacing.md,
+    // Box geometry - snap table 8.5.
     minHeight: 46,
     justifyContent: 'center',
   },
   input: {
-    fontSize: 15,
+    // Size only: a `lineHeight` on a multiline `TextInput` clips descenders.
+    fontSize: typography.rowLabel.fontSize,
     color: colors.textPrimary,
     padding: 0,
     maxHeight: 100,
@@ -27,17 +30,13 @@ export const styles = StyleSheet.create({
   sendButton: {
     width: 46,
     height: 46,
-    borderRadius: 14,
+    borderRadius: radius.cardSm,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
+    // Not a design value - snap table 8.6.
     opacity: 0.4,
-  },
-  sendIcon: {
-    fontSize: 18,
-    color: colors.accentText,
-    fontWeight: '700',
   },
 });

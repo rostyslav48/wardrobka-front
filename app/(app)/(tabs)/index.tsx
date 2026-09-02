@@ -11,11 +11,11 @@ import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 import { PROMPT_SHORTCUTS } from '@/constants/promptShortcuts';
 import OutfitSuggestionCard from '@/components/ui/OutfitSuggestionCard';
-import SuggestionSkeleton from '@/components/pages/app/home/SuggestionSkeleton';
+import UiSkeletonCard from '@/components/ui/UiSkeletonCard';
 import UpcomingOccasions from '@/components/pages/app/home/UpcomingOccasions';
-import EmptyState from '@/components/pages/app/home/EmptyState';
-import PromptShortcutChips from '@/components/pages/app/home/PromptShortcutChips';
-import QuickChatInput from '@/components/pages/app/home/QuickChatInput';
+import UiEmptyState from '@/components/ui/UiEmptyState';
+import PromptShortcutChips from '@/components/ui/PromptShortcutChips';
+import QuickChatInput from '@/components/ui/QuickChatInput';
 
 function getGreeting(name?: string | null): string {
   const hour = new Date().getHours();
@@ -134,12 +134,16 @@ export default function HomeScreen() {
 
           {isLoadingSuggestions ? (
             <>
-              <SuggestionSkeleton />
-              <SuggestionSkeleton />
-              <SuggestionSkeleton />
+              <UiSkeletonCard />
+              <UiSkeletonCard />
+              <UiSkeletonCard />
             </>
           ) : resolvedSuggestions.length === 0 ? (
-            <EmptyState />
+            <UiEmptyState
+              icon="sparkles"
+              title="No suggestions yet"
+              subtitle="Start a chat below to get personalised outfit ideas from your wardrobe."
+            />
           ) : (
             resolvedSuggestions.map((s) => (
               <OutfitSuggestionCard

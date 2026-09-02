@@ -8,11 +8,9 @@ export const styles = StyleSheet.create({
     paddingInline: pageInlineIntent,
   },
 
-  container__indented: {
-    paddingTop: 60,
-  },
-
+  // `flexGrow`, not `height: '100%'`: the old value capped scroll content at
+  // exactly one viewport, so anything taller than the screen was unreachable.
   content: {
-    height: '100%'
+    flexGrow: 1,
   },
 });
