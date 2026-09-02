@@ -539,3 +539,183 @@ screen, not something the mockup decided.
   button.
 - **Fonts are not in the repo.** See §4.4 — both families must be added as assets before
   any of this renders correctly on device.
+
+---
+
+## 8. Snap table
+
+plan-13 Phase 2 output. Every distinct numeric literal now present in
+`components/**/styles.ts` (34 files) and the twelve route files under `app/` — that is,
+every `.tsx` in `app/` except the three `_layout.tsx` — with its occurrence count and the
+`theme/layout.ts` token that replaces it.
+
+Phases 3–7 consume this table. A phase may not deviate from a mapping without recording
+the deviation here, in the same commit that deviates.
+
+Counts come from a `prop: <number>` sweep of those 46 files, so the same literal appears in
+more than one row when it plays more than one part (a `14` that is a `paddingHorizontal` and
+a `14` that is a `fontSize` are two different design decisions). "n" is the count within
+that role, not across the file set.
+
+### 8.1 Spacing — `padding*`, `margin*`, `gap`
+
+| px | n | Target token | Note |
+|---|---|---|---|
+| −8 | 2 | `-spacing.sm` | negative overlap in the item form |
+| 0 | 3 | — | zero stays zero |
+| 2 | 6 | `spacing.hair` | |
+| 3 | 2 | `spacing.micro` | |
+| 4 | 23 | `spacing['3xs']` | |
+| 5 | 4 | `spacing['2xs']` | |
+| 6 | 9 | `spacing.xs` | |
+| 7 | 1 | `spacing.chipY` | |
+| 8 | 53 | `spacing.sm` | the most common literal in the repo |
+| 9 | 1 | `spacing.smPlus` | |
+| 10 | 28 | `spacing.md` | |
+| 12 | 22 | `spacing.lg` | the card rhythm |
+| 14 | 25 | `spacing.cardPad` | 11 of these are already `paddingHorizontal` on a card |
+| 15 | 8 | `spacing.rowY` | |
+| 16 | 17 | `spacing.xl` | |
+| 18 | 1 | `spacing.section` | |
+| 20 | 5 | `spacing.gutter` | equals `pageInlineIntent`; prefer `pageInlineIntent` where it is a page gutter |
+| 24 | 2 | `spacing['2xl']` | |
+| 28 | 3 | `spacing['3xl']` | |
+| 30 | 1 | `spacing['3xl']` | **deviation: −2 px.** Login form block; no 30 px row in §2 |
+| 32 | 1 | `spacing['3xl']` | **deviation: −4 px.** Sheet padding-block; §2 tops out at 28 |
+| 35 | 1 | — | `SearchBar` left inset for the icon; derive as `spacing.cardPad + iconSize.mdPlus` (30) when the search field is rebuilt against §6.3 |
+| 40 | 3 | — | empty-state padding; no §2 row. Re-derive from §6 when those screens land |
+| 60 | 3 | `spacing.statusBar` | **+2 px.** §6.1 measures the scroll region's top padding as 62, not 60 — `UiPage` is the one that changes |
+| 80 | 1 | — | `ItemsGrid` top padding; no §2 row. §6.3 has the real figure |
+| 100 | 2 | `spacing.tabBarClearance` | **−4 px.** §2 records 96 for scroll-content bottom padding |
+
+### 8.2 Radius — `border*Radius`
+
+| px | n | Target token | Note |
+|---|---|---|---|
+| 3.5 | 1 | `radius.round` | the 7 × 7 typing-indicator dot; a circle, so 999 clamps to the same pixel |
+| 4 | 3 | `radius.dot` | chat-bubble tail corners. **The mockup has no message thread** (§6.4 is the session list), so this is the one radius §3 cannot arbitrate |
+| 6 | 7 | `radius.pill` | skeleton bars, 11–13 px tall — 6 on an 11 px bar is already a stadium |
+| 8 | 11 | `radius.control` | 9 × `borderRadius` → 10. The 2 × `shadowRadius: 8` are blur, not corners — no token |
+| 10 | 12 | `radius.control` | |
+| 11 | 1 | `radius.tileLg` | `ItemPickerSheet` thumbnail |
+| 12 | 5 | `radius.tileLg` | the 175 × 150 item-grid photo |
+| 14 | 2 | `radius.cardSm` | |
+| 15 | 1 | `radius.card` | `UiError` |
+| 16 | 12 | `radius.card` | |
+| 17 | 4 | `radius.round` | 34-tall filter chips and the 34 × 34 avatar — circles by construction |
+| 18 | 2 | `radius.pill` | the 36-tall chat input capsule |
+| 20 | 8 | split | `borderTopLeft/RightRadius` on `LogEntrySheet` → `radius.sheet` (24); the chip and `ItemCard` uses → `radius.pill`; `UiSelect` → `radius.control` |
+| 22 | 1 | `radius.round` | 44 × 44 icon button |
+| 25 | 1 | `radius.control` | the search input — §3 puts it at 10, so this is a visible change |
+| 28 | 3 | `radius.round` | the 56 × 56 FAB and the empty-state circle |
+| 32 | 2 | `radius.round` | 64 × 64 empty-state circle |
+
+`OutfitSuggestionCard`'s two `borderRadius: 8` thumbnails are the §3 "leave to component"
+row; they land on `radius.control` here only because 8 and 10 collapse. If that component
+is rebuilt, its slots are `radius.tile` (10) per §3's prose.
+
+### 8.3 Type — `fontSize`, `lineHeight`, `letterSpacing`, `fontWeight`
+
+| px | n | Prop | Target token |
+|---|---|---|---|
+| 10 | 2 | `fontSize` | `typography.eyebrow` |
+| 11 | 8 | `fontSize` | the 11 px roles — `wordmark`, `avatarInitials`, `fieldLabel`, `temperature`; pick by role, they differ only in tracking |
+| 12 | 7 | `fontSize` | `typography.chipLabel` / `chipLabelSelected` |
+| 13 | 23 | `fontSize` | `typography.overflowChip` |
+| 14 | 18 | `fontSize` | `typography.rowLabel` / `valueEmphasis` |
+| 15 | 23 | `fontSize` | `typography.rowLabel` (14). **Deviation: −1 px.** §4.3 has no 15 px role; the redesign drops the size |
+| 16 | 17 | `fontSize` | `typography.rowLabel` (14) for body text, `typography.button` (18) for a button label. §4.3's only 16 px row is the native textarea, which stays component-owned |
+| 17 | 6 | `fontSize` | `UiTitle sizeXS`. §4.1 confirms 17 is correct and §4.2 shows the mockup never uses the flag — leave until a caller needs it |
+| 18 | 2 | `fontSize` | `typography.button` |
+| 20 | 6 | `fontSize` | `typography.statNumeral` |
+| 22 | 1 | `fontSize` | `typography.sheetTitle` (`UiTitle` default) |
+| 28 | 1 | `fontSize` | `typography.screenTitle` (`UiTitle sizeL`) |
+| 32 | 1 | `fontSize` | `typography.screenTitle` (28). **Deviation: −4 px.** Home screen title; §4.3 caps at 28 |
+| 18 | 2 | `lineHeight` | `typography.body.lineHeight` — settings help text |
+| 20 | 6 | `lineHeight` | `typography.button.lineHeight` |
+| 21 | 1 | `lineHeight` | take the role's own `lineHeight`; §4.3 has no 21 |
+| 38 | 1 | `lineHeight` | `typography.screenTitle.lineHeight` (32) |
+| 0.5 | 1 | `letterSpacing` | `tracking.eyebrow` (1.4) — the log-sheet eyebrow is under-tracked today |
+| 0.6 | 1 | `letterSpacing` | leave to the component: §4.3's 11/600 ls 0.6 row is `OutfitSuggestionCard`'s own `-apple-system` text |
+| 0.8 | 3 | `letterSpacing` | `tracking.meta` (0.8) — exact match |
+| 700 | 1 | `fontWeight` | `typography.statNumeral.fontWeight` |
+
+**How the `lineHeight` numbers in `theme/layout.ts` were derived.** §4.3 records a numeric
+line-height for five roles only; the rest read `normal`. `normal` is the font's own
+ascent + descent + lineGap over its units-per-em, so it was read out of the two shipped
+font files rather than guessed:
+
+| Family | upem | hhea asc / desc / gap | `normal` factor |
+|---|---|---|---|
+| Archivo (`v25`, wght 400) | 1000 | 878 / −210 / 0 | **1.088** |
+| Newsreader (`v25`, opsz 6–72, wght 400) | 2000 | 1470 / −530 / 0 | **1.000** |
+
+Both fonts set the OS/2 `USE_TYPO_METRICS` bit and their typo metrics equal their hhea
+metrics, so Blink resolves `normal` from the same numbers. Every `normal` row therefore
+becomes `round(fontSize × 1.088)` for Archivo and `fontSize` exactly for Newsreader — for
+example `button` 18 → 20, `eyebrow` 10 → 11, `sheetTitle` 22 → 22. The five measured rows
+(28→32, 26→30, 20→24, 12.5→16, 11.5→15) are used as measured and are *not* what the factor
+predicts, because the artboard authors those five explicitly.
+
+### 8.4 Borders
+
+| px | n | Target token | Note |
+|---|---|---|---|
+| 1 | 14 | `border.hairline` | 11 `borderWidth`, 2 `borderBottomWidth`, 1 `borderTopWidth` |
+| 2 | 4 | `border.hairline` | **Deviation: −1 px.** §3's closing note: 1 px solid everywhere, and one 1 px dashed. There is no 2 px border in the mockup |
+
+### 8.5 Box geometry — `width`, `height`, `min*`, `max*`, `top/right/bottom/left`
+
+These are §6 layout figures, not scale tokens; only the icon-sized ones map into
+`iconSize`. Listed so the table is exhaustive.
+
+| px | n | Target |
+|---|---|---|
+| 0 | 5 | — |
+| −2 | 2 | `-spacing.hair` (badge offset) |
+| 1 | 1 | `border.hairline` (a 1 px rule drawn as a `height`) |
+| 4 | 2 | `spacing['3xs']` (badge offset) |
+| 6 | 2 | `spacing.xs` (badge offset) |
+| 7 | 2 | — typing dot, 7 × 7 |
+| 10 | 3 | `spacing.md` (absolute offsets) |
+| 11, 12, 13 | 2, 2, 2 | — skeleton bar heights; mirror the role they stand in for |
+| 16 | 4 | `iconSize.mdPlus` where it is a glyph box, otherwise § 6 |
+| 20 | 5 | `iconSize.xl` for the glyph box; `spacing.gutter` for the 4 absolute offsets |
+| 22 | 2 | — |
+| 28, 32 | 1, 1 | — |
+| 34 | 8 | — §6.1 avatar, 34 × 34: already correct |
+| 36 | 5 | — chat input row |
+| 40 | 1 | — |
+| 44 | 2 | — §3 settings toggle track is 44 × 26: already correct |
+| 46 | 3 | — |
+| 48 | 1 | — §3 send button is 48 × 48: already correct |
+| 56 | 6 | — §3 FAB is 56 × 56: already correct |
+| 60 | 4 | — |
+| 64 | 7 | — |
+| 70 | 3 | — §3 row 8: `OutfitSuggestionCard` thumbnails are 70 × 105: already correct |
+| 80 | 2 | — |
+| 90 | 2 | — |
+| 96 | 2 | `spacing.tabBarClearance` where it is scroll clearance; otherwise § 6 |
+| 100 | 3 | — |
+| 105 | 3 | — see 70 |
+| 120, 160, 260 | 1, 2, 2 | — |
+
+### 8.6 Not design values
+
+Present in the sweep, deliberately untokenised: `flex: 1` (41), `flexShrink: 1` (3),
+`flexGrow: 1/0` (3), `aspectRatio: 2` (5) and `3` (2), `shadowOpacity: 0.3` (2),
+`shadowRadius: 8` (2), `elevation: 8` (2), `opacity: 0.4` / `0.5` (2), `zIndex: 100` (1),
+and `quality: 0.8` (4, an `expo-image-manipulator` compression ratio, not a style).
+
+### 8.7 What this phase deliberately did not tokenise
+
+- **The `-apple-system` rows of §4.3.** Six text roles in the mockup render on the React
+  Native default family because the mockup never restyled the component that owns them
+  (`UiTextArea`, `UiSelect`, `OutfitSuggestionCard`). Pinning them into `typography` would
+  change a design the mockup did not make.
+- **The 13 colour swatches of §1.3.** Content, not theme, and the backend already owns the
+  list.
+- **A second border width.** §3 is explicit that 1 px is the only width, so `border` ships
+  one key. The four `borderWidth: 2` call sites in 8.4 are a change, not a gap in the scale.
+- **`radius` for the 2 px row of §3.** §3 maps both 1 and 2 to `radius.hair`; the token
+  carries 1.
