@@ -2,7 +2,7 @@
 category: Forms
 ---
 
-The one-line "ask a question" composer: a growing multiline field and a square send
+The one-line "ask a question" composer: a growing multiline field and a circular send
 button. Pair it with `PromptShortcutChips` above.
 
 ```jsx

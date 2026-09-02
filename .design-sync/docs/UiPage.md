@@ -24,7 +24,10 @@ It replaces the old `indented` boolean, which never had an observable effect.
 
 Three more props exist for tab screens:
 
-- `refreshControl` — a `<RefreshControl/>`, handed straight to the scroll view.
+- `refreshControl` — a `<RefreshControl/>`, handed straight to the scroll view. The
+  page padding deliberately lives on a wrapper around the scroll view, because
+  react-native-web clones a refresh control with the scroll view's own `style` and
+  would otherwise apply that padding twice.
 - `tabBarInset` — adds the bottom tab bar's height to the content's bottom padding.
   It defaults to `false` and is **only valid inside a bottom-tab navigator**; setting
   it anywhere else throws.
