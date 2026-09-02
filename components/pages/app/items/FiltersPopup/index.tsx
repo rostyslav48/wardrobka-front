@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import UiPopup from '@/components/ui/UiPopup';
 import UiButton from '@/components/ui/UiButton';
+import UiTitle from '@/components/ui/UiTitle';
 import { useModal } from '@/context/ModalContext';
 import { colors } from '@/theme/colors';
 import {
@@ -48,8 +49,9 @@ const STATUS_LABEL: Record<ItemStatus, string> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Spec 4.3's section-eyebrow role names "TYPE" among the strings it covers.
 function SectionLabel({ text }: { text: string }) {
-  return <Text style={styles.sectionLabel}>{text}</Text>;
+  return <UiTitle style={styles.sectionLabel}>{text}</UiTitle>;
 }
 
 function Chip({
@@ -112,7 +114,7 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
 
         {/* ── Type ─────────────────────────────────────── */}
         <View style={styles.section}>
-          <SectionLabel text="Type" />
+          <SectionLabel text="TYPE" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -131,7 +133,7 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
 
         {/* ── Season ───────────────────────────────────── */}
         <View style={styles.section}>
-          <SectionLabel text="Season" />
+          <SectionLabel text="SEASON" />
           <View style={styles.chipRow}>
             {Object.values(Season).map((season) => (
               <Chip
@@ -146,7 +148,7 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
 
         {/* ── Status ───────────────────────────────────── */}
         <View style={styles.section}>
-          <SectionLabel text="Status" />
+          <SectionLabel text="STATUS" />
           <View style={styles.chipRow}>
             {Object.values(ItemStatus).map((status) => (
               <Chip
@@ -161,35 +163,33 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
 
         {/* ── Colour ───────────────────────────────────── */}
         <View style={styles.section}>
-          <SectionLabel text="Colour" />
+          <SectionLabel text="COLOUR" />
           <View style={styles.swatchRow}>
             {/* "Any" option */}
             <Pressable
-              style={[styles.swatchAny, draft.color === undefined && { borderColor: colors.textPrimary }]}
+              style={[styles.swatchAny, draft.color === undefined && styles.swatchAny__active]}
               onPress={() => set('color', undefined)}
             >
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '600' }}>
-                Any
-              </Text>
+              <Text style={styles.swatchAnyText}>Any</Text>
             </Pressable>
 
             {SWATCHES.map(({ label, hex }) => (
-              <Pressable
+              <View
                 key={label}
-                style={[
-                  styles.swatch,
-                  { backgroundColor: hex },
-                  draft.color === hex && styles.swatch__active,
-                ]}
-                onPress={() => set('color', draft.color === hex ? undefined : hex)}
-              />
+                style={[styles.swatchRing, draft.color === hex && styles.swatchRing__active]}
+              >
+                <Pressable
+                  style={[styles.swatch, { backgroundColor: hex }]}
+                  onPress={() => set('color', draft.color === hex ? undefined : hex)}
+                />
+              </View>
             ))}
           </View>
         </View>
 
         {/* ── Favourite ────────────────────────────────── */}
         <View style={styles.section}>
-          <SectionLabel text="Favourite" />
+          <SectionLabel text="FAVOURITE" />
           <View style={styles.favouriteRow}>
             <Text style={styles.favouriteLabel}>Show favourites only</Text>
             <Switch
@@ -204,17 +204,13 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
         {/* ── Footer ───────────────────────────────────── */}
         <View style={styles.footer}>
           <View style={styles.footerButtonWrapper}>
-            <UiButton secondary onPress={handleClear}>
-              <Text style={[styles.buttonLabel, styles.buttonLabel__secondary]}>
-                Clear all
-              </Text>
+            <UiButton secondary onPress={handleClear} style={styles.footerButton}>
+              <UiTitle sizeS style={styles.buttonLabel__secondary}>Clear all</UiTitle>
             </UiButton>
           </View>
           <View style={styles.footerButtonWrapper}>
-            <UiButton onPress={handleApply}>
-              <Text style={[styles.buttonLabel, styles.buttonLabel__primary]}>
-                Apply
-              </Text>
+            <UiButton onPress={handleApply} style={styles.footerButton}>
+              <UiTitle sizeS style={styles.buttonLabel__primary}>Apply</UiTitle>
             </UiButton>
           </View>
         </View>

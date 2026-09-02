@@ -17,6 +17,7 @@ export { default as PromptShortcutChips } from '@/components/ui/PromptShortcutCh
 export { default as QuickChatInput } from '@/components/ui/QuickChatInput/index';
 export { default as UiEmptyState } from '@/components/ui/UiEmptyState/index';
 export { default as UiSkeletonCard } from '@/components/ui/UiSkeletonCard/index';
+export { default as UiStatusBadge } from '@/components/ui/UiStatusBadge/index';
 
 // Providers the previews wrap with (cfg.provider).
 export { SafeAreaProvider } from 'react-native-safe-area-context';

@@ -1,5 +1,5 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-import { PropsWithChildren, ReactElement } from 'react';
+import { PropsWithChildren, ReactElement, ReactNode } from 'react';
 import { RefreshControlProps, StyleProp, View, ViewStyle } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { styles } from './styles';
@@ -21,6 +21,12 @@ type Props = PropsWithChildren<{
   tabBarInset?: boolean;
   /** Applied to the scroll content container, after the defaults. */
   contentStyle?: StyleProp<ViewStyle>;
+  /**
+   * Rendered above the scroll view, inside the same top-padded frame, so it
+   * stays fixed while the body scrolls. For the back-button + title bar a
+   * pushed route (e.g. the item form) needs; tab-root screens have none.
+   */
+  header?: ReactNode;
 }>;
 
 type ScrollProps = Omit<Props, 'tabBarInset'> & { bottomInset: number };
@@ -31,6 +37,7 @@ function PageScrollView({
   refreshControl,
   contentStyle,
   bottomInset,
+  header,
 }: ScrollProps) {
   const insets = useSafeAreaInsets();
 
@@ -44,6 +51,7 @@ function PageScrollView({
     // reason it always did - the top offset must not scroll away under the
     // content. The bottom inset belongs to the content, so it scrolls in.
     <View style={[styles.container, { paddingTop: insets.top + topInset }]}>
+      {header}
       <Animated.ScrollView
         ref={scrollRef}
         style={styles.scroll}

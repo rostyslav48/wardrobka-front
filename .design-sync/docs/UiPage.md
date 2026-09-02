@@ -33,6 +33,9 @@ Three more props exist for tab screens:
   it anywhere else throws.
 - `contentStyle` — a React Native style object applied to the scroll content
   container after the defaults.
+- `header` — rendered above the scroll view, inside the same top-padded frame, so
+  it stays fixed while the body scrolls. For a pushed route's back-button + title
+  bar (the item form uses this); tab-root screens have none and omit it.
 
 Taps reach children while the keyboard is up: the scroll view sets
 `keyboardShouldPersistTaps="handled"` rather than React Native's `'never'` default, so
