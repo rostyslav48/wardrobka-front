@@ -31,6 +31,7 @@ import { outfitLogService } from '@/services/outfit-log.service';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import ItemPickerSheet from '@/components/ui/ItemPickerSheet';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { styles } from './styles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -216,6 +217,9 @@ export default function LogEntrySheet({
             animatedSheetStyle,
           ]}
         >
+          {/* Spec 6.7's shared sheet chrome: a centred grabber above the header. */}
+          <View style={styles.grabber} />
+
           {/* Header */}
           <View style={styles.topBar}>
             <View>
@@ -231,6 +235,7 @@ export default function LogEntrySheet({
               )}
             </View>
             <Pressable
+              style={styles.closeButton}
               onPress={
                 view === 'items'
                   ? () => {
@@ -243,7 +248,7 @@ export default function LogEntrySheet({
             >
               <IconSymbol
                 name={view === 'items' ? 'chevron.left' : 'xmark'}
-                size={20}
+                size={iconSize.xs}
                 color={colors.textPrimary}
               />
             </Pressable>
@@ -279,7 +284,7 @@ export default function LogEntrySheet({
                     >
                       <MaterialIcons
                         name="calendar-today"
-                        size={16}
+                        size={iconSize.mdPlus}
                         color={colors.textSecondary}
                       />
                       <Text style={styles.dateButtonText}>
@@ -344,7 +349,7 @@ export default function LogEntrySheet({
                           <View style={styles.selectedThumbPlaceholder}>
                             <IconSymbol
                               name="tshirt.fill"
-                              size={18}
+                              size={iconSize.lg}
                               color={colors.textSecondary}
                             />
                           </View>
@@ -360,7 +365,7 @@ export default function LogEntrySheet({
                     style={styles.emptyItemsButton}
                     onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
                   >
-                    <IconSymbol name="plus" size={16} color={colors.textSecondary} />
+                    <IconSymbol name="plus" size={iconSize.mdPlus} color={colors.textSecondary} />
                     <Text style={styles.emptyItemsText}>Tap to select items worn</Text>
                   </Pressable>
                 )}

@@ -32,4 +32,17 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 260,
   },
+  // Padding 9/13, `radius.pill` - the same "Add entry" pill spec 6.5 draws,
+  // reused here since both are a single primary action on an accent ground.
+  action: {
+    marginTop: spacing.xs,
+    paddingVertical: spacing.smPlus,
+    paddingHorizontal: spacing.chipX,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+  },
+  actionLabel: {
+    ...typography.pillLabel,
+    color: colors.accentText,
+  },
 });

@@ -36,6 +36,11 @@ Three more props exist for tab screens:
 - `header` — rendered above the scroll view, inside the same top-padded frame, so
   it stays fixed while the body scrolls. For a pushed route's back-button + title
   bar (the item form uses this); tab-root screens have none and omit it.
+- `onEndReached` / `onEndReachedThreshold` — fires once when scroll position gets
+  within `onEndReachedThreshold` (a fraction of the viewport height, default 0.3) of
+  the bottom. Same shape as `FlatList`'s own prop, for a screen that paginates but
+  renders its list as a plain `View` inside this scroll view rather than nesting a
+  second virtualized list (outfit history uses this).
 
 Taps reach children while the keyboard is up: the scroll view sets
 `keyboardShouldPersistTaps="handled"` rather than React Native's `'never'` default, so

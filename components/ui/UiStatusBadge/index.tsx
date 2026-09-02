@@ -32,7 +32,11 @@ export default function UiStatusBadge({ label, tone, onPress, testID }: Props) {
 
   if (onPress) {
     return (
-      <Pressable style={badgeStyle} onPress={onPress} hitSlop={4} testID={testID}>
+      // hitSlop 6, not 4: the pre-redesign badge was `paddingVertical: 3` +
+      // `hitSlop: 4` (~27 px touch target); spec 6.3/7.3's padding 2/6 shrank
+      // the visual pill by 1 px a side, so hitSlop makes up the difference
+      // rather than the visual size changing.
+      <Pressable style={badgeStyle} onPress={onPress} hitSlop={6} testID={testID}>
         <Text style={textStyle}>{label}</Text>
       </Pressable>
     );

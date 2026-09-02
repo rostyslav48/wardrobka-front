@@ -1,11 +1,20 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing, typography } from '@/theme/layout';
 
+/**
+ * Spec 7.2: "Bubbles, if any, take `radius.card` and `surfaceRaised`; do not
+ * invent a second accent." The user bubble keeps the existing `accent`
+ * ground; the assistant bubble moves from `surface` to `surfaceRaised`. The
+ * 4px tail-corner radius is snap table 8.2's one explicit non-arbitration -
+ * "the mockup has no message thread, so this is the one radius §3 cannot
+ * arbitrate" - and stays a bare literal rather than guessing a token for it.
+ */
 export const styles = StyleSheet.create({
   row: {
-    marginBottom: 12,
+    marginBottom: spacing.lg,
     maxWidth: '80%',
-    gap: 4,
+    gap: spacing['3xs'],
   },
   rowUser: {
     alignSelf: 'flex-end',
@@ -17,22 +26,23 @@ export const styles = StyleSheet.create({
   },
 
   bubble: {
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: radius.card,
+    paddingHorizontal: spacing.cardPad,
+    paddingVertical: spacing.md,
   },
   bubbleUser: {
     backgroundColor: colors.accent,
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     borderBottomLeftRadius: 4,
   },
 
+  // Snap table 8.3: the old 21px lineHeight has no §4.3 role - "take the
+  // role's own lineHeight" instead, so this uses `rowLabel`'s 15 as-is.
   content: {
-    fontSize: 15,
-    lineHeight: 21,
+    ...typography.rowLabel,
   },
   contentUser: {
     color: colors.accentText,
@@ -42,9 +52,9 @@ export const styles = StyleSheet.create({
   },
 
   time: {
-    fontSize: 11,
+    ...typography.meta,
     color: colors.textSecondary,
-    marginHorizontal: 4,
+    marginHorizontal: spacing['3xs'],
   },
   timeUser: {
     // inherits from time

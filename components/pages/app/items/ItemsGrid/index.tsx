@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { WardrobeItem } from '@/types/wardrobe';
 import UiEmptyState from '@/components/ui/UiEmptyState';
 import ItemCard from '@/components/pages/app/items/ItemCard';
@@ -41,14 +42,13 @@ export default function ItemsGrid({ items, isLoading }: Props) {
   }
 
   if (items.length === 0) {
-    // No inline action: the screen's own FAB is already the "add an item"
-    // affordance, matching how Home's suggestions empty state relies on the
-    // ask block above it rather than a second button inside the component.
     return (
       <UiEmptyState
         icon="tshirt.fill"
         title="Your wardrobe is empty"
         subtitle="Add a few pieces and the assistant can start putting outfits together."
+        actionLabel="+ Add your first item"
+        onAction={() => router.push('/item/new')}
       />
     );
   }

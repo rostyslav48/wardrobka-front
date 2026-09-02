@@ -180,6 +180,10 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
               >
                 <Pressable
                   style={[styles.swatch, { backgroundColor: hex }]}
+                  // hitSlop 2: the 30x30 tappable inner circle sits inside a
+                  // 34x34 selection ring; this brings the touch target out to
+                  // match the ring rather than shrinking the visible swatch.
+                  hitSlop={2}
                   onPress={() => set('color', draft.color === hex ? undefined : hex)}
                 />
               </View>

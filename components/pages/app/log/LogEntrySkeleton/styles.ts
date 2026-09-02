@@ -1,34 +1,38 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    gap: 10,
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing.cardPad,
+    marginBottom: spacing.lg,
+    gap: spacing.md,
   },
   dateBar: {
     height: 16,
     width: 100,
-    borderRadius: 6,
+    borderRadius: radius.pill,
     backgroundColor: colors.border,
   },
   thumbRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
+    marginTop: spacing.mdPlus,
   },
   thumb: {
-    width: 64,
-    height: 96,
-    borderRadius: 8,
+    flex: 1,
+    height: 84,
+    borderRadius: radius.tile,
     backgroundColor: colors.border,
   },
   noteBar: {
     height: 12,
     width: '60%',
-    borderRadius: 6,
+    borderRadius: radius.pill,
     backgroundColor: colors.border,
   },
 });
