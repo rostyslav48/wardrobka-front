@@ -4,6 +4,7 @@ import { Redirect, Stack } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '@/context/AuthContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
+import { CalendarProvider } from '@/context/CalendarContext';
 import { useNotificationObserver } from '@/hooks/useNotificationObserver';
 import { notificationsService } from '@/services/notifications.service';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
@@ -55,19 +56,21 @@ export default function AuthLayout() {
 
   return (
     <WardrobeProvider>
-      <View style={{ flex: 1 }}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="item/new" options={{ headerShown: false }} />
-          <Stack.Screen name="item/[id]" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="chat/[sessionId]"
-            options={{ headerShown: false }}
-          />
-        </Stack>
+      <CalendarProvider>
+        <View style={{ flex: 1 }}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="item/new" options={{ headerShown: false }} />
+            <Stack.Screen name="item/[id]" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="chat/[sessionId]"
+              options={{ headerShown: false }}
+            />
+          </Stack>
 
-        <UiToast ref={toastRef} />
-      </View>
+          <UiToast ref={toastRef} />
+        </View>
+      </CalendarProvider>
     </WardrobeProvider>
   );
 }

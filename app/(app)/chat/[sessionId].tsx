@@ -28,9 +28,14 @@ import { pageInlineIntent } from '@/theme/layout';
 const NEW_SESSION_PARAM = 'new';
 
 export default function ChatScreen() {
-  const { sessionId, topic: topicParam } = useLocalSearchParams<{
+  const {
+    sessionId,
+    topic: topicParam,
+    prompt: promptParam,
+  } = useLocalSearchParams<{
     sessionId: string;
     topic?: string;
+    prompt?: string;
   }>();
   const insets = useSafeAreaInsets();
   const { show, hide } = useModal();
@@ -45,12 +50,13 @@ export default function ChatScreen() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(
     sessionId !== NEW_SESSION_PARAM,
   );
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState(promptParam ?? '');
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<WardrobeItem[]>([]);
 
   const listRef = useRef<FlatList>(null);
+  const hasAutoSentRef = useRef(false);
 
   // ── Fetch message history ────────────────────────────────────────────────────
 
@@ -137,6 +143,19 @@ export default function ChatScreen() {
         },
       });
   };
+
+  // Auto-sends a `prompt` route param exactly once — used when an occasion
+  // card on Home routes here with sessionId "new" already asking about it,
+  // matching how the Home prompt shortcut chips submit on select rather than
+  // waiting for the user to tap send.
+  useEffect(() => {
+    if (hasAutoSentRef.current) return;
+    if (!promptParam || activeSessionId) return;
+
+    hasAutoSentRef.current = true;
+    handleSend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Item context picker ───────────────────────────────────────────────────────
 
