@@ -7,7 +7,7 @@ import { colors } from '@/theme/colors';
 
 export default function ForgotPassword() {
   return (
-    <UiPage indented={false}>
+    <UiPage topInset={0}>
       <View style={styles.container}>
         <UiTitle sizeL style={styles.title} testID="forgot-password-heading">
           Forgot Password?

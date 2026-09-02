@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { styles } from './styles';
 
 interface Props {
@@ -42,7 +43,7 @@ export default function QuickChatInput({
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.accentText} />
         ) : (
-          <IconSymbol name="arrow.up" size={20} color={colors.accentText} />
+          <IconSymbol name="arrow.up" size={iconSize.xl} color={colors.accentText} />
         )}
       </Pressable>
     </View>

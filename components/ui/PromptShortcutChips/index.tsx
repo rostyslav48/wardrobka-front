@@ -7,7 +7,7 @@ interface Shortcut {
 }
 
 interface Props {
-  shortcuts: ReadonlyArray<Shortcut>;
+  shortcuts: readonly Shortcut[];
   onSelect: (prompt: string) => void;
 }
 

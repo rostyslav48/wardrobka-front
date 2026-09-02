@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = keyof typeof MAPPING;
+export type IconSymbolName = keyof typeof MAPPING;
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -32,6 +32,11 @@ const MAPPING = {
   'sparkles': 'auto-awesome',
   'arrow.up': 'arrow-upward',
   'bubble.left.and.bubble.right.fill': 'chat',
+  // Redesign additions - redesign-spec.md section 5.
+  'sun.max': 'wb-sunny',
+  'arrow.right': 'arrow-forward',
+  'calendar': 'calendar-today',
+  'drop.fill': 'water-drop',
 } as IconMapping;
 
 /**
@@ -51,5 +56,16 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const glyph = MAPPING[name];
+
+  if (__DEV__ && glyph === undefined) {
+    // An unmapped name renders as a blank square on Android and web, which is
+    // invisible in review. Say so instead.
+    console.warn(
+      `IconSymbol: "${String(name)}" has no MAPPING entry in components/ui/IconSymbol.tsx; ` +
+        'it will render as an empty box on Android and web.',
+    );
+  }
+
+  return <MaterialIcons color={color} size={size} name={glyph} style={style} />;
 }

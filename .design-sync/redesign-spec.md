@@ -719,3 +719,50 @@ and `quality: 0.8` (4, an `expo-image-manipulator` compression ratio, not a styl
   one key. The four `borderWidth: 2` call sites in 8.4 are a change, not a gap in the scale.
 - **`radius` for the 2 px row of §3.** §3 maps both 1 and 2 to `radius.hair`; the token
   carries 1.
+
+### 8.8 Phase 3 deviations from the table above
+
+Section 8's rule is that a phase may not deviate from a mapping without recording the
+deviation here, in the same commit. Phase 3 restyled `components/ui/**` and took eleven
+deviations. Every one is a case where the by-the-number row would have produced a
+result section 4 or section 5 contradicts, because §8.1–§8.5 map a *literal* while
+§4.3 and §5 map a *role*, and one literal can play two roles.
+
+| Where | Table row | Applied instead | Why |
+|---|---|---|---|
+| `UiTitle.sizeXS` | 8.3, 17px → "leave until a caller needs it" | `typography.sessionTitle` (14.5 / 500) | A caller needs it. Its one usage in the repo is the chat header in `app/(app)/chat/[sessionId].tsx`, which §4.3 measures as the 14.5 / 500 chat-session-title role. The AC also requires all five flags to be `typography.*` spreads, and there is no 17px role |
+| `UiPopup.title` | 8.3, 20px → `typography.statNumeral` | `typography.sheetTitle` (22 / 400) | This bar titles a bottom sheet — §4.3's "Filters" / "Add item" / "Edit entry" row — not a pulse stat numeral |
+| `ItemPickerSheet.title` | 8.3, 17px | `typography.sheetTitle` (22 / 400) | Same: it is a sheet heading |
+| `ItemPickerSheet.subtitle` | 8.3, 13px → `typography.overflowChip` | `typography.body` (11.5 / 400) | `overflowChip` is 13 / **600**; a live "<n> selected" count is a secondary line, and would have been bolded |
+| `ItemPickerSheet.itemName` | 8.3, 11px → "pick by role" | `typography.cardName` (12.5 / 500) | The four 11px roles the row offers are wordmark, avatar initials, field label and temperature. None is an item name; §4.3's item-card-name row is |
+| `ItemPickerSheet.checkOverlay` radius | 8.2, 11px → `radius.tileLg` | `radius.round` | The row attributes the literal to "`ItemPickerSheet` thumbnail". It is not — it is the 22 × 22 selected-check badge, a circle by construction, which is the reading §8.2 already gives its 17 / 22 / 28 / 32 rows |
+| `PromptShortcutChips.chipText` | 8.3, 13px → `typography.overflowChip` | `typography.chipLabel` (12 / 500) | These are the "Ask Wardropka" chips, which §4.3 measures as the 12 / 500 ask-chip role |
+| `UiEmptyState.title` | 8.3, 16px → `rowLabel` (body) or `button` (button label) | `typography.button` (18 / 600) | Neither offered role is a heading; `button` is the one that keeps the 600 weight the empty-state title already had |
+| `UiEmptyState.subtitle` line-height | 8.3, 20px → `typography.button.lineHeight` | the role's own 15 | §8.3's 21px row sets the principle: take the role's own line-height. Borrowing `button`'s 20 onto body text would pin a number no role asks for |
+| `UiEmptyState` icon size | §5 | `iconSize.xxl` (24) | The glyph was drawn at 28. §5's size column tops out at 24 and has no 28px entry |
+| `UiToast.text` colour | — | `colors.textPrimary` | Was a hardcoded `#FFFFFF`, which `CLAUDE.md` forbids. §1.1 records no pure white anywhere in the mockup, so the palette gets no new key; `textPrimary` (`#F0F0F0`) is the light-on-dark ink and reads identically on both toast grounds |
+
+Three further choices are *within* the table and are noted only so a later reader does
+not mistake them for drift:
+
+- **`UiToast.text` size.** §8.3's 15px row targets `typography.rowLabel` (14). The 14px
+  row offers `rowLabel` **or** `valueEmphasis`; `valueEmphasis` was taken because it is
+  the same 14px at the 500 weight the toast already carried. Same reasoning for
+  `UiError.errorText` and `UiFormField.errorText`, which carried a bare `fontWeight: '500'`
+  and no size.
+- **`OutfitSuggestionCard` and `UiSkeletonCard` thumbnail radius.** §8.2 lands both on
+  `radius.control`; they use `radius.tile`, the token §8.2's own closing note names for
+  them. The two tokens carry the same value (10), so nothing renders differently.
+- **`OutfitSuggestionCard.header.minHeight`.** §8.5's 16px row reads "`iconSize.mdPlus`
+  where it is a glyph box, otherwise § 6". It is a glyph box: it reserves the delete
+  icon's height so a card without a topic keeps its rhythm.
+
+**Applied as written, worth flagging because they are visible changes:** `UiButton` and
+`UiSelect` radius 8 / 20 → `radius.control` (10), per §8.2; `ItemPickerSheet.cell` and
+the four other `borderWidth: 2` sites → `border.hairline`, per §8.4; `UiPage`'s top
+padding 60 → `spacing.statusBar` (62), per §8.1.
+
+**Deliberately not done in Phase 3.** `QuickChatInput` still sends with `arrow.up`.
+§5 records that the mockup's ask-input send glyph is a bold right arrow and that
+`arrow.up` "points the wrong way"; `arrow.right` is now in `MAPPING`, but swapping the
+call site is a design change to the Home screen, which is Phase 4's surface.

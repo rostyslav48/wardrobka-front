@@ -1,28 +1,36 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { tracking, typography } from '@/theme/layout';
 
+/**
+ * The five flags are the five text roles the app actually asks `UiTitle` for -
+ * see spec section 4.2 for the artboard's usage and 8.3 for the mapping. Four
+ * land on the row 8.3 names for their literal; `sizeXS` is the one deviation
+ * (recorded in 8.8): its only caller is the chat header, which section 4.3
+ * measures as the `sessionTitle` role.
+ */
 export const styles = StyleSheet.create({
   base: {
     color: colors.textPrimary,
   },
   sizeXS: {
-    fontSize: 17,
-    fontWeight: '600',
+    ...typography.sessionTitle,
+    letterSpacing: tracking.sessionTitle,
   },
   sizeS: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.button,
+    letterSpacing: tracking.button,
   },
   sizeM: {
-    fontSize: 20,
-    fontWeight: '600',
+    ...typography.statNumeral,
+    letterSpacing: tracking.statNumeral,
   },
   sizeDefault: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...typography.sheetTitle,
+    letterSpacing: tracking.sheetTitle,
   },
   sizeL: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...typography.screenTitle,
+    letterSpacing: tracking.screenTitle,
   },
 });
