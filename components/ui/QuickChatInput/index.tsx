@@ -43,7 +43,7 @@ export default function QuickChatInput({
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.accentText} />
         ) : (
-          <IconSymbol name="arrow.up" size={iconSize.xl} color={colors.accentText} />
+          <IconSymbol name="arrow.right" size={iconSize.lg} color={colors.accentText} />
         )}
       </Pressable>
     </View>

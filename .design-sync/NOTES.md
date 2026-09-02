@@ -115,6 +115,14 @@ None. The final validate run is warning-free.
   `contentContainerStyle: { height: '100%' }` made content taller than the screen
   unreachable. It is now `flexGrow: 1`. Login and forgot-password were short enough
   never to hit it; the tab screens adopted in later phases are not.
+- **`UiPage`'s page padding was applied twice under `refreshControl`; fixed.**
+  `react-native-web`'s `ScrollView` renders a `refreshControl` by cloning it with
+  `style: props.style` and keeping that style on the scroll view too, so the 20px
+  gutter and the top inset both landed twice - Home rendered at a 40px gutter and a
+  124px top inset. The padded frame is now a `View` wrapping the scroll view; the
+  scroll view itself carries only `flex: 1`. Measured after the fix: 20 and 62.
+  Only web is affected, and only a caller that passes `refreshControl` - Home is the
+  first one, which is why Phase 3 could not have seen it.
 - **`IconSymbol` warns on an unmapped name.** `MAPPING[name]` being `undefined`
   used to render as a blank box on Android and web with no other signal. It now
   emits a `__DEV__`-guarded `console.warn`. The `.ios.tsx` variant goes through

@@ -766,3 +766,63 @@ padding 60 → `spacing.statusBar` (62), per §8.1.
 §5 records that the mockup's ask-input send glyph is a bold right arrow and that
 `arrow.up` "points the wrong way"; `arrow.right` is now in `MAPPING`, but swapping the
 call site is a design change to the Home screen, which is Phase 4's surface.
+
+### 8.9 Phase 4 deviations, and the copy Home now ships
+
+Phase 4 rebuilt Home (`components/pages/app/home/HomeScreen/`) against §6.2. Four
+deviations from the table, all the same shape as §8.8's: §8.3 maps a *literal*, §4.3 maps
+a *role*, and Home's literals were carrying the wrong role.
+
+| Where | Table row | Applied instead | Why |
+|---|---|---|---|
+| `sectionEyebrow` ("ASK WARDROPKA", "RECENT SUGGESTIONS") | 8.3, 20px → `typography.statNumeral` | `typography.eyebrow` (10 / 600, ls 1.4) | §4.3's section-eyebrow row names these two strings verbatim. `statNumeral` is the pulse tile's numeral, which Home does not render |
+| `seeAll` | 8.3, 14px → `rowLabel` / `valueEmphasis` | `typography.dateChip` (10 / 500, ls 1.0) + `colors.textPrimary` | §4.3 has a row for "SEE ALL →" specifically: 10 / 500, ls 1.0, `textPrimary`. `dateChip` is the same triple at a different colour; adding a second identical role would be an invented token |
+| `greeting` | 8.3, 32px → `typography.screenTitle`, "deviation −4 px" | `UiTitle sizeL` | Same landing point, reached through the component: `UiTitle sizeL` *is* `typography.screenTitle` + `tracking.screenTitle` since Phase 3, and the AC requires the headings to render through `UiTitle` |
+| `PromptShortcutChips.chip` ground | — | no `backgroundColor` (was `colors.surface`) | §6.2 gives the ask chips "padding 7 / 13, `r999`, 1 px `#262626`" and no ground. The border colour moves from `colors.border` `#2E2E2E` to `colors.hairline` `#262626` for the same reason |
+
+**Applied as written, worth flagging because they are visible changes.**
+`PromptShortcutChips` chip padding 14 / 9 → `spacing.chipX` / `spacing.chipY` (13 / 7) and
+gap 8 → `spacing.xs` (6), per §6.2. `QuickChatInput`'s field radius 14 →
+`radius.control` (10), its height 46 → 51, its send button 46 → 48 at `radius.round`, and
+its glyph `arrow.up` 20 → `arrow.right` 18 — the swap §8.8 deferred to this phase.
+The ask block is built to §6.2's decomposition of its 107 px — eyebrow 11, chips 29, input
+51, 8 between each. Measured in Chromium at 390 px it comes out at **114**: the chip row
+carries 2 px of vertical padding either side so the horizontal scroller cannot clip the
+chip borders, and the multiline field's intrinsic line box takes it to 54 rather than its
+51 px minimum. Both are platform, not scale.
+
+**Section order.** §6.2 numbers the ask block **2** and recent suggestions **3**, so Home
+now renders ask above recent. It previously rendered them the other way round.
+
+**`UpcomingOccasions`.** Home's one remaining section without a §6.2 counterpart. Its
+header moved onto the same eyebrow role as the other two, and ships as **"UPCOMING
+OCCASIONS"**, so the screen reads as one page; its trailing `marginBottom: 28` is gone
+because `HomeScreen` now owns the rhythm between its sections. The occasion cards
+themselves still carry their pre-redesign literals — they belong to the phase that
+rebuilds them.
+
+**A `UiPage` defect this phase surfaced.** Home is the first caller of Phase 3's
+`refreshControl` prop, and on web the page rendered at a 40 px gutter and a 124 px top
+inset — both exactly double. `react-native-web`'s `ScrollView` clones a `refreshControl`
+with `style: props.style` and keeps that style on the scroll view as well
+(`ScrollView/index.js`), so anything in the scroll view's own `style` is applied twice.
+The padded frame is now a `View` wrapping the scroll view, which applies it once and still
+keeps the top offset from scrolling away. Measured after the fix: gutter **20**, top inset
+**62**, both §6.1's figures.
+
+**Copy.** §4.3's eyebrow role is set in capitals, so the three section headings ship as
+**"ASK WARDROPKA"**, **"RECENT SUGGESTIONS"** and **"UPCOMING OCCASIONS"**, and the
+affordance as **"SEE ALL →"** (was "Ask Wardropka", "Recent Suggestions", "Upcoming
+Occasions", "See all"). The arrow is a text character:
+§5's icon inventory has no entry for it. The suggestions empty state now reads "Start a
+chat **above**…" because the ask block moved above it. The `testID`s are unchanged, and
+`e2e/support/testIds.ts` carries the rendered strings as comments.
+
+**Not in Home, and why.** §6.2's **hero card** (item 1) and **pulse block** (item 4) are
+not built. Both are surfaces for product the app does not have — there is no
+outfit-of-the-day, no "Wear this today" logging action and no wardrobe stat aggregate —
+so building them would mean inventing behaviour, not applying a design. §6.1's
+**masthead** and its avatar entry point to Settings are likewise unbuilt: the tab bar
+already routes to Settings and the masthead is shell, not Home. Home's own greeting block
+and `UpcomingOccasions` section have no §6.2 counterpart and are kept, restyled onto the
+scale. Everything §6.2 records for the ask block and for recent suggestions is applied.

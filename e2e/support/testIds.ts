@@ -22,6 +22,10 @@ export const testIds = Object.freeze({
   home: Object.freeze({
     greeting: 'home-greeting',
     greetingSubtitle: 'home-greeting-subtitle',
+    // Renamed by the redesign (spec section 8.9): the three section headings
+    // are section 4.3's eyebrow role and now render in capitals as
+    // 'RECENT SUGGESTIONS', 'ASK WARDROPKA' and 'UPCOMING OCCASIONS'. The ids
+    // did not change.
     recentSuggestionsHeader: 'home-recent-suggestions-header',
     askWardropkaHeader: 'home-ask-wardropka-header',
     occasionsHeader: 'home-occasions-header',

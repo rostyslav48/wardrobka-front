@@ -24,12 +24,20 @@ It replaces the old `indented` boolean, which never had an observable effect.
 
 Three more props exist for tab screens:
 
-- `refreshControl` — a `<RefreshControl/>`, handed straight to the scroll view.
+- `refreshControl` — a `<RefreshControl/>`, handed straight to the scroll view. The
+  page padding deliberately lives on a wrapper around the scroll view, because
+  react-native-web clones a refresh control with the scroll view's own `style` and
+  would otherwise apply that padding twice.
 - `tabBarInset` — adds the bottom tab bar's height to the content's bottom padding.
   It defaults to `false` and is **only valid inside a bottom-tab navigator**; setting
   it anywhere else throws.
 - `contentStyle` — a React Native style object applied to the scroll content
   container after the defaults.
+
+Taps reach children while the keyboard is up: the scroll view sets
+`keyboardShouldPersistTaps="handled"` rather than React Native's `'never'` default, so
+a screen can put a text input and its submit button in the same page without the first
+tap being swallowed. It still dismisses the keyboard on drag.
 
 Content taller than the viewport scrolls: the content container grows rather than
 being pinned to one screen height.

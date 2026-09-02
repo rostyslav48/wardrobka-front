@@ -26,10 +26,10 @@ export default function UpcomingOccasions() {
   };
 
   return (
-    <View style={styles.section}>
+    <View>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle} testID="home-occasions-header">
-          Upcoming Occasions
+          UPCOMING OCCASIONS
         </Text>
       </View>
 

@@ -1,6 +1,6 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { PropsWithChildren, ReactElement } from 'react';
-import { RefreshControlProps, StyleProp, ViewStyle } from 'react-native';
+import { RefreshControlProps, StyleProp, View, ViewStyle } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { styles } from './styles';
 import { spacing } from '@/theme/layout';
@@ -37,22 +37,32 @@ function PageScrollView({
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
   return (
-    <Animated.ScrollView
-      ref={scrollRef}
-      // The top offset sits on the scroll frame so it stays put while the
-      // content moves under it, which is what the screens already relied on.
-      // The bottom inset belongs to the content, so it scrolls into view.
-      style={[styles.container, { paddingTop: insets.top + topInset }]}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: insets.bottom + bottomInset },
-        contentStyle,
-      ]}
-      refreshControl={refreshControl}
-      keyboardDismissMode="on-drag"
-    >
-      {children}
-    </Animated.ScrollView>
+    // The page padding lives on this wrapper, not on the scroll view's own
+    // `style`: react-native-web clones a `refreshControl` with `style:
+    // props.style` and keeps it on the scroll view too, so anything put there
+    // is applied twice on web. It stays outside the scroller for the same
+    // reason it always did - the top offset must not scroll away under the
+    // content. The bottom inset belongs to the content, so it scrolls in.
+    <View style={[styles.container, { paddingTop: insets.top + topInset }]}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + bottomInset },
+          contentStyle,
+        ]}
+        refreshControl={refreshControl}
+        keyboardDismissMode="on-drag"
+        // Not React Native's 'never' default, under which a child does not
+        // receive the tap that dismisses the keyboard. Every screen built on
+        // UiPage puts its inputs and buttons in this scroll view, so the first
+        // tap on a send button would otherwise be swallowed on iOS/Android.
+        keyboardShouldPersistTaps="handled"
+      >
+        {children}
+      </Animated.ScrollView>
+    </View>
   );
 }
 

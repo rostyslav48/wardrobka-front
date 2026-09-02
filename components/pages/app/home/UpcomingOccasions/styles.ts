@@ -1,20 +1,25 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Only the section header is on the redesign scale so far: it shares Home's
+ * eyebrow role (spec section 4.3) so the screen reads as one page, and the
+ * block's trailing margin is gone because `HomeScreen` now owns the rhythm
+ * between its sections. The cards below belong to the phase that rebuilds
+ * them and still carry their pre-redesign literals.
+ */
 export const styles = StyleSheet.create({
-  section: {
-    marginBottom: 28,
-  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
+    color: colors.textSecondary,
   },
   hint: {
     fontSize: 14,
