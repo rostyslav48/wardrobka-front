@@ -1,32 +1,35 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing } from '@/theme/layout';
 
+/** Mirrors `ItemCard/styles.ts`'s shape - spec section 6.3. */
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
+    gap: spacing.smPlus,
   },
   photo: {
     width: '100%',
-    aspectRatio: 2 / 3,
-    backgroundColor: colors.border,
+    aspectRatio: 175 / 150,
+    borderRadius: radius.tileLg,
+    backgroundColor: colors.surface,
   },
   info: {
-    padding: 8,
-    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   nameLine: {
     height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.border,
-    width: '70%',
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    flex: 1,
   },
   badgeLine: {
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.border,
-    width: '45%',
+    height: 16,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    width: 56,
   },
 });

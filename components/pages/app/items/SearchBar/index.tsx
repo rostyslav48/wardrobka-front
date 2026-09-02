@@ -1,6 +1,7 @@
 import { TextInput, View } from 'react-native';
 import React, { useState } from 'react';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { styles } from './styles';
 
@@ -18,7 +19,7 @@ export default function SearchBar() {
         placeholderTextColor={colors.placeholder}
       />
       <IconSymbol
-        size={20}
+        size={iconSize.xl}
         name="magnifyingglass"
         color={colors.placeholder}
         style={styles.icon}

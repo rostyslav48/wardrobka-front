@@ -1,21 +1,27 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { border, radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec section 6.7's bottom-sheet body: sections separated by `spacing.sheetSection`
+ * (26). The chip row itself (padding 6/11, `radius.pill`) is the sheet preamble's
+ * own figure, not a table 8 literal - `spacing.xs`/`spacing.mdPlus` are the nearest
+ * scale entries and match exactly (6 and 11).
+ */
 export const styles = StyleSheet.create({
   content: {
-    gap: 24,
-    paddingBottom: 16,
+    gap: spacing.sheetSection,
+    paddingBottom: spacing.xl,
   },
 
   section: {
-    gap: 10,
+    gap: spacing.md,
   },
 
+  // Spec 4.3's section-eyebrow role names "TYPE" among the strings it covers.
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
     color: colors.textSecondary,
   },
 
@@ -23,19 +29,19 @@ export const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
 
   // Horizontal scroll chip row (types)
   chipScroll: {
-    gap: 8,
+    gap: spacing.sm,
   },
 
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: spacing.mdPlus,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    borderWidth: border.hairline,
     borderColor: colors.border,
     backgroundColor: 'transparent',
   },
@@ -45,6 +51,8 @@ export const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
 
+  // Snap table 8.7: same untokenised native role `UiSelect`'s own chip label
+  // carries (13/500 textSecondary) - this chip is the same design.
   chipText: {
     fontSize: 13,
     fontWeight: '500',
@@ -52,38 +60,63 @@ export const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
 
+  // Spec 4.3: "12/600 accentText - selected filter-chip label".
   chipText__active: {
+    ...typography.chipLabelSelected,
+    letterSpacing: tracking.chipLabelSelected,
     color: colors.accentText,
   },
 
-  // Color swatches
+  // Colour swatches - spec 6.7: 30 x 30 circles (`radius.round`), ringed. RN has
+  // no multi-ring `box-shadow`, so the ring is approximated with a 34 x 34
+  // wrapper: an unselected hairline ring, a 2px `brand` ring when selected.
   swatchRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: spacing.md,
+  },
+
+  swatchRing: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.round,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: border.hairline,
+    borderColor: colors.border,
+  },
+
+  swatchRing__active: {
+    borderWidth: 2,
+    borderColor: colors.brand,
   },
 
   swatch: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-
-  swatch__active: {
-    borderColor: colors.textPrimary,
+    width: 30,
+    height: 30,
+    borderRadius: radius.round,
   },
 
   swatchAny: {
     width: 34,
     height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
+    borderRadius: radius.round,
+    borderWidth: border.hairline,
     borderColor: colors.border,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  swatchAny__active: {
+    borderColor: colors.textPrimary,
+  },
+
+  // Spec 4.3: "'Any' swatch label" role, verbatim.
+  swatchAnyText: {
+    ...typography.swatchLabel,
+    letterSpacing: tracking.swatchLabel,
+    color: colors.textSecondary,
   },
 
   // Favourite toggle row
@@ -93,26 +126,29 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
+  // Not a heading - the settings-row label role (14/400).
   favouriteLabel: {
-    fontSize: 15,
-    fontWeight: '500',
+    ...typography.rowLabel,
+    letterSpacing: tracking.rowLabel,
     color: colors.textPrimary,
   },
 
   // Footer
   footer: {
     flexDirection: 'row',
-    gap: 10,
-    paddingTop: 8,
+    gap: spacing.md,
+    paddingTop: spacing.sm,
   },
 
   footerButtonWrapper: {
     flex: 1,
   },
 
-  buttonLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+  // Spec 6.7: "two 176 x 50 buttons". `UiButton` only accepts `style`
+  // overrides (section 7.4), which is spec-sanctioned per 6.2's own hero
+  // buttons.
+  footerButton: {
+    height: 50,
   },
 
   buttonLabel__primary: {

@@ -2,7 +2,9 @@ import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-na
 import { router } from 'expo-router';
 import { ImageStatus, WardrobeItem, ItemStatus } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import UiStatusBadge, { UiStatusBadgeTone } from '@/components/ui/UiStatusBadge';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { wardrobeService } from '@/services/wardrobe.service';
 import {
@@ -23,11 +25,11 @@ const STATUS_LABEL: Record<ItemStatus, string> = {
   [ItemStatus.NeedRepair]: 'Need Repair',
 };
 
-const STATUS_COLOR: Record<ItemStatus, string> = {
-  [ItemStatus.Active]:    colors.statusActive,
-  [ItemStatus.Washing]:   colors.statusWashing,
-  [ItemStatus.Missing]:   colors.statusMissing,
-  [ItemStatus.NeedRepair]: colors.statusNeedRepair,
+const STATUS_TONE: Record<ItemStatus, UiStatusBadgeTone> = {
+  [ItemStatus.Active]:    'active',
+  [ItemStatus.Washing]:   'washing',
+  [ItemStatus.Missing]:   'missing',
+  [ItemStatus.NeedRepair]: 'needRepair',
 };
 
 const STATUS_OPTIONS: ItemStatus[] = [
@@ -40,7 +42,6 @@ const STATUS_OPTIONS: ItemStatus[] = [
 export default function ItemCard({ item }: Props) {
   const { upsertItem } = useWardrobe();
   const { isRetrying, originalExpired, retry } = useRetryImageGeneration();
-  const badgeColor = STATUS_COLOR[item.status];
 
   const handleRetry = () =>
     retry(item, {
@@ -113,7 +114,7 @@ export default function ItemCard({ item }: Props) {
       {/* While a product image is being generated the item has no img_url yet,
           so the placeholder stands in until a poll picks up image_status:ready. */}
       {item.image_status === ImageStatus.Pending ? (
-        <View testID="item-card-generating" style={styles.placeholder}>
+        <View testID="item-card-generating" style={styles.photoArea}>
           <ActivityIndicator color={colors.textSecondary} />
           <Text style={styles.placeholderText}>Generating…</Text>
         </View>
@@ -121,8 +122,8 @@ export default function ItemCard({ item }: Props) {
         /* A failed job leaves the item with no image at all — without saying
            so the card is indistinguishable from an item added without a
            photo, and the user never learns there is anything to retry. */
-        <View testID="item-card-failed" style={styles.placeholder}>
-          <IconSymbol name="sparkles" size={28} color={colors.textSecondary} />
+        <View testID="item-card-failed" style={styles.photoArea}>
+          <IconSymbol name="sparkles" size={iconSize.xxl} color={colors.textSecondary} />
           <Text style={styles.placeholderText}>{failedLabel}</Text>
           {failedAction}
         </View>
@@ -147,8 +148,8 @@ export default function ItemCard({ item }: Props) {
           ) : null}
         </View>
       ) : (
-        <View style={styles.placeholder}>
-          <IconSymbol name="tshirt.fill" size={40} color={colors.textSecondary} />
+        <View style={styles.photoArea}>
+          <IconSymbol name="tshirt.fill" size={iconSize.xxl} color={colors.textSecondary} />
         </View>
       )}
 
@@ -156,15 +157,11 @@ export default function ItemCard({ item }: Props) {
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
         </Text>
-        <Pressable
-          style={[styles.badge, { backgroundColor: `${badgeColor}22` }]}
+        <UiStatusBadge
+          label={STATUS_LABEL[item.status]}
+          tone={STATUS_TONE[item.status]}
           onPress={handleStatusPress}
-          hitSlop={4}
-        >
-          <Text style={[styles.badgeText, { color: badgeColor }]}>
-            {STATUS_LABEL[item.status]}
-          </Text>
-        </Pressable>
+        />
       </View>
     </Pressable>
   );

@@ -1,20 +1,39 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec section 6.3: the item-grid card is a 175 x 150 photo frame
+ * (`radius.tileLg`) then a 17px caption row - the name left, the status pill
+ * right. The card's rendered width comes from the grid's own column layout
+ * (not a fixed 175px), so the frame keeps the spec's aspect ratio instead.
+ * Section 2 row "9" is the caption's top margin (`spacing.smPlus`).
+ */
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
+    gap: spacing.smPlus,
   },
   imageFrame: {
     width: '100%',
+    aspectRatio: 175 / 150,
+    borderRadius: radius.tileLg,
+    overflow: 'hidden',
     position: 'relative',
   },
   image: {
     width: '100%',
-    aspectRatio: 2 / 3,
+    height: '100%',
+  },
+  photoArea: {
+    width: '100%',
+    aspectRatio: 175 / 150,
+    borderRadius: radius.tileLg,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   // Sits over the bottom of the image so a failed regeneration never hides the
   // photo the item still has.
@@ -23,61 +42,45 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    backgroundColor: 'rgba(17, 17, 17, 0.85)',
+    gap: spacing.sm,
+    backgroundColor: colors.scrim,
   },
   failedOverlayText: {
     flexShrink: 1,
+    ...typography.chipLabel,
+    letterSpacing: tracking.chipLabel,
     color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  placeholder: {
-    width: '100%',
-    aspectRatio: 2 / 3,
-    backgroundColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
   },
   placeholderText: {
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
   },
   retryButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.hair,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
   },
   retryButtonText: {
+    ...typography.overflowChip,
     color: colors.textPrimary,
-    fontSize: 11,
-    fontWeight: '600',
   },
   info: {
-    padding: 8,
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   name: {
+    flex: 1,
+    ...typography.cardName,
+    letterSpacing: tracking.cardName,
     color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
 });

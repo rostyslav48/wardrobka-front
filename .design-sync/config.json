@@ -24,7 +24,8 @@
     "PromptShortcutChips": "components/ui/PromptShortcutChips/index.tsx",
     "QuickChatInput": "components/ui/QuickChatInput/index.tsx",
     "UiEmptyState": "components/ui/UiEmptyState/index.tsx",
-    "UiSkeletonCard": "components/ui/UiSkeletonCard/index.tsx"
+    "UiSkeletonCard": "components/ui/UiSkeletonCard/index.tsx",
+    "UiStatusBadge": "components/ui/UiStatusBadge/index.tsx"
   },
   "provider": {
     "component": "SafeAreaProvider",
@@ -57,7 +58,7 @@
     "UiTitle": "  children?: React.ReactNode;\n  /** 14.5px / 500 - the chat-session-title role. */\n  sizeXS?: boolean;\n  /** 18px / 600 - the button-label role. */\n  sizeS?: boolean;\n  /** 20px / 700 - the stat-numeral role. */\n  sizeM?: boolean;\n  /** 28px / 400 - the screen-title role. */\n  sizeL?: boolean;\n  /** React Native StyleProp<TextStyle>. */\n  style?: object;\n  numberOfLines?: number;",
     "UiError": "  errorMessage: string;",
     "UiToast": "  /** React Native StyleProp<ViewStyle>. */\n  style?: object;\n  /** Imperative handle: `ref.current.show(message, 'success' | 'error')`. */\n  ref?: React.Ref<{ show: (message: string, type: 'success' | 'error') => void }>;",
-    "UiPage": "  children?: React.ReactNode;\n  /** Padding added above the safe-area top inset. Defaults to 62, the scroll region's measured top padding. Pass 0 for a flush screen. */\n  topInset?: number;\n  /** A <RefreshControl/>, handed straight to the underlying scroll view. */\n  refreshControl?: React.ReactElement;\n  /** Add the bottom tab bar's height to the content's bottom padding. Defaults to false, and is only valid inside a bottom-tab navigator. */\n  tabBarInset?: boolean;\n  /** React Native StyleProp<ViewStyle>, applied to the scroll content container after the defaults. */\n  contentStyle?: object;",
+    "UiPage": "  children?: React.ReactNode;\n  /** Padding added above the safe-area top inset. Defaults to 62, the scroll region's measured top padding. Pass 0 for a flush screen. */\n  topInset?: number;\n  /** A <RefreshControl/>, handed straight to the underlying scroll view. */\n  refreshControl?: React.ReactElement;\n  /** Add the bottom tab bar's height to the content's bottom padding. Defaults to false, and is only valid inside a bottom-tab navigator. */\n  tabBarInset?: boolean;\n  /** React Native StyleProp<ViewStyle>, applied to the scroll content container after the defaults. */\n  contentStyle?: object;\n  /** Rendered above the scroll view, inside the top-padded frame - stays fixed while the body scrolls. For a pushed route's back button + title bar. */\n  header?: React.ReactNode;",
     "UiPopup": "  children?: React.ReactNode;\n  /** Fill the viewport height rather than hugging its content. Defaults to true. */\n  fullScreen?: boolean;\n  title?: string;",
     "UiFormField": "  children: React.ReactNode;\n  /** Rendered under the field when set. */\n  errorMessage?: string;",
     "UiInput": "  value: string;\n  onChange: (value: string) => void;\n  placeholder?: string;\n  /** Mask the value and show the reveal toggle. */\n  isSecureText?: boolean;\n  readonly?: boolean;",
@@ -68,7 +69,8 @@
     "PromptShortcutChips": "  /** Rendered in order, in one horizontally scrolling row. */\n  shortcuts: readonly { label: string; prompt: string }[];\n  /** Fires with the chosen shortcut's `prompt`, not its `label`. */\n  onSelect: (prompt: string) => void;",
     "QuickChatInput": "  value: string;\n  onChangeText: (text: string) => void;\n  /** Fires on the send button and on the return key; suppressed while the value is blank or `isLoading` is set. */\n  onSubmit: () => void;\n  /** Disables the field and swaps the send glyph for a spinner. */\n  isLoading: boolean;",
     "UiEmptyState": "  /** Any name `IconSymbol` maps - 'sparkles', 'calendar', 'tshirt.fill'. Drawn at 24px inside a 64px disc. */\n  icon: string;\n  title: string;\n  subtitle: string;",
-    "UiSkeletonCard": "  // No props. The loading stand-in for OutfitSuggestionCard; render one per\n  // card-shaped row you are waiting on."
+    "UiSkeletonCard": "  // No props. The loading stand-in for OutfitSuggestionCard; render one per\n  // card-shaped row you are waiting on.",
+    "UiStatusBadge": "  label: string;\n  /** One of the four `status*` keys in `theme/colors.ts`. */\n  tone: 'active' | 'washing' | 'missing' | 'needRepair';\n  /** Renders the badge as a Pressable instead of a View - the item grid's inline quick-change. */\n  onPress?: () => void;"
   },
   "overrides": {
     "UiButton": {
@@ -114,6 +116,9 @@
       "cardMode": "column"
     },
     "UiSkeletonCard": {
+      "cardMode": "column"
+    },
+    "UiStatusBadge": {
       "cardMode": "column"
     }
   },
