@@ -1,0 +1,18 @@
+/* Generated from theme/colors.ts + theme/layout.ts by .design-sync/gen-tokens.mjs. */
+:root {
+  --wa-background: #111111;
+  --wa-surface: #1E1E1E;
+  --wa-text-primary: #F0F0F0;
+  --wa-text-secondary: #888888;
+  --wa-border: #2E2E2E;
+  --wa-accent: #F0F0F0;
+  --wa-accent-text: #111111;
+  --wa-status-active: #16A34A;
+  --wa-status-washing: #D97706;
+  --wa-status-missing: #DC2626;
+  --wa-status-need-repair: #9333EA;
+  --wa-error: #EF4444;
+  --wa-error-background: #1F0606;
+  --wa-placeholder: #888888;
+  --wa-page-inline-intent: 20px;
+}
