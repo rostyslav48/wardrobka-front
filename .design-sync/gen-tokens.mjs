@@ -2,23 +2,23 @@
 // Source of truth stays theme/colors.ts + theme/layout.ts - this only transcribes
 // them to CSS custom properties so designs built with the DS can reference them.
 //
-// It compiles both files with esbuild and imports the result, rather than reading
-// them with a regex: the scale in theme/layout.ts is nested objects now, and a
-// regex that stops matching produces zero tokens and a green build. The floor
-// check at the bottom is the second half of that guard.
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+// It type-strips both files and imports the result, rather than reading them with
+// a regex: the scale in theme/layout.ts is nested objects now, and a regex that
+// stops matching produces zero tokens and a green build. The floor check at the
+// bottom is the second half of that guard.
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 const root = new URL('..', import.meta.url).pathname;
 const out = join(root, '.design-sync/.cache/nm-scratch/node_modules/wardrobe-tokens');
 const notesPath = join(root, '.design-sync/NOTES.md');
 
-// esbuild resolves from .design-sync/node_modules -> ../.ds-sync/node_modules,
-// the same way the bundle.mjs fork picks it up. See NOTES.md "Setup".
-const esbuild = createRequire(import.meta.url)('esbuild');
+// `typescript` is a tracked devDependency of this repo, so `npm ci` provisions it
+// and it is pure JS - no platform-specific binary to go missing on another OS.
+// Resolution starts at the repo root on purpose, not at .design-sync/, whose
+// node_modules is a symlink into the gitignored .ds-sync toolkit.
+const ts = createRequire(new URL('../package.json', import.meta.url))('typescript');
 
 const kebab = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
@@ -27,26 +27,22 @@ const GROUP_PREFIX = { typography: 'type' };
 // theme/layout.ts typography sub-key -> token suffix.
 const SUB_KEY = { fontSize: 'size', fontWeight: 'weight', lineHeight: 'line-height' };
 
-const scratch = mkdtempSync(join(tmpdir(), 'wa-tokens-'));
-let colors;
-let layout;
-try {
-  const compile = (src, name) => {
-    const outfile = join(scratch, name);
-    esbuild.buildSync({
-      entryPoints: [join(root, src)],
-      outfile,
-      format: 'esm',
-      platform: 'node',
-      logLevel: 'silent',
-    });
-    return pathToFileURL(outfile).href;
-  };
-  colors = (await import(compile('theme/colors.ts', 'colors.mjs'))).colors;
-  layout = await import(compile('theme/layout.ts', 'layout.mjs'));
-} finally {
-  rmSync(scratch, { recursive: true, force: true });
-}
+// Type-strip to ESM and import from a data: URL. The theme files carry only
+// type-only imports, so nothing needs resolving; if that ever stops being true
+// the check below fails loudly instead of importing a half-built module.
+const load = async (src) => {
+  const { outputText } = ts.transpileModule(readFileSync(join(root, src), 'utf8'), {
+    fileName: src,
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ESNext },
+  });
+  if (/^\s*(?:import|export)\b[^\n]*\bfrom\b/m.test(outputText)) {
+    throw new Error(`${src} has a runtime import; theme files must stay dependency-free`);
+  }
+  return import(`data:text/javascript,${encodeURIComponent(outputText)}`);
+};
+
+const { colors } = await load('theme/colors.ts');
+const layout = await load('theme/layout.ts');
 
 const pairs = [];
 const seen = new Set();

@@ -9,10 +9,13 @@ of that.
 - `node .design-sync/gen-tokens.mjs` — regenerates the synthetic `wardrobe-tokens`
   package inside the scratch `node_modules` from `theme/colors.ts` +
   `theme/layout.ts`. **Run it before every build**; `cfg.tokensPkg` points at it and
-  the build fails to find tokens without it. It compiles both theme files with
-  `esbuild`, which it resolves by bare name through the
-  `.design-sync/node_modules` symlink below — so create that symlink before the
-  first run, not just before the first bundle.
+  the build fails to find tokens without it. It type-strips both theme files with
+  `typescript` — a tracked devDependency of this repo, resolved from the repo
+  root's `node_modules`, so `npm ci` alone is enough. It deliberately does **not**
+  use `esbuild` from the `.design-sync/node_modules` symlink: that target is
+  gitignored, appears in no tracked manifest here, and ships a platform-specific
+  binary, so a clone on another OS gets `You installed esbuild for another
+  platform`. This script must keep running on a bare `npm ci`.
   **Expected token count: 194.** The script prints what it emitted and exits
   non-zero if it emits fewer than this number, or if this line is missing. Raise
   the number here whenever `theme/` legitimately grows.
@@ -29,6 +32,13 @@ of that.
   ```
 - `ln -sfn ../.ds-sync/node_modules .design-sync/node_modules` — the `bundle.mjs`
   fork imports `esbuild` by bare name and can't resolve it from `overrides/` otherwise.
+  `.ds-sync/` is not part of this repo: it is the design-sync toolkit
+  (`resync.mjs`, `lib/`, `storybook/`, and its own `ds-sync-deps` `package.json`
+  pinning `esbuild` + `ts-morph`) that the design-sync tool materialises into the
+  working tree, and `.gitignore` excludes both it and the symlink. It exists only
+  after that tool has run at least once, which is why nothing on the
+  `npm ci` → build path may depend on it — only the bundle step, which needs the
+  tool anyway.
 - Build command (there is no `buildCmd`; the entry is hand-written):
 
   ```sh
@@ -112,12 +122,16 @@ None. The final validate run is warning-free.
 
 ## Re-sync risks
 
-- **`gen-tokens.mjs` compiles and imports `theme/*.ts`; it no longer reads them
-  with a regex.** `esbuild.buildSync` transpiles each file into a temp ESM module,
-  the script `import()`s it and walks the exports — so nested objects, double
+- **`gen-tokens.mjs` type-strips and imports `theme/*.ts`; it no longer reads them
+  with a regex.** `ts.transpileModule` erases the types, the script `import()`s the
+  result from a `data:` URL and walks the exports — so nested objects, double
   quotes and computed values are all fine, and a restructure that the old regex
-  would have silently dropped now either works or throws. Two things can still
+  would have silently dropped now either works or throws. Three things can still
   bite:
+  - **A runtime import in a theme file.** Type-stripping does not resolve or
+    bundle, so `theme/*.ts` must import nothing but types. The script checks the
+    stripped output and throws `has a runtime import; theme files must stay
+    dependency-free` rather than importing a module that cannot load.
   - **A new export shape.** The walker handles a string, a number, a one-level
     object of those, and `typography`'s two-level `fontSize`/`fontWeight`/
     `lineHeight` entries. Anything else (an array, a function, a three-level
