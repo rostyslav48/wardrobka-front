@@ -462,6 +462,22 @@ separated by 26.
 
 ## 7. What the mockup cannot tell us
 
+### 7.0 Standing scope rule — confirmed 2026-09-02
+
+**Restyle what exists; do not build what the mockup implies.** Three surfaces in this
+document describe product the app does not have, and Rostyslav confirmed on 2026-09-02 that
+they are out of scope for the whole of plan-13:
+
+- **§6.2 item 1, the hero card** — an outfit-of-the-day with a "Wear this today" logging
+  action, a swap action and a weather-plus-calendar context line.
+- **§6.2 item 4, the pulse block** — the CLEAN / WASH / REPAIR / UNWORN stat tiles.
+- **§6.1's masthead** — the wordmark row with its avatar entry point to Settings.
+
+They stay documented here because the measurements are correct and a future feature plan
+will want them. They are not build instructions. Where a screen has a section this document
+does not cover, keep it and restyle it onto the scale; where this document has a surface the
+app does not implement, skip it and record the skip.
+
 ### 7.1 First, a correction to the phase brief
 
 plan-13 Phase 0 says the mockup "covers Home and not Items, Chat, Log, Settings, the item
