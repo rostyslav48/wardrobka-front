@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { AuthApiService, ProfileData, UpdateProfilePayload } from '@/services/auth.service';
 import ProfileSection from '@/components/pages/app/settings/ProfileSection';
 import NotificationsSection from '@/components/pages/app/settings/NotificationsSection';
+import CalendarSection from '@/components/pages/app/settings/CalendarSection';
 import SignOutSection from '@/components/pages/app/settings/SignOutSection';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
 import UiTitle from '@/components/ui/UiTitle';
@@ -79,6 +80,12 @@ export default function SettingsScreen() {
         <View style={styles.separator} />
 
         <NotificationsSection
+          onNotify={(message, type) => toastRef.current?.show(message, type)}
+        />
+
+        <View style={styles.separator} />
+
+        <CalendarSection
           onNotify={(message, type) => toastRef.current?.show(message, type)}
         />
 

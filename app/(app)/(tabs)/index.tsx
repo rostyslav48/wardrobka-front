@@ -12,6 +12,7 @@ import { pageInlineIntent } from '@/theme/layout';
 import { PROMPT_SHORTCUTS } from '@/constants/promptShortcuts';
 import OutfitSuggestionCard from '@/components/ui/OutfitSuggestionCard';
 import SuggestionSkeleton from '@/components/pages/app/home/SuggestionSkeleton';
+import UpcomingOccasions from '@/components/pages/app/home/UpcomingOccasions';
 import EmptyState from '@/components/pages/app/home/EmptyState';
 import PromptShortcutChips from '@/components/pages/app/home/PromptShortcutChips';
 import QuickChatInput from '@/components/pages/app/home/QuickChatInput';
@@ -118,6 +119,8 @@ export default function HomeScreen() {
             What are you wearing today?
           </Text>
         </View>
+
+        <UpcomingOccasions />
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

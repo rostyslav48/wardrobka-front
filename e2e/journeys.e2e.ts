@@ -97,6 +97,19 @@ test.describe('authenticated app shell', () => {
     await expect(page.getByTestId(testIds.home.recentSuggestionsHeader)).toBeVisible();
   });
 
+  test('the home tab shows the upcoming occasions section, disconnected by default', async ({
+    page,
+  }) => {
+    await expect(page.getByTestId(testIds.home.occasionsHeader)).toBeVisible();
+    // A freshly created account has no calendar connection.
+    await expect(page.getByTestId(testIds.home.occasionsDisconnected)).toBeVisible();
+  });
+
+  test('the settings tab shows the Google Calendar row', async ({ page }) => {
+    await page.getByTestId(testIds.tabs.settings).click();
+    await expect(page.getByTestId('settings-calendar-row')).toBeVisible();
+  });
+
   test('all five tabs are reachable', async ({ page }) => {
     const stops: { tab: string; screenTestId: string }[] = [
       { tab: testIds.tabs.items, screenTestId: testIds.screens.items },

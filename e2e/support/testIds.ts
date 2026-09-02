@@ -24,6 +24,10 @@ export const testIds = Object.freeze({
     greetingSubtitle: 'home-greeting-subtitle',
     recentSuggestionsHeader: 'home-recent-suggestions-header',
     askWardropkaHeader: 'home-ask-wardropka-header',
+    occasionsHeader: 'home-occasions-header',
+    occasionsDisconnected: 'home-occasions-disconnected',
+    occasionsRevoked: 'home-occasions-revoked',
+    occasionsEmpty: 'home-occasions-empty',
   }),
   tabs: Object.freeze({
     home: 'tab-home',
