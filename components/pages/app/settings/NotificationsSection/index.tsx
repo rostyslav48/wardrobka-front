@@ -110,7 +110,7 @@ export default function NotificationsSection({ onNotify }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Notifications</Text>
+      <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
 
       <View style={styles.row}>
         <View style={styles.rowLabel}>
@@ -122,7 +122,7 @@ export default function NotificationsSection({ onNotify }: Props) {
         <Switch
           value={prefs.enabled}
           onValueChange={handleToggle}
-          trackColor={{ false: colors.border, true: colors.statusActive }}
+          trackColor={{ false: colors.border, true: colors.brand }}
           thumbColor={colors.textPrimary}
         />
       </View>
