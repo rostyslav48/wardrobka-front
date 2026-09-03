@@ -32,6 +32,11 @@ export const testIds = Object.freeze({
     occasionsDisconnected: 'home-occasions-disconnected',
     occasionsRevoked: 'home-occasions-revoked',
     occasionsEmpty: 'home-occasions-empty',
+    seeAllSuggestions: 'home-see-all-suggestions',
+  }),
+  outfitHistory: Object.freeze({
+    screen: 'outfit-history-screen',
+    card: (id: string) => `outfit-suggestion-card-${id}`,
   }),
   tabs: Object.freeze({
     home: 'tab-home',

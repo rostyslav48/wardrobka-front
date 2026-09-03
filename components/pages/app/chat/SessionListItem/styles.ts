@@ -1,32 +1,40 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { pageInlineIntent } from '@/theme/layout';
+import { border, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec 6.4: "one row per session at padding 15 / 2 ... Rows are separated by
+ * 1 px hairlines, not cards." Title is the `sessionTitle` role (14.5/500);
+ * preview and date share the `body` role (11.5/400) spec 4.3 names for
+ * "chat preview" verbatim.
+ */
 export const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: pageInlineIntent,
-    paddingVertical: 14,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingVertical: spacing.rowY,
+    paddingHorizontal: spacing.hair,
+    gap: spacing.lg,
+    borderBottomWidth: border.hairline,
+    borderBottomColor: colors.hairline,
   },
   body: {
     flex: 1,
-    gap: 3,
+    gap: spacing.micro,
   },
   topic: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.sessionTitle,
+    letterSpacing: tracking.sessionTitle,
     color: colors.textPrimary,
   },
   preview: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
   },
   date: {
-    fontSize: 12,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
     flexShrink: 0,
   },

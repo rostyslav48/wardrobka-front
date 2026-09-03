@@ -18,6 +18,8 @@ export const NoItems = () => (
       icon="tshirt.fill"
       title="Your wardrobe is empty"
       subtitle="Add a few pieces and the assistant can start putting outfits together."
+      actionLabel="+ Add your first item"
+      onAction={() => {}}
     />
   </div>
 );
@@ -28,6 +30,8 @@ export const NoLogEntries = () => (
       icon="calendar"
       title="Nothing logged yet"
       subtitle="Log what you wore and the outfit history builds itself."
+      actionLabel="+ Add entry"
+      onAction={() => {}}
     />
   </div>
 );

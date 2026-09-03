@@ -28,8 +28,26 @@ export const styles = StyleSheet.create({
   subtitle: {
     ...typography.rowLabel,
     letterSpacing: tracking.rowLabel,
+    // rowLabel's 15px lineHeight is measured for a single-line list row; this
+    // subtitle wraps (maxWidth 260 forces it), so it needs a readable
+    // multi-line leading rather than the role's own value - see the same
+    // deviation in chat/MessageBubble/styles.ts.
+    lineHeight: 20,
     color: colors.textSecondary,
     textAlign: 'center',
     maxWidth: 260,
+  },
+  // Padding 9/13, `radius.pill` - the same "Add entry" pill spec 6.5 draws,
+  // reused here since both are a single primary action on an accent ground.
+  action: {
+    marginTop: spacing.xs,
+    paddingVertical: spacing.smPlus,
+    paddingHorizontal: spacing.chipX,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+  },
+  actionLabel: {
+    ...typography.pillLabel,
+    color: colors.accentText,
   },
 });

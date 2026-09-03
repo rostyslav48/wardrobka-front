@@ -58,7 +58,10 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="settings-screen">
       <View style={styles.header}>
-        <UiTitle>Settings</UiTitle>
+        {/* sizeL: spec 6.6's "Settings" 28/400 - the same page-title role as
+            Items/Chat/Log, unified here per Phase 6's AC even though the
+            rest of this screen's restyle is Phase 7's job. */}
+        <UiTitle sizeL>Settings</UiTitle>
       </View>
 
       <ScrollView
