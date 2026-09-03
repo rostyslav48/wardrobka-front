@@ -38,7 +38,7 @@ export default function CalendarSection({ onNotify }: Props) {
 
   return (
     <View style={styles.container} testID="settings-calendar-row">
-      <Text style={styles.sectionTitle}>Google Calendar</Text>
+      <Text style={styles.sectionTitle}>GOOGLE CALENDAR</Text>
 
       <View style={styles.row}>
         <Text style={styles.label}>

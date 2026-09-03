@@ -1,19 +1,27 @@
-import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { Stack, router } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import UiPage from '@/components/ui/UiPage';
+import UiTitle from '@/components/ui/UiTitle';
+import UiButton from '@/components/ui/UiButton';
+import { colors } from '@/theme/colors';
+import { pageInlineIntent, spacing, tracking, typography } from '@/theme/layout';
 
 export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
-      <ThemedView style={styles.container}>
-        <ThemedText type="title">This screen does not exist.</ThemedText>
-        <Link href="/" style={styles.link}>
-          <ThemedText type="link">Go to home screen!</ThemedText>
-        </Link>
-      </ThemedView>
+      <UiPage topInset={0}>
+        <View style={styles.container}>
+          <UiTitle style={styles.title}>This screen does not exist.</UiTitle>
+          <UiButton
+            secondary
+            onPress={() => router.replace('/')}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Go to home screen!</Text>
+          </UiButton>
+        </View>
+      </UiPage>
     </>
   );
 }
@@ -23,10 +31,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    gap: spacing.xl,
+    paddingHorizontal: pageInlineIntent,
   },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
+  title: {
+    textAlign: 'center',
+  },
+  button: {
+    marginTop: spacing.sm,
+  },
+  buttonText: {
+    ...typography.button,
+    letterSpacing: tracking.button,
+    color: colors.textPrimary,
   },
 });

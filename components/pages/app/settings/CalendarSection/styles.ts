@@ -1,37 +1,43 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * The mockup has no calendar-management surface at all (spec 7.2 only
+ * documents Notifications for this screen) - extrapolated onto the same
+ * eyebrow-title / row-label / body-hint shape as `NotificationsSection`, and
+ * the same `surface`-ground action button `UiButton secondary` uses.
+ */
 export const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
+    color: colors.textSecondary,
   },
   row: {
-    gap: 4,
+    gap: spacing['3xs'],
   },
   label: {
-    fontSize: 16,
+    ...typography.rowLabel,
     color: colors.textPrimary,
   },
   hint: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
-    lineHeight: 18,
   },
   button: {
     alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.control,
     backgroundColor: colors.surface,
   },
   buttonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.valueEmphasis,
     color: colors.textPrimary,
   },
 });
