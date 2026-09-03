@@ -1,22 +1,38 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
+import { DarkTheme, Theme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
 import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '@/context/AuthContext';
 import { Alert } from 'react-native';
 import { ModalProvider } from '@/context/ModalContext';
+import { colors } from '@/theme/colors';
+
+// The app ships one dark palette (theme/colors.ts) and has no light theme
+// (redesign-spec.md 7.2: "Light theme - does not exist and must not be
+// invented"). The previous `colorScheme === 'dark' ? DarkTheme : DefaultTheme`
+// branch off the OS/browser scheme setting painted light nav chrome on the
+// web build's first frame (the web-only hook it read from returned a light
+// default until hydration by design) and permanently on a device set to
+// light mode. `fonts` is the one field this object borrows from `DarkTheme`
+// rather than the palette - React Navigation's per-platform system font
+// stack, which `theme/colors.ts` has no equivalent for.
+const navigationTheme: Theme = {
+  dark: true,
+  colors: {
+    primary: colors.accent,
+    background: colors.background,
+    card: colors.surface,
+    text: colors.textPrimary,
+    border: colors.border,
+    notification: colors.error,
+  },
+  fonts: DarkTheme.fonts,
+};
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -33,14 +49,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme}>
       <Head>
         <title>Wardrobe Assistant</title>
       </Head>
       <AuthProvider>
         <ModalProvider>
           <Slot />
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
         </ModalProvider>
       </AuthProvider>
     </ThemeProvider>
