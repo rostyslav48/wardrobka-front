@@ -28,6 +28,11 @@ export const styles = StyleSheet.create({
   subtitle: {
     ...typography.rowLabel,
     letterSpacing: tracking.rowLabel,
+    // rowLabel's 15px lineHeight is measured for a single-line list row; this
+    // subtitle wraps (maxWidth 260 forces it), so it needs a readable
+    // multi-line leading rather than the role's own value - see the same
+    // deviation in chat/MessageBubble/styles.ts.
+    lineHeight: 20,
     color: colors.textSecondary,
     textAlign: 'center',
     maxWidth: 260,

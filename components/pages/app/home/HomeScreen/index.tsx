@@ -141,7 +141,11 @@ export default function HomeScreen() {
           >
             RECENT SUGGESTIONS
           </UiTitle>
-          <Pressable onPress={() => router.push('/outfit-history')} hitSlop={8}>
+          <Pressable
+            onPress={() => router.push('/outfit-history')}
+            hitSlop={8}
+            testID="home-see-all-suggestions"
+          >
             <UiTitle style={styles.seeAll}>SEE ALL →</UiTitle>
           </Pressable>
         </View>

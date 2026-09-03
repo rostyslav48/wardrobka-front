@@ -39,10 +39,15 @@ export const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
 
-  // Snap table 8.3: the old 21px lineHeight has no §4.3 role - "take the
-  // role's own lineHeight" instead, so this uses `rowLabel`'s 15 as-is.
+  // `rowLabel`'s fontSize/fontWeight apply per snap table 8.3, but its 15px
+  // lineHeight is measured for a single-line list row, not wrapped prose -
+  // spec §7.2 has no chat-thread mockup surface to borrow a leading value
+  // from, so the role's lineHeight is not transcribable here. Overridden to
+  // a readable ~1.43 ratio (matches the pre-redesign bubble's 21/15 ratio)
+  // so multi-line replies don't collide ascenders/descenders between lines.
   content: {
     ...typography.rowLabel,
+    lineHeight: 20,
   },
   contentUser: {
     color: colors.accentText,

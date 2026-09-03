@@ -149,4 +149,62 @@ test.describe('authenticated app shell', () => {
 
     expect(errors).toEqual([]);
   });
+
+  test('outfit history reaches via SEE ALL, renders its cards, and pages a short list without a scroll', async ({
+    page,
+  }) => {
+    // Page one is a full PAGE_SIZE (so hasMore stays true) of thumbnail-less
+    // cards, sized to fit a tall viewport without overflowing it - the
+    // regression this guards is UiPage's onEndReached firing only from
+    // `onScroll`, which never fires when the content doesn't need to scroll.
+    const pageOne = Array.from({ length: 20 }, (_, i) => ({
+      id: `e2e-suggestion-${i}`,
+      sessionId: `e2e-session-${i}`,
+      sessionTopic: `Outfit idea ${i}`,
+      summary: 'A suggested outfit',
+      wardrobeItemIds: [],
+      createdAt: new Date(2026, 0, 1).toISOString(),
+    }));
+    const pageTwo = [
+      {
+        id: 'e2e-suggestion-page-two',
+        sessionId: 'e2e-session-page-two',
+        sessionTopic: 'Second page outfit',
+        summary: 'A suggested outfit',
+        wardrobeItemIds: [],
+        createdAt: new Date(2026, 0, 1).toISOString(),
+      },
+    ];
+
+    await page.route('**/ai-assistant/outfit-suggestions?*', async (route) => {
+      const offset = new URL(route.request().url()).searchParams.get('offset');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(offset === '0' ? pageOne : pageTwo),
+      });
+    });
+
+    await page.setViewportSize({ width: 800, height: 3000 });
+
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    await page.getByTestId(testIds.tabs.home).click();
+    await page.getByTestId(testIds.home.seeAllSuggestions).click();
+
+    await expect(page.getByTestId(testIds.outfitHistory.screen)).toBeVisible();
+    await expect(
+      page.getByTestId(testIds.outfitHistory.card('e2e-suggestion-0')),
+    ).toBeVisible();
+
+    // No scroll is performed - the second page must load from the
+    // content-size/layout check, since 20 thumbnail-less cards fit inside a
+    // 3000px-tall viewport and never fire a scroll event.
+    await expect(
+      page.getByTestId(testIds.outfitHistory.card('e2e-suggestion-page-two')),
+    ).toBeVisible({ timeout: 10_000 });
+
+    expect(errors, 'outfit history must render without an unhandled error').toEqual([]);
+  });
 });

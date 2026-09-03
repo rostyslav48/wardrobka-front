@@ -1,6 +1,7 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { PropsWithChildren, ReactElement, ReactNode, useRef } from 'react';
 import {
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControlProps,
@@ -36,10 +37,12 @@ type Props = PropsWithChildren<{
   header?: ReactNode;
   /**
    * Fires once when the scroll position gets within `onEndReachedThreshold`
-   * (a fraction of the viewport height, default 0.3) of the bottom - the same
-   * shape as `FlatList`'s own prop, for a screen that paginates but can't use
-   * a `FlatList` because it lives inside this scroll view (nesting one
-   * virtualized list inside another is invalid RN).
+   * (a fraction of the viewport height, default 0.3) of the bottom, and is
+   * also re-checked whenever the content's own intrinsic height changes, so
+   * a page that doesn't overflow the viewport still triggers - the same
+   * shape and semantics as `FlatList`'s own prop, for a screen that
+   * paginates but can't use a `FlatList` because it lives inside this scroll
+   * view (nesting one virtualized list inside another is invalid RN).
    */
   onEndReached?: () => void;
   onEndReachedThreshold?: number;
@@ -61,20 +64,59 @@ function PageScrollView({
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const hasFiredRef = useRef(false);
+  // Mirrors FlatList's own onEndReached, which also fires on content-size
+  // change (not only on scroll) - a page of results short enough not to
+  // overflow the viewport would otherwise never trigger the next page.
+  const layoutHeightRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const scrollYRef = useRef(0);
+
+  const checkEndReached = () => {
+    if (!onEndReached) return;
+    const distanceFromEnd =
+      contentHeightRef.current - layoutHeightRef.current - scrollYRef.current;
+    const nearEnd = distanceFromEnd <= layoutHeightRef.current * onEndReachedThreshold;
+
+    if (nearEnd && !hasFiredRef.current) {
+      hasFiredRef.current = true;
+      onEndReached();
+    } else if (!nearEnd) {
+      hasFiredRef.current = false;
+    }
+  };
 
   const handleScroll = onEndReached
     ? (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-        const distanceFromEnd =
-          contentSize.height - layoutMeasurement.height - contentOffset.y;
-        const nearEnd = distanceFromEnd <= layoutMeasurement.height * onEndReachedThreshold;
+        scrollYRef.current = contentOffset.y;
+        contentHeightRef.current = contentSize.height;
+        layoutHeightRef.current = layoutMeasurement.height;
+        checkEndReached();
+      }
+    : undefined;
 
-        if (nearEnd && !hasFiredRef.current) {
-          hasFiredRef.current = true;
-          onEndReached();
-        } else if (!nearEnd) {
-          hasFiredRef.current = false;
-        }
+  const handleLayout = onEndReached
+    ? (event: LayoutChangeEvent) => {
+        layoutHeightRef.current = event.nativeEvent.layout.height;
+        checkEndReached();
+      }
+    : undefined;
+
+  // The scroll view's own `contentSize` (what `onScroll`/`onContentSizeChange`
+  // report) is the flexGrow:1 content container's *rendered* height, which is
+  // stretched to fill the viewport whenever real content is shorter than it -
+  // see `styles.ts`'s note on why `content` uses flexGrow. That means it can
+  // never be measured as "shorter than the viewport", which defeats this
+  // check for exactly the case it exists for. This inner wrapper has no
+  // flexGrow, so its `onLayout` reports children's true intrinsic height -
+  // content/layout changes are rare, unlike scroll, so each one re-evaluates
+  // fresh rather than the scroll path's "fired once, wait for nearEnd to
+  // clear" coalescing.
+  const handleInnerLayout = onEndReached
+    ? (event: LayoutChangeEvent) => {
+        contentHeightRef.current = event.nativeEvent.layout.height;
+        hasFiredRef.current = false;
+        checkEndReached();
       }
     : undefined;
 
@@ -98,6 +140,7 @@ function PageScrollView({
         refreshControl={refreshControl}
         onScroll={handleScroll}
         scrollEventThrottle={handleScroll ? 100 : undefined}
+        onLayout={handleLayout}
         keyboardDismissMode="on-drag"
         // Not React Native's 'never' default, under which a child does not
         // receive the tap that dismisses the keyboard. Every screen built on
@@ -105,7 +148,18 @@ function PageScrollView({
         // tap on a send button would otherwise be swallowed on iOS/Android.
         keyboardShouldPersistTaps="handled"
       >
-        {children}
+        {
+          // The inner-height wrapper only mounts for onEndReached callers -
+          // it would otherwise sit between the flexGrow content container and
+          // its direct children for every screen, breaking any `contentStyle`
+          // that uses `gap` between multiple children (ItemDetailScreen and
+          // NewItemScreen's `form` style both do).
+          onEndReached ? (
+            <View onLayout={handleInnerLayout}>{children}</View>
+          ) : (
+            children
+          )
+        }
       </Animated.ScrollView>
     </View>
   );

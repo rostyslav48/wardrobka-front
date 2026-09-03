@@ -150,7 +150,11 @@ export default function HistoryScreen() {
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
               <IconSymbol name="chevron.left" size={iconSize.xl} color={colors.textPrimary} />
             </Pressable>
-            <UiTitle style={styles.title} numberOfLines={1}>
+            <UiTitle
+              style={styles.title}
+              numberOfLines={1}
+              testID="outfit-history-screen"
+            >
               Outfit History
             </UiTitle>
             <View style={styles.headerSpacer} />
