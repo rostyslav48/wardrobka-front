@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { radius, spacing, tracking, typography } from '@/theme/layout';
+import { border, radius, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Spec 6.5: card padding 14 (`radius.card`, 1px `hairline`, ground
@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surfaceRaised,
     borderRadius: radius.card,
-    borderWidth: 1,
+    borderWidth: border.hairline,
     borderColor: colors.hairline,
     padding: spacing.cardPad,
     marginBottom: spacing.lg,

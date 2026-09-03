@@ -2,7 +2,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { WardrobeItem } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
-import { iconSize } from '@/theme/layout';
+import { iconSize, spacing } from '@/theme/layout';
 import { styles } from './styles';
 
 interface Props {
@@ -29,7 +29,7 @@ export default function ChatInputBar({
   const canSend = value.trim().length > 0 && !isSending;
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: bottomInset + 8 }]}>
+    <View style={[styles.wrapper, { paddingBottom: bottomInset + spacing.sm }]}>
       {selectedItems.length > 0 && (
         <ScrollView
           horizontal

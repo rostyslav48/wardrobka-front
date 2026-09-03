@@ -3,6 +3,7 @@ import { OutfitLog } from '@/types/outfit-log';
 import { WardrobeItem } from '@/types/wardrobe';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { styles } from './styles';
 
 const THUMB_MAX = 4;
@@ -40,7 +41,9 @@ export default function LogEntryCard({ entry, wardrobeItems, onPress }: Props) {
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.header}>
         <Text style={styles.date}>{formatDate(entry.date)}</Text>
-        <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+        {/* Spec 5, row 11: the chevron is the one non-square glyph (7x12); it
+            draws inside the `sm` box, same as every other list-row chevron. */}
+        <IconSymbol name="chevron.right" size={iconSize.sm} color={colors.textSecondary} />
       </View>
 
       {items.length > 0 && (
@@ -51,7 +54,9 @@ export default function LogEntryCard({ entry, wardrobeItems, onPress }: Props) {
                 <Image source={{ uri: item.img_url }} style={styles.thumbImage} resizeMode="cover" />
               ) : (
                 <View style={styles.thumbPlaceholder}>
-                  <IconSymbol name="tshirt.fill" size={20} color={colors.textSecondary} />
+                  {/* Spec 5's "hanger (icon font)" row: 24px, the same size
+                      `OutfitSuggestionCard` draws its own placeholder at. */}
+                  <IconSymbol name="tshirt.fill" size={iconSize.xxl} color={colors.textSecondary} />
                 </View>
               )}
             </View>

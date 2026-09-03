@@ -11,7 +11,7 @@ import { border, pageInlineIntent, radius, spacing, typography } from '@/theme/l
  */
 export const styles = StyleSheet.create({
   wrapper: {
-    borderTopWidth: 1,
+    borderTopWidth: border.hairline,
     borderTopColor: colors.hairline,
     backgroundColor: colors.background,
     paddingTop: spacing.md,

@@ -31,7 +31,7 @@ import { outfitLogService } from '@/services/outfit-log.service';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import ItemPickerSheet from '@/components/ui/ItemPickerSheet';
 import { colors } from '@/theme/colors';
-import { iconSize } from '@/theme/layout';
+import { iconSize, spacing } from '@/theme/layout';
 import { styles } from './styles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -213,7 +213,7 @@ export default function LogEntrySheet({
         <Animated.View
           style={[
             styles.sheet,
-            { paddingBottom: insets.bottom + 8 },
+            { paddingBottom: insets.bottom + spacing.sm },
             animatedSheetStyle,
           ]}
         >

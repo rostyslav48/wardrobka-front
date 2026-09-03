@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { spacing, tracking, typography } from '@/theme/layout';
+import { border, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Spec 6.4: "one row per session at padding 15 / 2 ... Rows are separated by
@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.rowY,
     paddingHorizontal: spacing.hair,
     gap: spacing.lg,
-    borderBottomWidth: 1,
+    borderBottomWidth: border.hairline,
     borderBottomColor: colors.hairline,
   },
   body: {

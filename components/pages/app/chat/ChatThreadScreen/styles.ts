@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { pageInlineIntent, radius, spacing, tracking, typography } from '@/theme/layout';
+import { border, pageInlineIntent, radius, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * No spec surface (7.2: "genuinely absent"). Reuses the chat-row type ramp
@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: pageInlineIntent,
     paddingVertical: spacing.cardPad,
-    borderBottomWidth: 1,
+    borderBottomWidth: border.hairline,
     borderBottomColor: colors.hairline,
     gap: spacing.sm,
   },

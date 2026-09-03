@@ -1,12 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { radius, spacing } from '@/theme/layout';
+import { border, radius, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surfaceRaised,
     borderRadius: radius.card,
-    borderWidth: 1,
+    borderWidth: border.hairline,
     borderColor: colors.hairline,
     padding: spacing.cardPad,
     marginBottom: spacing.lg,

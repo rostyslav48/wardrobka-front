@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { radius, spacing, tracking, typography } from '@/theme/layout';
+import { border, radius, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Spec section 6.4. `UiPage` owns the 62 top padding, the 20 gutters and the
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
   list: {
     marginTop: spacing.xl,
-    borderTopWidth: 1,
+    borderTopWidth: border.hairline,
     borderTopColor: colors.hairline,
   },
   centered: {
