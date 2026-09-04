@@ -4,14 +4,57 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthApiService } from '@/services/auth.service';
+import { calendarService } from '@/services/calendar.service';
+import { UpcomingOccasion } from '@/types/calendar';
 import {
   buildMorningNotificationContent,
+  buildOccasionNotificationContent,
   DEFAULT_NOTIFICATION_PREFS,
   EXPO_PUSH_TOKEN_KEY,
   NOTIFICATION_PREFS_KEY,
   NotificationPrefs,
   parseTime,
+  SCHEDULE_WINDOW_DAYS,
 } from '@/constants/notifications';
+
+/** "YYYY-MM-DD" in device-local time — the bucket key for grouping occasions by day. */
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Parses an occasion's ISO start. All-day events carry a date-only string
+ * ("2026-09-05") with no timezone — `new Date(...)` would read that as UTC
+ * midnight, which shifts to the wrong local day west of UTC. Timed events
+ * carry a full offset-aware timestamp and parse correctly as-is.
+ */
+function parseOccasionStart(iso: string): Date {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+  return new Date(iso);
+}
+
+function groupOccasionsByLocalDay(
+  occasions: UpcomingOccasion[],
+): Map<string, UpcomingOccasion[]> {
+  const byDay = new Map<string, UpcomingOccasion[]>();
+  for (const occasion of occasions) {
+    const key = localDateKey(parseOccasionStart(occasion.start));
+    const bucket = byDay.get(key);
+    if (bucket) {
+      bucket.push(occasion);
+    } else {
+      byDay.set(key, [occasion]);
+    }
+  }
+  return byDay;
+}
 
 /**
  * Device-facing notification layer (plan-08). Unlike the HTTP services this is
@@ -147,19 +190,80 @@ export const notificationsService = {
   },
 
   /**
+   * Schedules one one-off, date-triggered notification per local day for the
+   * next `SCHEDULE_WINDOW_DAYS` days, each carrying that day's occasions.
+   * Cancels any existing schedule first, exactly like `scheduleDaily`, so the
+   * two modes can never both be armed at once.
+   *
+   * A day whose fire time has already passed (always "today", when the
+   * configured time is earlier than now) is skipped rather than fired
+   * immediately or pushed later — every other day in the window is still in
+   * the future, so no day is scheduled twice and none is silently dropped.
+   */
+  async scheduleOccasionWindow(
+    time: string,
+    occasions: UpcomingOccasion[],
+    name?: string | null,
+  ): Promise<void> {
+    await this.cancelAll();
+
+    const { hour, minute } = parseTime(time);
+    const byDay = groupOccasionsByLocalDay(occasions);
+    const now = new Date();
+
+    for (let offset = 0; offset < SCHEDULE_WINDOW_DAYS; offset += 1) {
+      const fireDate = new Date(now);
+      fireDate.setDate(fireDate.getDate() + offset);
+      fireDate.setHours(hour, minute, 0, 0);
+      if (fireDate.getTime() <= now.getTime()) continue;
+
+      const dayOccasions = byDay.get(localDateKey(fireDate)) ?? [];
+      await Notifications.scheduleNotificationAsync({
+        content: buildOccasionNotificationContent(dayOccasions, name),
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: fireDate,
+        },
+      });
+    }
+  },
+
+  /**
    * Single entry point for reconciling the device schedule with the stored
    * preference — schedule when enabled, cancel when not. Used by the Settings
    * UI and on app startup.
+   *
+   * `calendarConnected` gates the occasion-aware window: pass whether the
+   * Google Calendar connection is currently `active` (not disconnected, not
+   * revoked). When it's true and `includeOccasions` is on, this fetches the
+   * next `SCHEDULE_WINDOW_DAYS` days of occasions and arms the rolling
+   * one-off window; on any failure (or when either condition is false) it
+   * falls back to the existing recurring daily schedule, unchanged.
    */
   async applyPrefs(
     prefs: NotificationPrefs,
     name?: string | null,
+    calendarConnected = false,
   ): Promise<void> {
-    if (prefs.enabled) {
-      await this.scheduleDaily(prefs.time, name);
-    } else {
+    if (!prefs.enabled) {
       await this.cancelAll();
+      return;
     }
+
+    if (prefs.includeOccasions && calendarConnected) {
+      try {
+        const { occasions } = await firstValueFrom(
+          calendarService.getOccasions(SCHEDULE_WINDOW_DAYS),
+        );
+        await this.scheduleOccasionWindow(prefs.time, occasions, name);
+        return;
+      } catch {
+        // Fetch failed — fall through to the recurring daily path so the
+        // user still gets a reminder.
+      }
+    }
+
+    await this.scheduleDaily(prefs.time, name);
   },
 
   // ---- Preference persistence (device-local, used by the Settings UI later) ----

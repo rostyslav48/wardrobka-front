@@ -4,10 +4,47 @@ import { Redirect, Stack } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '@/context/AuthContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
-import { CalendarProvider } from '@/context/CalendarContext';
+import { CalendarProvider, useCalendar } from '@/context/CalendarContext';
 import { useNotificationObserver } from '@/hooks/useNotificationObserver';
 import { notificationsService } from '@/services/notifications.service';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
+
+/**
+ * Reconciles the device notification schedule with the stored preference and
+ * the current calendar connection. Rendered inside `CalendarProvider` (not in
+ * `AuthLayout` itself) so it can read `status` — that's what re-arms the
+ * window after connect and after disconnect, in addition to cold start.
+ */
+function NotificationsReconciler() {
+  const { userData } = useAuth();
+  const { status, isLoading } = useCalendar();
+
+  useEffect(() => {
+    // Wait for the initial calendar fetch so this runs once, already knowing
+    // whether occasions are available, instead of scheduling twice (recurring
+    // then occasion-aware) on every cold start.
+    if (isLoading) return;
+
+    (async () => {
+      try {
+        if (!(await notificationsService.hasPermission())) {
+          await notificationsService.cancelAll();
+          return;
+        }
+        const prefs = await notificationsService.loadPrefs();
+        await notificationsService.applyPrefs(
+          prefs,
+          userData?.name,
+          status === 'active',
+        );
+      } catch {
+        // Scheduling is best-effort; never block app startup on it.
+      }
+    })();
+  }, [status, isLoading, userData?.name]);
+
+  return null;
+}
 
 // Show the reminder even when the app is already in the foreground.
 Notifications.setNotificationHandler({
@@ -20,7 +57,7 @@ Notifications.setNotificationHandler({
 });
 
 export default function AuthLayout() {
-  const { token, userData } = useAuth();
+  const { token } = useAuth();
   const toastRef = useRef<UiToastRef>(null);
 
   const handleNotificationError = useCallback((message: string) => {
@@ -29,27 +66,6 @@ export default function AuthLayout() {
 
   useNotificationObserver({ onError: handleNotificationError });
 
-  // Reconcile the device schedule with the stored preference on startup, so
-  // the reminder survives app restarts and picks up the current user's name.
-  // Gated on permission already being granted — the preference defaults to
-  // enabled, and startup must never trigger a permission prompt.
-  useEffect(() => {
-    if (!token) return;
-
-    (async () => {
-      try {
-        if (!(await notificationsService.hasPermission())) {
-          await notificationsService.cancelAll();
-          return;
-        }
-        const prefs = await notificationsService.loadPrefs();
-        await notificationsService.applyPrefs(prefs, userData?.name);
-      } catch {
-        // Scheduling is best-effort; never block app startup on it.
-      }
-    })();
-  }, [token, userData?.name]);
-
   if (!token) {
     return <Redirect href="/login" />;
   }
@@ -57,6 +73,7 @@ export default function AuthLayout() {
   return (
     <WardrobeProvider>
       <CalendarProvider>
+        <NotificationsReconciler />
         <View style={{ flex: 1 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

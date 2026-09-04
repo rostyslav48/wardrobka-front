@@ -4,6 +4,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCalendar } from '@/context/CalendarContext';
 import { notificationsService } from '@/services/notifications.service';
 import {
   DEFAULT_NOTIFICATION_PREFS,
@@ -29,6 +30,7 @@ function timeToDate(time: string): Date {
 
 export default function NotificationsSection({ onNotify }: Props) {
   const { userData } = useAuth();
+  const { status: calendarStatus } = useCalendar();
 
   const [prefs, setPrefs] = useState<NotificationPrefs>(
     DEFAULT_NOTIFICATION_PREFS,
@@ -60,9 +62,13 @@ export default function NotificationsSection({ onNotify }: Props) {
     async (next: NotificationPrefs) => {
       setPrefs(next);
       await notificationsService.savePrefs(next);
-      await notificationsService.applyPrefs(next, userData?.name);
+      await notificationsService.applyPrefs(
+        next,
+        userData?.name,
+        calendarStatus === 'active',
+      );
     },
-    [userData?.name],
+    [userData?.name, calendarStatus],
   );
 
   const handleToggle = useCallback(
@@ -91,6 +97,13 @@ export default function NotificationsSection({ onNotify }: Props) {
       void notificationsService.syncPushToken();
     },
     [prefs, persist, onNotify],
+  );
+
+  const handleIncludeOccasionsToggle = useCallback(
+    async (includeOccasions: boolean) => {
+      await persist({ ...prefs, includeOccasions });
+    },
+    [prefs, persist],
   );
 
   const handleTimeChange = useCallback(
@@ -122,6 +135,24 @@ export default function NotificationsSection({ onNotify }: Props) {
         <Switch
           value={prefs.enabled}
           onValueChange={handleToggle}
+          trackColor={{ false: colors.border, true: colors.brand }}
+          thumbColor={colors.textPrimary}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.rowLabel}>
+          <Text style={styles.label}>
+            Mention calendar events in the reminder
+          </Text>
+          <Text style={styles.hint}>
+            Turn off to keep event titles off your lock screen
+          </Text>
+        </View>
+        <Switch
+          value={prefs.includeOccasions}
+          onValueChange={handleIncludeOccasionsToggle}
+          disabled={!prefs.enabled}
           trackColor={{ false: colors.border, true: colors.brand }}
           thumbColor={colors.textPrimary}
         />
