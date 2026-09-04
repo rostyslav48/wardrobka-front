@@ -133,6 +133,7 @@ export default function NotificationsSection({ onNotify }: Props) {
           </Text>
         </View>
         <Switch
+          testID="settings-notifications-daily-switch"
           value={prefs.enabled}
           onValueChange={handleToggle}
           trackColor={{ false: colors.border, true: colors.brand }}
@@ -150,6 +151,7 @@ export default function NotificationsSection({ onNotify }: Props) {
           </Text>
         </View>
         <Switch
+          testID="settings-notifications-include-occasions-switch"
           value={prefs.includeOccasions}
           onValueChange={handleIncludeOccasionsToggle}
           disabled={!prefs.enabled}

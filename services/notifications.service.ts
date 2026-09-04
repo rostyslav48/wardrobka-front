@@ -57,6 +57,20 @@ function groupOccasionsByLocalDay(
 }
 
 /**
+ * Serializes `applyPrefs` calls. Its two callers (`NotificationsSection` and
+ * `NotificationsReconciler` in `app/(app)/_layout.tsx`) both fire it without
+ * awaiting one another — a toggle flip and a connect/disconnect status change
+ * can land within the same tick. Each call does cancel-then-schedule across
+ * several awaits (an HTTP round trip, then up to `SCHEDULE_WINDOW_DAYS`
+ * sequential `scheduleNotificationAsync` calls); two overlapping calls would
+ * interleave those writes and could double-book a day or leave the wrong
+ * mode armed. Chaining onto this queue instead makes every call wait for the
+ * previous one to fully finish (success or failure) before it starts, so the
+ * device schedule always ends up reflecting only the *last* call's decision.
+ */
+let applyQueue: Promise<unknown> = Promise.resolve();
+
+/**
  * Device-facing notification layer (plan-08). Unlike the HTTP services this is
  * a plain async module — it wraps Promise-based `expo-notifications` APIs and
  * device storage, not RxJS Ajax.
@@ -237,33 +251,51 @@ export const notificationsService = {
    * Google Calendar connection is currently `active` (not disconnected, not
    * revoked). When it's true and `includeOccasions` is on, this fetches the
    * next `SCHEDULE_WINDOW_DAYS` days of occasions and arms the rolling
-   * one-off window; on any failure (or when either condition is false) it
-   * falls back to the existing recurring daily schedule, unchanged.
+   * one-off window; on anything short of a `connected` response — a
+   * transport failure, or a 200 reporting `status: 'disconnected'` (Google
+   * revoked access, token expired, or any upstream error — the backend
+   * never throws for these, see `google-calendar.service.ts`) — it falls
+   * back to the existing recurring daily schedule, unchanged.
+   *
+   * Calls are serialized through `applyQueue` (see its comment) so two
+   * overlapping invocations can never interleave their cancel/schedule
+   * writes; the last call queued always wins.
    */
   async applyPrefs(
     prefs: NotificationPrefs,
     name?: string | null,
     calendarConnected = false,
   ): Promise<void> {
-    if (!prefs.enabled) {
-      await this.cancelAll();
-      return;
-    }
-
-    if (prefs.includeOccasions && calendarConnected) {
-      try {
-        const { occasions } = await firstValueFrom(
-          calendarService.getOccasions(SCHEDULE_WINDOW_DAYS),
-        );
-        await this.scheduleOccasionWindow(prefs.time, occasions, name);
+    const run = async () => {
+      if (!prefs.enabled) {
+        await this.cancelAll();
         return;
-      } catch {
-        // Fetch failed — fall through to the recurring daily path so the
-        // user still gets a reminder.
       }
-    }
 
-    await this.scheduleDaily(prefs.time, name);
+      if (prefs.includeOccasions && calendarConnected) {
+        try {
+          const { status, occasions } = await firstValueFrom(
+            calendarService.getOccasions(SCHEDULE_WINDOW_DAYS),
+          );
+          if (status === 'connected') {
+            await this.scheduleOccasionWindow(prefs.time, occasions, name);
+            return;
+          }
+          // status === 'disconnected' — Google-side failure or revocation
+          // reported as a normal 200. Fall through to the recurring path.
+        } catch {
+          // Transport-level failure (gateway unreachable, 401, 500) — fall
+          // through to the recurring daily path so the user still gets a
+          // reminder.
+        }
+      }
+
+      await this.scheduleDaily(prefs.time, name);
+    };
+
+    const task = applyQueue.then(run);
+    applyQueue = task.catch(() => {});
+    return task;
   },
 
   // ---- Preference persistence (device-local, used by the Settings UI later) ----
