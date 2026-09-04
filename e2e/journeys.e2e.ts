@@ -110,6 +110,25 @@ test.describe('authenticated app shell', () => {
     await expect(page.getByTestId('settings-calendar-row')).toBeVisible();
   });
 
+  test('the calendar-mention switch is disabled once the daily reminder is off', async ({
+    page,
+  }) => {
+    await page.getByTestId(testIds.tabs.settings).click();
+
+    await expect(page.getByText('Mention calendar events in the reminder')).toBeVisible();
+    await expect(page.getByTestId(testIds.settings.includeOccasionsSwitch)).toBeVisible();
+
+    // Turning the daily reminder off never prompts for permission (only
+    // turning it on does), so this is safe to drive without granting the
+    // browser's Notification permission first.
+    await page.getByTestId(testIds.settings.dailyReminderSwitch).click();
+    // react-native-web renders `disabled` onto the switch's inner
+    // `<input role="switch">`, not the outer `data-testid` div.
+    await expect(
+      page.getByTestId(testIds.settings.includeOccasionsSwitch).locator('input'),
+    ).toBeDisabled();
+  });
+
   test('all five tabs are reachable', async ({ page }) => {
     const stops: { tab: string; screenTestId: string }[] = [
       { tab: testIds.tabs.items, screenTestId: testIds.screens.items },

@@ -51,6 +51,12 @@ export const testIds = Object.freeze({
     log: 'log-screen',
     settings: 'settings-screen',
   }),
+  settings: Object.freeze({
+    // plan-12 phase 5: the daily-reminder switch and the "mention calendar
+    // events" switch it gates, both in NotificationsSection.
+    dailyReminderSwitch: 'settings-notifications-daily-switch',
+    includeOccasionsSwitch: 'settings-notifications-include-occasions-switch',
+  }),
   item: Object.freeze({
     photoPicker: 'item-photo-picker',
     photoAnalyzing: 'item-photo-analyzing',
