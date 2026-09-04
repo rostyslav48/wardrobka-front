@@ -842,3 +842,89 @@ so building them would mean inventing behaviour, not applying a design. §6.1's
 already routes to Settings and the masthead is shell, not Home. Home's own greeting block
 and `UpcomingOccasions` section have no §6.2 counterpart and are kept, restyled onto the
 scale. Everything §6.2 records for the ask block and for recent suggestions is applied.
+
+---
+
+## 9. Knowing divergences from the mockup
+
+Closed out at plan-13 Phase 8, 2026-09-04, against integration front `1036ce9`. Everything
+here is a deliberate decision with a reason, not an outstanding defect. Anything found later
+that is *not* in this list is a defect.
+
+### 9.1 Product the app does not have (spec §7.0: restyle what exists)
+
+- **The Home hero card is not built.** §6.2 item 1 — "TODAY · 08:41 / 94% MATCH", the four
+  garment slots, the weather-and-occasion strip and the "Logged for today" / "Swap" actions.
+  There is no outfit-of-the-day, no wear-logging action on Home and no match score in the
+  product, so building the card would mean inventing behaviour.
+- **The wardrobe pulse block is not built** (§6.2 item 4). It aggregates wardrobe statistics
+  the backend does not compute.
+- **The masthead is not built** (§6.1) — the "● WARDROPKA" wordmark, the date and the avatar
+  entry point to Settings. The tab bar already routes to Settings, and the masthead is shell
+  rather than Home.
+- **Home keeps two sections the mockup has no counterpart for**: the greeting block
+  ("Good afternoon, …" / "What are you wearing today?") and `UpcomingOccasions`, both
+  restyled onto the scale. Removing working product to match a mockup that never covered it
+  would be a regression.
+- **The implemented tab bar has five tabs, the mockup four.** Settings is a real route and
+  the mockup reaches it through the unbuilt masthead avatar, so it is a tab instead.
+
+### 9.2 Typography
+
+- **Fonts are the platform default face, by decision (2026-09-02).** The mockup's display
+  face is not licensed into the app and no similar family is substituted. Every *size*,
+  weight, line height and tracking in `theme/layout.ts` is the measured value; only the
+  family differs. This is the largest visible difference in the side-by-side.
+- **Nineteen `fontSize` literals remain in six `styles.ts` files** rather than reading a
+  `typography.*` role: `components/ui/form/UiSelect/styles.ts`,
+  `components/ui/form/UiTextArea/styles.ts`, `components/ui/OutfitSuggestionCard/styles.ts`,
+  `components/pages/app/home/UpcomingOccasions/styles.ts`,
+  `components/pages/login/LoginScreen/styles.ts` and
+  `components/pages/login/ForgotPasswordScreen/styles.ts`. The two login files carry
+  comments explaining theirs: 16/'bold' and 14/'500' are not on the type scale, and the
+  Phase 7 follow-up was a structural move whose oracle was "the rendered output must not
+  change", so substituting a nearest role would have changed it. The other four files hold
+  sizes (11, 12, 13, 14, 15, 16) that predate the scale. All six files do import
+  `@/theme/layout` for spacing, radius and colour. Aligning them is a restyle, not a
+  verification, and is deliberately left out of Phase 8.
+
+### 9.3 Hex outside `theme/colors.ts`
+
+The Phase 8 grep is naive and reports four files. Two are *content*, per §1.3, which names
+colour-picker swatch data as data rather than theme values:
+
+- `components/pages/app/items/itemForm.ts` — 13 swatch values for the item colour picker.
+- `components/pages/app/items/FiltersPopup/index.tsx` — the same 13 values for the filter
+  sheet. (The Phase 8 acceptance criterion named only `itemForm.ts`; both files are the same
+  case and QA adjudicated it in Phases 5 and 6 without filing it.)
+
+The other two are comments quoting the spec's own hex while explaining what replaced it:
+`components/ui/UiToast/styles.ts` and `components/ui/PromptShortcutChips/styles.ts`.
+
+### 9.4 Home side-by-side
+
+`design/artboards/implemented/home-side-by-side.png` puts the `02-home-logged` export beside
+the implemented Home at 390x844. Beyond §9.1 and §9.2, the remaining differences are:
+
+- **Empty states, not layout.** The capture runs on a freshly created account, so recent
+  suggestions render "No suggestions yet" and occasions render the "Connect Google Calendar"
+  prompt where the mockup shows populated cards.
+- **The prompt-shortcut chip row is a horizontal scroller** and clips its second chip at the
+  right edge; the mockup authored three short chips that fit. The chips are content
+  (`constants/promptShortcuts.ts`), and the row scrolls by design.
+- **Section order differs**: the implemented Home is greeting → occasions → ask → recent
+  suggestions; the mockup is masthead → hero → ask → recent suggestions. The two sections
+  the mockup lacks have to go somewhere, and occasions sit above the ask block because they
+  are what a user checks before asking.
+
+### 9.5 Captures
+
+`design/artboards/implemented/` holds eleven screenshots at 390x844 — five tabs
+(`tab-home`, `tab-items`, `tab-chat`, `tab-log`, `tab-settings`) and six secondary screens
+(`secondary-item-form`, `secondary-chat-list`, `secondary-chat-thread`,
+`secondary-outfit-history`, `auth-login`, `auth-forgot-password`) — plus the side-by-side.
+
+`secondary-chat-thread` is the **chat list**, not a populated thread. Creating a session
+needs `POST /ai-assistant/chat`, which reaches Gemini; the call did not return a session in
+the capture run, and the capture falls back to `/chat` rather than inventing a fixture. A
+populated thread was verified live in Phase 6's QA round.

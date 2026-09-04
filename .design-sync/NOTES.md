@@ -99,30 +99,29 @@ was a hard build or runtime failure:
 
 ## Known render warns
 
-None. The final validate run is warning-free.
+**One, expected: `[FONT_MISSING]`.** The validate run reports `"Newsreader"
+(--wa-font-family-display)` and `"Archivo" (--wa-font-family-body)` as referenced by the
+shipped CSS with no `@font-face` shipping them. That is the fonts decision of 2026-09-02
+stated back by the tool: the app renders in the platform default face and no similar family
+is substituted, so the DS pane substituting system fonts is the intended result, not a
+defect. Do not "fix" it by adding `cfg.extraFonts`. All 17 previews render cleanly and the
+warning is non-blocking.
+
+**Token counts, so a future reader does not mistake one for a loss.** `gen-tokens.mjs`
+writes **194** tokens and `ds-bundle/tokens/tokens.css` ships exactly 194 `--wa-*`
+definitions — those two must always agree, and 194 is the number to watch. The validate line
+prints `tokens: 198 defined, 2 referenced`; its "defined" count is four higher than anything
+in the shipped CSS (the two `var()` uses in `base.css` are what "2 referenced" counts). The
+extra four were not traced to a source at the Phase 8 gate. Treat a change in *194* as
+signal; the 198 is the tool's own accounting.
 
 ## Findings worth acting on (app source, not sync config)
 
-- **`UiPage`'s `indented` prop was inert; fixed.** The old style array ended with
-  `{ paddingTop: insets.top, … }`, which overrode `container__indented`'s
-  `paddingTop: 60` whether the prop was true or false, so both settings rendered
-  identically. The prop is now `topInset?: number`, composed as
-  `paddingTop: insets.top + topInset` and defaulting to 62 (spec section 6.1's
-  measured scroll-region top padding). `conventions.md`, `docs/UiPage.md` and
-  `cfg.dtsPropsFor.UiPage` all describe the new prop, and `previews/UiPage.tsx`
-  now ships the second cell it was previously denied for being pixel-identical.
-- **`UiPage`'s content container was capped at one viewport; fixed.**
-  `contentContainerStyle: { height: '100%' }` made content taller than the screen
-  unreachable. It is now `flexGrow: 1`. Login and forgot-password were short enough
-  never to hit it; the tab screens adopted in later phases are not.
-- **`UiPage`'s page padding was applied twice under `refreshControl`; fixed.**
-  `react-native-web`'s `ScrollView` renders a `refreshControl` by cloning it with
-  `style: props.style` and keeping that style on the scroll view too, so the 20px
-  gutter and the top inset both landed twice - Home rendered at a 40px gutter and a
-  124px top inset. The padded frame is now a `View` wrapping the scroll view; the
-  scroll view itself carries only `flex: 1`. Measured after the fix: 20 and 62.
-  Only web is affected, and only a caller that passes `refreshControl` - Home is the
-  first one, which is why Phase 3 could not have seen it.
+- The three `UiPage` findings recorded here through Phases 3-5 (an inert `indented` prop, a
+  content container capped at one viewport, and page padding applied twice under
+  `refreshControl`) are all fixed, shipped and verified in later phases' QA rounds. Removed
+  from this list at the Phase 8 gate; the fixes themselves are described in
+  `docs/UiPage.md`, `conventions.md` and `cfg.dtsPropsFor.UiPage`.
 - **`IconSymbol` warns on an unmapped name.** `MAPPING[name]` being `undefined`
   used to render as a blank box on Android and web with no other signal. It now
   emits a `__DEV__`-guarded `console.warn`. The `.ios.tsx` variant goes through

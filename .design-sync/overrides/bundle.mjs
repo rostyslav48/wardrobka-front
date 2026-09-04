@@ -1,4 +1,4 @@
-// forked from design-sync lib/bundle.mjs - React Native source needs react-native-web resolution (.web.* extensions, .ttf/.js-as-jsx loaders); only sharedBuildOptions differs.
+// forked from design-sync lib/bundle.mjs - React Native source needs react-native-web resolution (.web.* extensions, .ttf/.js-as-jsx loaders). Two things differ from upstream: sharedBuildOptions, and the worklets() esbuild plugin below (NOTES.md fork change 4).
 // esbuild bundling: dist entry -> IIFE at window.<GLOBAL>, plus the
 // `/* @ds-bundle: {...} */` first-line header the claude.ai/design app's
 // self-check parses.
