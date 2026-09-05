@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
     height: '100%',
   },
   photoAnalyzingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,

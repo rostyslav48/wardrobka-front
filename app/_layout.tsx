@@ -1,4 +1,4 @@
-import { DarkTheme, Theme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, Theme, ThemeProvider } from 'expo-router/react-navigation';
 import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
 import Head from 'expo-router/head';

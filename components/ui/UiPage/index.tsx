@@ -9,7 +9,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { styles } from './styles';
 import { spacing } from '@/theme/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

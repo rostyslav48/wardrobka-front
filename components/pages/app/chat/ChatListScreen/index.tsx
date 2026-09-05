@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { aiAssistantService } from '@/services/ai-assistant.service';
 import { AssistantSessionDto } from '@/types/ai-assistant';
 import SessionListItem from '@/components/pages/app/chat/SessionListItem';

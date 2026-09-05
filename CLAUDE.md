@@ -4,8 +4,8 @@
 React Native / Expo app for wardrobe management. Targets iOS, Android, and Web via Expo Router.
 
 ## Tech Stack
-- **Framework**: Expo 54 + React Native 0.81.5 + React 19.1.0
-- **Routing**: Expo Router 6 (file-based, `app/` directory)
+- **Framework**: Expo 57 + React Native 0.86.3 + React 19.2.3
+- **Routing**: Expo Router 57 (file-based, `app/` directory)
 - **State**: React Context + RxJS Observables (no Redux/Zustand)
 - **Forms**: Formik + Yup validation
 - **HTTP**: RxJS Ajax (`services/http.service.ts`)
@@ -80,6 +80,11 @@ config.ts     # reads EXPO_PUBLIC_* env vars
 - Expo Router file-based: `app/(app)/(tabs)/index.tsx` → home tab
 - Auth guard lives in `app/(app)/_layout.tsx` — redirects unauthenticated users to `(auth)/login`
 - Typed routes enabled (`experiments.typedRoutes: true` in `app.json`)
+- Expo Router 57 vendors React Navigation — import `Tabs`, `useBottomTabBarHeight`,
+  `BottomTabBarHeightContext` and `BottomTabBarButtonProps` from `expo-router/js-tabs`,
+  and `PlatformPressable` / `ThemeProvider` / `DarkTheme` from `expo-router/react-navigation`.
+  Do **not** add `@react-navigation/*` packages back: their contexts are separate instances
+  from the ones Expo Router renders, so hooks read from them return nothing at runtime.
 
 ## State & Context
 - `useAuth()` — auth state + login/register/logout (Observables)
@@ -99,6 +104,9 @@ Only `EXPO_PUBLIC_*` variables are exposed to the client bundle by Expo.
 ## Gotchas & Things to Avoid
 - `react-native-worklets` is in deps — likely required by `react-native-reanimated`; do not remove
 - `newArchEnabled: true` — avoid libraries that are not compatible with the React Native New Architecture
+- `StyleSheet.absoluteFillObject` was removed in RN 0.86 — use `StyleSheet.absoluteFill`, which is now the plain object
+- `expo lint` currently reports pre-existing `react-hooks` errors (`refs`, `set-state-in-effect`,
+  `immutability`) newly enabled by eslint-plugin-react-hooks 7 in SDK 57; they predate the SDK 57 upgrade
 - The app is **portrait-only** (`"orientation": "portrait"` in `app.json`)
 - No global error boundary is set up yet — RxJS errors must be caught per-subscription
 - No CI/CD or build pipeline is configured yet *(fill in if added)*

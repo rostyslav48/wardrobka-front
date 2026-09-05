@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 import { Animated, StyleProp, Text, ViewStyle } from 'react-native';
-import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
+import { BottomTabBarHeightContext } from 'expo-router/js-tabs';
 import { spacing } from '@/theme/layout';
 import { styles } from './styles';
 
