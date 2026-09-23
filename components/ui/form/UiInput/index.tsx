@@ -1,4 +1,4 @@
-import { Pressable, TextInput, View } from 'react-native';
+import { KeyboardTypeOptions, Pressable, TextInput, View } from 'react-native';
 import { colors } from '@/theme/colors';
 import { useState } from 'react';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -11,6 +11,8 @@ interface Props {
   isSecureText?: boolean;
   readonly?: boolean;
   testID?: string;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: KeyboardTypeOptions;
 }
 
 export default function UiInput({
@@ -20,6 +22,8 @@ export default function UiInput({
   isSecureText,
   readonly,
   testID,
+  autoCapitalize,
+  keyboardType,
 }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -34,6 +38,9 @@ export default function UiInput({
         secureTextEntry={isSecureText && !isPasswordVisible}
         editable={!readonly}
         testID={testID}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
+        autoCorrect={autoCapitalize === 'none' ? false : undefined}
       />
       {isSecureText && (
         <Pressable

@@ -80,3 +80,35 @@ export async function loginThroughUi(page: Page, user: WebUser) {
     'login never completed',
   ).toBeHidden();
 }
+
+/**
+ * Submits credentials expected to fail and waits for "Wrong email or
+ * password" - retrying past the same 10 requests/60s login throttle
+ * `loginThroughUi` already retries past. A throttled attempt here renders
+ * "Something went wrong, please try again." instead (BUG-F06: the real 429
+ * body carries no `statusCode`, so the login screen's own 429 branch never
+ * matches it), which would otherwise fail the exact-text assertion these
+ * tests make regardless of how many other specs' logins ran first.
+ */
+export async function expectWrongCredentials(page: Page, email: string, password: string) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.getByTestId(testIds.login.emailInput).fill(email);
+    await page.getByTestId(testIds.login.passwordInput).fill(password);
+    await page.getByTestId(testIds.login.submitButton).click();
+
+    const shown = await expect(page.getByText('Wrong email or password'))
+      .toBeVisible({ timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (shown) return;
+
+    // Rate limited — wait for the 60s window to roll over and try again.
+    await page.waitForTimeout(45_000);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId(testIds.login.heading).waitFor({ timeout: 45_000 });
+  }
+  await expect(
+    page.getByText('Wrong email or password'),
+    'login error never appeared — stuck behind the login throttle',
+  ).toBeVisible();
+}

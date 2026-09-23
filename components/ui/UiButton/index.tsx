@@ -50,6 +50,7 @@ export default function UiButton({
       onPress={handleClick}
       disabled={isLoading}
       testID={testID}
+      accessibilityRole="button"
     >
       {isLoading ? <ActivityIndicator color={colors.accentText} /> : children}
     </TouchableOpacity>

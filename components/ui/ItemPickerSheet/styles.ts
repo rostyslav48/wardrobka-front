@@ -10,7 +10,13 @@ import {
 } from '@/theme/layout';
 
 const CELL_GAP = spacing.sm;
+const COLUMNS = 3;
 const LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.52;
+// Fixed pixel width, not a flex/percentage split - RN has no `calc()`, and a
+// percentage `flexBasis` plus a `gap` together overflow the row width. This
+// mirrors `LIST_MAX_HEIGHT` above in deriving straight from the window.
+const CELL_WIDTH =
+  (Dimensions.get('window').width - pageInlineIntent * 2 - CELL_GAP * (COLUMNS - 1)) / COLUMNS;
 
 export const styles = StyleSheet.create({
   container: {
@@ -46,8 +52,11 @@ export const styles = StyleSheet.create({
     gap: CELL_GAP,
     marginBottom: CELL_GAP,
   },
+  // Fixed width, not `flex: 1` - a short last row (e.g. a single item in a
+  // 3-column grid) would otherwise stretch that one cell across the whole
+  // row instead of leaving the remaining columns empty.
   cell: {
-    flex: 1,
+    width: CELL_WIDTH,
     borderRadius: radius.tile,
     overflow: 'hidden',
     backgroundColor: colors.surface,

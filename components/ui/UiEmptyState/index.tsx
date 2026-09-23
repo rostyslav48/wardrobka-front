@@ -13,18 +13,26 @@ interface Props {
   /** Optional tappable action rendered below the subtitle. Provide both or neither. */
   actionLabel?: string;
   onAction?: () => void;
+  testID?: string;
 }
 
-export default function UiEmptyState({ icon, title, subtitle, actionLabel, onAction }: Props) {
+export default function UiEmptyState({
+  icon,
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+  testID,
+}: Props) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID={testID}>
       <View style={styles.iconWrapper}>
         <IconSymbol name={icon} size={iconSize.xxl} color={colors.textSecondary} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
       {actionLabel && onAction ? (
-        <Pressable style={styles.action} onPress={onAction} hitSlop={8}>
+        <Pressable style={styles.action} onPress={onAction} hitSlop={8} testID={testID ? `${testID}-action` : undefined}>
           <Text style={styles.actionLabel}>{actionLabel}</Text>
         </Pressable>
       ) : null}

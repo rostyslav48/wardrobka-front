@@ -67,6 +67,9 @@ function Chip({
     <Pressable
       style={[styles.chip, active && styles.chip__active]}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
     >
       <Text style={[styles.chipText, active && styles.chipText__active]}>
         {label}
@@ -169,6 +172,9 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
             <Pressable
               style={[styles.swatchAny, draft.color === undefined && styles.swatchAny__active]}
               onPress={() => set('color', undefined)}
+              accessibilityRole="button"
+              accessibilityLabel="Any colour"
+              accessibilityState={{ selected: draft.color === undefined }}
             >
               <Text style={styles.swatchAnyText}>Any</Text>
             </Pressable>
@@ -185,6 +191,9 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
                   // match the ring rather than shrinking the visible swatch.
                   hitSlop={2}
                   onPress={() => set('color', draft.color === hex ? undefined : hex)}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  accessibilityState={{ selected: draft.color === hex }}
                 />
               </View>
             ))}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import { useAuth } from '@/context/AuthContext';
 import { AuthApiService, ProfileData, UpdateProfilePayload } from '@/services/auth.service';
 import ProfileSection from '@/components/pages/app/settings/ProfileSection';
 import NotificationsSection from '@/components/pages/app/settings/NotificationsSection';
@@ -16,6 +17,7 @@ const appVersion = Constants.expoConfig?.version ?? '—';
 
 export default function SettingsScreen() {
   const toastRef = useRef<UiToastRef>(null);
+  const { updateUserData } = useAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +44,7 @@ export default function SettingsScreen() {
     AuthApiService.updateProfile(payload).subscribe({
       next: (updated) => {
         setProfile(updated);
+        updateUserData({ name: updated.name });
         onSuccess();
         toastRef.current?.show('Profile updated', 'success');
       },
@@ -61,9 +64,14 @@ export default function SettingsScreen() {
           <UiTitle sizeL>Settings</UiTitle>
         </View>
 
+        {/* QA-55: a fixed-height loader (matching ProfileSection's loaded
+            height) instead of a small spinner in an unsized block, so the
+            page doesn't grow by ~150pt once the profile arrives. */}
         <View style={styles.profileBlock}>
           {isLoading ? (
-            <ActivityIndicator style={styles.loader} color={colors.textSecondary} />
+            <View style={styles.loader}>
+              <ActivityIndicator color={colors.textSecondary} />
+            </View>
           ) : profile ? (
             <ProfileSection profile={profile} onSave={handleSave} />
           ) : null}

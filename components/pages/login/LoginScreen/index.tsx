@@ -10,7 +10,10 @@ import UiFormField from '@/components/ui/form/UiFormField';
 import UiInput from '@/components/ui/form/UiInput';
 import UiError from '@/components/ui/UiError';
 import { LoginSchema } from '@/components/pages/login/validators/loginValidation';
-import { RegisterSchema } from '@/components/pages/login/validators/registerValidation';
+import {
+  RegisterSchema,
+  friendlyAuthError,
+} from '@/components/pages/login/validators/registerValidation';
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
 import UiTitle from '@/components/ui/UiTitle';
@@ -46,7 +49,7 @@ export default function LoginScreen() {
         if (statusCode === 401 || statusCode === 404) {
           setErrorMessage('Wrong email or password');
         } else if (statusCode === 400) {
-          setErrorMessage(e.response.message);
+          setErrorMessage(friendlyAuthError(e.response.message));
         } else if (statusCode === 429) {
           setErrorMessage('Too many attempts. Please wait a moment and try again.');
         } else {
@@ -65,7 +68,7 @@ export default function LoginScreen() {
         const statusCode = e.response?.statusCode;
 
         if (statusCode === 400 || statusCode === 409) {
-          setErrorMessage(e.response.message);
+          setErrorMessage(friendlyAuthError(e.response.message));
         } else if (statusCode === 429) {
           setErrorMessage('Too many attempts. Please wait a moment and try again.');
         } else {
@@ -79,11 +82,17 @@ export default function LoginScreen() {
   };
 
   const onSubmit = (values: LoginForm | RegisterForm): Promise<unknown> => {
+    const email = values.email.trim();
     const method = isLogin
-      ? login(values.email, values.password)
-      : register(values.email, values.password, (values as RegisterForm).name);
+      ? login(email, values.password)
+      : register(email, values.password, (values as RegisterForm).name.trim());
 
     return firstValueFrom(method);
+  };
+
+  const switchMode = () => {
+    setIsLogin(!isLogin);
+    setErrorMessage('');
   };
 
   return (
@@ -107,14 +116,24 @@ export default function LoginScreen() {
           validateOnChange={false}
           validateOnBlur={false}
         >
-          {({ handleChange, handleSubmit, values, errors, isSubmitting }) => (
+          {({ handleChange, handleSubmit, values, errors, isSubmitting }) => {
+            // QA-19: the server error banner is a separate piece of state from
+            // Formik's own field errors, so it needs its own clear-on-change.
+            const onFieldChange = (field: keyof RegisterForm) => (value: string) => {
+              setErrorMessage('');
+              handleChange(field)(value);
+            };
+
+            return (
             <View style={styles.formContent}>
               <UiFormField errorMessage={errors.email}>
                 <UiInput
                   value={values.email}
-                  onChange={handleChange('email')}
+                  onChange={onFieldChange('email')}
                   placeholder="Email"
                   testID="login-email-input"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
                 />
               </UiFormField>
 
@@ -122,7 +141,7 @@ export default function LoginScreen() {
                 <UiFormField errorMessage={errors.name}>
                   <UiInput
                     value={values.name}
-                    onChange={handleChange('name')}
+                    onChange={onFieldChange('name')}
                     placeholder="Name"
                     testID="login-name-input"
                   />
@@ -132,7 +151,7 @@ export default function LoginScreen() {
               <UiFormField errorMessage={errors.password}>
                 <UiInput
                   value={values.password}
-                  onChange={handleChange('password')}
+                  onChange={onFieldChange('password')}
                   placeholder="Password"
                   isSecureText={true}
                   testID="login-password-input"
@@ -144,7 +163,7 @@ export default function LoginScreen() {
                   <UiFormField errorMessage={errors.confirmPassword}>
                     <UiInput
                       value={values.confirmPassword}
-                      onChange={handleChange('confirmPassword')}
+                      onChange={onFieldChange('confirmPassword')}
                       placeholder="Confirm password"
                       isSecureText={true}
                       testID="login-confirm-password-input"
@@ -167,11 +186,12 @@ export default function LoginScreen() {
                 </Text>
               </UiButton>
             </View>
-          )}
+            );
+          }}
         </Formik>
 
         <UiButton
-          onPress={() => setIsLogin(!isLogin)}
+          onPress={switchMode}
           secondary
           style={styles.switchButton}
           testID="login-switch-mode-link"

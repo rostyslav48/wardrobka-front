@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { useModal } from '@/context/ModalContext';
@@ -11,8 +12,9 @@ import UiTitle from '@/components/ui/UiTitle';
 import FiltersPopup from '@/components/pages/app/items/FiltersPopup';
 import ItemsGrid from '@/components/pages/app/items/ItemsGrid';
 import SearchBar from '@/components/pages/app/items/SearchBar';
+import { usePendingImagePolling } from '@/components/pages/app/items/usePendingImagePolling';
 import { SEASON_OPTIONS, STATUS_OPTIONS, SWATCHES } from '@/components/pages/app/items/itemForm';
-import { WardrobeFilters } from '@/types/wardrobe';
+import { WardrobeFilters, WardrobeItem } from '@/types/wardrobe';
 import { styles } from './styles';
 
 // Spec 6.3's applied-filter chip row. Only the fields `FiltersPopup` actually
@@ -39,11 +41,55 @@ function chipLabel(field: FilterField, filters: WardrobeFilters): string | null 
   }
 }
 
+/** name/brand/type match, case-insensitive and trimmed - QA-40. */
+function matchesSearch(item: WardrobeItem, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return (
+    item.name.toLowerCase().includes(needle) ||
+    (item.brand ?? '').toLowerCase().includes(needle) ||
+    item.type.toLowerCase().includes(needle)
+  );
+}
+
 export default function ItemsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { show } = useModal();
-  const { items, isLoading, activeFiltersCount, filters, applyFilters, clearFilters } =
-    useWardrobe();
+  const {
+    items,
+    total,
+    isLoading,
+    error,
+    activeFiltersCount,
+    filters,
+    applyFilters,
+    clearFilters,
+    refresh,
+  } = useWardrobe();
+  const [search, setSearch] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  usePendingImagePolling(items);
+
+  // QA-53/62: pulling to refresh a failed load looked identical to it doing
+  // nothing - no spinner ever showed, and a failed retry left the same
+  // silence. `isRefreshing` is cleared by `refresh`'s own onSettled callback,
+  // so it tracks only the pull started here, not the initial load or the
+  // pending-image poll (both of which also flip `isLoading`, via a separate
+  // fetch that never calls this callback).
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    refresh(() => setIsRefreshing(false));
+  };
+
+  const hasSearch = search.trim().length > 0;
+  const visibleItems = hasSearch ? items.filter((item) => matchesSearch(item, search)) : items;
+  const hasActiveSearchOrFilters = hasSearch || activeFiltersCount > 0;
+
+  const clearSearchAndFilters = () => {
+    setSearch('');
+    clearFilters();
+  };
 
   const openFiltersModal = () => {
     show({
@@ -66,18 +112,39 @@ export default function ItemsScreen() {
 
   return (
     <View style={styles.root} testID="items-screen">
-      <UiPage tabBarInset>
+      <UiPage
+        tabBarInset
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.textSecondary}
+          />
+        }
+      >
         {/* Spec 6.3: "Wardrobe" 28/400 Newsreader left, "N ITEMS" right. */}
         <View style={styles.titleRow}>
           <UiTitle sizeL>Wardrobe</UiTitle>
-          <UiTitle style={styles.itemCount}>{items.length} ITEMS</UiTitle>
+          <UiTitle style={styles.itemCount}>
+            {/* QA-41: filters are server-side, so `items` here is already the
+                narrowed response with no total of its own - `total` (tracked
+                in WardrobeContext from the last unfiltered fetch) keeps this
+                accurate for a filter chip, not just the client-side search. */}
+            {hasActiveSearchOrFilters
+              ? `${visibleItems.length} OF ${total} ITEMS`
+              : `${items.length} ITEMS`}
+          </UiTitle>
         </View>
 
         <View style={styles.searchRow}>
           <View style={styles.searchBarWrapper}>
-            <SearchBar />
+            <SearchBar value={search} onChangeText={setSearch} />
           </View>
-          <Pressable style={styles.filterButton} onPress={openFiltersModal}>
+          <Pressable
+            style={styles.filterButton}
+            onPress={openFiltersModal}
+            testID="items-filter-button"
+          >
             <IconSymbol
               name="line.3.horizontal.decrease"
               size={iconSize.mdPlus}
@@ -106,7 +173,15 @@ export default function ItemsScreen() {
         ) : null}
 
         <View style={styles.grid}>
-          <ItemsGrid items={items} isLoading={isLoading} />
+          <ItemsGrid
+            items={visibleItems}
+            totalLoaded={items.length}
+            isLoading={isLoading}
+            error={error}
+            onRetry={() => refresh()}
+            hasActiveSearchOrFilters={hasActiveSearchOrFilters}
+            onClearSearchAndFilters={clearSearchAndFilters}
+          />
         </View>
       </UiPage>
 

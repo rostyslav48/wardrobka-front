@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -62,6 +63,11 @@ export default function ChatThreadScreen() {
 
   const listRef = useRef<FlatList>(null);
   const hasAutoSentRef = useRef(false);
+  // QA-56: opening a long thread populated `messages` from the top and then
+  // animated all the way to the bottom. The first scroll for a given session
+  // (its history arriving, or its first optimistic message) jumps instantly;
+  // only messages added after that animate.
+  const hasScrolledOnMountRef = useRef(false);
 
   // ── Fetch message history ────────────────────────────────────────────────────
 
@@ -84,11 +90,29 @@ export default function ChatThreadScreen() {
 
   // ── Scroll to bottom when messages change ────────────────────────────────────
 
+  // A different session's history is a different starting point to jump to.
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-    }
+    hasScrolledOnMountRef.current = false;
+  }, [activeSessionId]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const animated = hasScrolledOnMountRef.current;
+    hasScrolledOnMountRef.current = true;
+    setTimeout(() => listRef.current?.scrollToEnd({ animated }), 80);
   }, [messages]);
+
+  // QA-30: focusing the composer opened the keyboard without keeping the
+  // newest messages in view, leaving them behind it. `keyboardWillShow` fires
+  // before the keyboard is fully up on iOS, matching the composer's own
+  // reposition; `keyboardDidShow` is the closest Android has.
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => listRef.current?.scrollToEnd({ animated: true }),
+    );
+    return () => sub.remove();
+  }, []);
 
   // ── Send message ─────────────────────────────────────────────────────────────
 
@@ -170,6 +194,7 @@ export default function ChatThreadScreen() {
         <ItemPickerSheet
           items={wardrobeItems}
           selectedIds={selectedItems.map((i) => i.id)}
+          bottomInset={insets.bottom}
           onConfirm={(ids) => {
             setSelectedItems(wardrobeItems.filter((i) => ids.includes(i.id)));
             hide();

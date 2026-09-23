@@ -7,7 +7,7 @@
  * needs rewriting.
  */
 import { test, expect } from '@playwright/test';
-import { createApiUser, loginThroughUi, openApp, WebUser } from './support/app';
+import { createApiUser, expectWrongCredentials, loginThroughUi, openApp, WebUser } from './support/app';
 import { testIds } from './support/testIds';
 
 let user: WebUser;
@@ -34,22 +34,46 @@ test('a user can log in and land on the wardrobe tabs', async ({ page }) => {
 test('wrong credentials show an inline error and keep the user on login', async ({
   page,
 }) => {
-  await page.getByTestId(testIds.login.emailInput).fill(user.email);
-  await page.getByTestId(testIds.login.passwordInput).fill('TotallyWrong123!');
-  await page.getByTestId(testIds.login.submitButton).click();
-
   // Deliberate text assertion: the error copy is behaviour, not chrome.
-  await expect(page.getByText('Wrong email or password')).toBeVisible();
+  // Goes through expectWrongCredentials rather than a one-shot submit so a
+  // login throttled by another spec's logins retries instead of failing on
+  // "Something went wrong" — see that helper's doc comment.
+  await expectWrongCredentials(page, user.email, 'TotallyWrong123!');
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
 });
 
 test('an unknown email shows the same message as a wrong password', async ({ page }) => {
-  await page.getByTestId(testIds.login.emailInput).fill(`nobody-${Date.now()}@example.com`);
-  await page.getByTestId(testIds.login.passwordInput).fill('Password123!');
+  // Deliberate text assertion: the error copy is behaviour, not chrome.
+  await expectWrongCredentials(page, `nobody-${Date.now()}@example.com`, 'Password123!');
+});
+
+test('QA-19: the server error banner clears as soon as the email field changes', async ({
+  page,
+}) => {
+  // Stubbed rather than driven off a real wrong password: POST /auth/login is
+  // throttled to 10 requests/60s per IP, and a real 429's body carries no
+  // `statusCode` (BUG-F06), so a login attempt landing on the throttle window
+  // renders "Something went wrong" instead of "Wrong email or password" and
+  // fails this test's precondition before it ever reaches the behaviour under
+  // test - clearing the banner on input change.
+  await page.route('**/auth/login', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Unauthorized', statusCode: 401 }),
+    });
+  });
+
+  await page.getByTestId(testIds.login.emailInput).fill(user.email);
+  await page.getByTestId(testIds.login.passwordInput).fill('TotallyWrong123!');
   await page.getByTestId(testIds.login.submitButton).click();
 
-  // Deliberate text assertion: the error copy is behaviour, not chrome.
   await expect(page.getByText('Wrong email or password')).toBeVisible();
+
+  await page.getByTestId(testIds.login.emailInput).fill(`${user.email}x`);
+
+  await expect(page.getByText('Wrong email or password')).toBeHidden();
 });
 
 test('client-side validation blocks an empty submit', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { aiAssistantService } from '@/services/ai-assistant.service';
@@ -8,6 +8,7 @@ import SessionListItem from '@/components/pages/app/chat/SessionListItem';
 import UiPage from '@/components/ui/UiPage';
 import UiTitle from '@/components/ui/UiTitle';
 import UiEmptyState from '@/components/ui/UiEmptyState';
+import UiInlineError from '@/components/ui/UiInlineError';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import { iconSize, spacing } from '@/theme/layout';
@@ -17,25 +18,36 @@ export default function ChatListScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const [sessions, setSessions] = useState<AssistantSessionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSessions = useCallback(() => {
-    setIsLoading(true);
+  // QA-53/62: this screen never had a `RefreshControl` at all, so a pull
+  // triggered nothing - no fetch, no spinner, no error. `silent` keeps a
+  // pull from swapping the list for the full-page spinner below.
+  const fetchSessions = useCallback((silent = false) => {
+    if (!silent) setIsLoading(true);
     setError(null);
     const sub = aiAssistantService.getSessions().subscribe({
       next: (data) => {
         setSessions(data);
         setIsLoading(false);
+        setIsRefreshing(false);
       },
       error: () => {
         setError('Failed to load chats.');
         setIsLoading(false);
+        setIsRefreshing(false);
       },
     });
     return () => sub.unsubscribe();
   }, []);
 
   useEffect(() => fetchSessions(), [fetchSessions]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchSessions(true);
+  };
 
   const openSession = (session: AssistantSessionDto) => {
     router.push({
@@ -46,7 +58,16 @@ export default function ChatListScreen() {
 
   return (
     <View style={styles.root} testID="chat-screen">
-      <UiPage tabBarInset>
+      <UiPage
+        tabBarInset
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.textSecondary}
+          />
+        }
+      >
         {/* Spec 6.4: "Chats" 28/400 left, "N SESSIONS" 10/600 right - the same
             title-row shape as Items' "Wardrobe" / "N ITEMS". */}
         <View style={styles.titleRow}>
@@ -58,13 +79,15 @@ export default function ChatListScreen() {
           <View style={styles.centered}>
             <ActivityIndicator color={colors.textPrimary} size="large" />
           </View>
-        ) : error ? (
-          <View style={styles.centered}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable style={styles.retryButton} onPress={fetchSessions}>
-              <Text style={styles.retryLabel}>Retry</Text>
-            </Pressable>
-          </View>
+        ) : error && sessions.length === 0 ? (
+          <UiEmptyState
+            testID="chat-error-state"
+            icon="exclamationmark.triangle.fill"
+            title="Couldn't load your chats"
+            subtitle="Check your connection and try again."
+            actionLabel="Retry"
+            onAction={() => fetchSessions()}
+          />
         ) : sessions.length === 0 ? (
           <UiEmptyState
             icon="bubble.left.and.bubble.right.fill"
@@ -75,6 +98,13 @@ export default function ChatListScreen() {
           />
         ) : (
           <View style={styles.list}>
+            {error ? (
+              <UiInlineError
+                testID="chat-error-banner"
+                message="Couldn't refresh your chats."
+                onRetry={() => fetchSessions()}
+              />
+            ) : null}
             {sessions.map((session) => (
               <SessionListItem
                 key={session.id}

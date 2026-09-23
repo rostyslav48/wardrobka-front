@@ -35,18 +35,6 @@ export const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing['3xl'],
   },
-  errorText: {
-    ...typography.rowLabel,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: spacing['3xs'],
-  },
-  retryLabel: {
-    ...typography.valueEmphasis,
-    color: colors.textPrimary,
-  },
   fab: {
     position: 'absolute',
     right: spacing.gutter,

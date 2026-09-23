@@ -57,6 +57,26 @@ export const testIds = Object.freeze({
     dailyReminderSwitch: 'settings-notifications-daily-switch',
     includeOccasionsSwitch: 'settings-notifications-include-occasions-switch',
   }),
+  items: Object.freeze({
+    filterButton: 'items-filter-button',
+    searchInput: 'items-search-input',
+    loadingSkeleton: 'items-loading-skeleton',
+    emptyState: 'items-empty-state',
+    noMatchState: 'items-no-match-state',
+    noMatchClear: 'items-no-match-state-action',
+    errorState: 'items-error-state',
+    errorStateRetry: 'items-error-state-action',
+    errorBanner: 'items-error-banner',
+    errorBannerRetry: 'items-error-banner-action',
+  }),
+  chat: Object.freeze({
+    errorState: 'chat-error-state',
+    errorBanner: 'chat-error-banner',
+  }),
+  log: Object.freeze({
+    errorState: 'log-error-state',
+    errorBanner: 'log-error-banner',
+  }),
   item: Object.freeze({
     photoPicker: 'item-photo-picker',
     photoAnalyzing: 'item-photo-analyzing',

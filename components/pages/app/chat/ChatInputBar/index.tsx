@@ -77,7 +77,13 @@ export default function ChatInputBar({
             editable={!isSending}
             returnKeyType="send"
             onSubmitEditing={canSend ? onSend : undefined}
-            blurOnSubmit={false}
+            // QA-29: for a multiline TextInput, RN only fires `onSubmitEditing`
+            // on Return when `submitBehavior` says so - `blurOnSubmit={false}`
+            // alone resolves to `submitBehavior: 'newline'` (RN's default for
+            // multiline), so Return silently inserted a line break and the
+            // handler above never ran. `"submit"` fires it and keeps the
+            // keyboard open, matching the "send" label without blurring.
+            submitBehavior="submit"
           />
         </View>
 

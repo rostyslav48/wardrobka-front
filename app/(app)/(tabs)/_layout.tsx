@@ -17,6 +17,12 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
+        // QA-06: `tabBarStyle: { position: 'absolute' }` (below) means the
+        // tab bar never responds to keyboard height on its own, so an open
+        // keyboard slides up over it - a tap meant for a tab lands on the
+        // keyboard instead. Hiding the bar while the keyboard is shown is
+        // the vendored bottom-tabs' own built-in fix for exactly this.
+        tabBarHideOnKeyboard: true,
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',

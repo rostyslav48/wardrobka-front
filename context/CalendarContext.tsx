@@ -17,8 +17,12 @@ interface CalendarContextValue {
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
-  /** Runs the OAuth flow, then re-fetches state. Resolves to the fresh status. */
-  connect: () => Promise<CalendarStatus>;
+  /**
+   * Runs the OAuth flow, then re-fetches state. `cancelled` is true when the
+   * user closed the auth sheet themselves - QA-03: the caller should not
+   * treat that as a failure.
+   */
+  connect: () => Promise<{ status: CalendarStatus; cancelled: boolean }>;
   disconnect: () => Promise<void>;
 }
 
@@ -62,9 +66,13 @@ export function CalendarProvider({ children }: PropsWithChildren) {
     void fetchAll();
   }, [fetchAll]);
 
-  const connect = useCallback(async (): Promise<CalendarStatus> => {
-    await googleCalendarService.connect();
-    return fetchAll();
+  const connect = useCallback(async (): Promise<{
+    status: CalendarStatus;
+    cancelled: boolean;
+  }> => {
+    const { cancelled } = await googleCalendarService.connect();
+    const status = await fetchAll();
+    return { status, cancelled };
   }, [fetchAll]);
 
   const disconnect = useCallback(async (): Promise<void> => {
