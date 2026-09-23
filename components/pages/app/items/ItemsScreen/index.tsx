@@ -175,6 +175,7 @@ export default function ItemsScreen() {
         <View style={styles.grid}>
           <ItemsGrid
             items={visibleItems}
+            totalLoaded={items.length}
             isLoading={isLoading}
             error={error}
             onRetry={() => refresh()}

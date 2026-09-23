@@ -238,3 +238,44 @@ test('QA-53/62: a failed refetch on an already-loaded wardrobe shows a banner an
   await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
   await expect(page.getByTestId(testIds.items.emptyState)).not.toBeAttached();
 });
+
+test('QA-41 regression: a client-side search matching nothing must not be reported as a fetch error', async ({
+  page,
+}) => {
+  // Round-2 QA finding: ItemsGrid judged its error branch against the
+  // search-narrowed list, so a failed refetch while the search box matched
+  // nothing rendered "Couldn't load your wardrobe" even though the wardrobe
+  // itself loaded fine and the user's own search is the only reason the
+  // grid is empty. Loading/error must be judged against what the fetch
+  // returned, not what the client-side search narrowed it to.
+  let fail = false;
+  await page.route('**/wardrobe*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    if (fail) {
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(THREE_ITEMS),
+    });
+  });
+
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+
+  await page.getByTestId(testIds.items.searchInput).fill('zzz-nothing-matches');
+  await expect(page.getByTestId(testIds.items.noMatchState)).toBeVisible();
+
+  fail = true;
+  // usePendingImagePolling refetches on every focus - refocusing the tab
+  // stands in for the pull-to-refresh gesture react-native-web can't drive.
+  await page.getByTestId(testIds.tabs.home).click();
+  await page.getByTestId(testIds.tabs.items).click();
+
+  await expect(page.getByTestId(testIds.items.searchInput)).toHaveValue('zzz-nothing-matches');
+  await expect(page.getByTestId(testIds.items.noMatchState)).toBeVisible();
+  await expect(page.getByTestId(testIds.items.errorState)).not.toBeAttached();
+});

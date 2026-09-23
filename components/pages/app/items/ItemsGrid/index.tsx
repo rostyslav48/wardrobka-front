@@ -8,8 +8,18 @@ import ItemSkeleton from '@/components/pages/app/items/ItemSkeleton';
 import { styles } from './styles';
 
 interface Props {
-  /** Visible items after search/filters - what actually renders in the grid. */
+  /** Visible items after client-side search - what actually renders in the grid. */
   items: WardrobeItem[];
+  /**
+   * Count of what `WardrobeContext` actually fetched (server-filtered, but
+   * *not* narrowed by the client-side search box) - QA-41 review fix. Loading
+   * and error states must be judged against this, not `items.length`: if a
+   * client-side search matches nothing, `items` is empty even though the
+   * fetch itself succeeded and has data, and a stale/failed refetch must not
+   * be reported as "couldn't load" when it's really the user's own search
+   * that emptied the grid.
+   */
+  totalLoaded: number;
   isLoading: boolean;
   /** Set by `WardrobeContext` when the fetch itself failed - QA-53/62. */
   error?: string | null;
@@ -31,6 +41,7 @@ function chunk<T>(list: T[], size: number): T[][] {
 // list on Home already sets this precedent.
 export default function ItemsGrid({
   items,
+  totalLoaded,
   isLoading,
   error,
   onRetry,
@@ -39,8 +50,10 @@ export default function ItemsGrid({
 }: Props) {
   // Only the very first load shows skeletons: a background poll flips
   // isLoading too, and swapping the grid for skeletons every few seconds
-  // would hide the images the poll exists to reveal.
-  if (isLoading && items.length === 0) {
+  // would hide the images the poll exists to reveal. Judged against
+  // `totalLoaded`, not `items.length` - a client-side search narrowing
+  // `items` to zero must not re-trigger the skeleton.
+  if (isLoading && totalLoaded === 0) {
     return (
       <View style={styles.grid} testID="items-loading-skeleton">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -56,7 +69,9 @@ export default function ItemsGrid({
   // QA-53/62: a failed fetch on an otherwise-empty wardrobe used to render
   // the same "your wardrobe is empty" copy as a genuinely empty one - the
   // user had no way to tell a real fetch failure from having no items.
-  if (error && items.length === 0) {
+  // Same `totalLoaded` reasoning as above: a search matching nothing is not
+  // a fetch failure, even while `error` still holds a stale/failed refetch.
+  if (error && totalLoaded === 0) {
     return (
       <UiEmptyState
         testID="items-error-state"

@@ -7,7 +7,7 @@
  * needs rewriting.
  */
 import { test, expect } from '@playwright/test';
-import { createApiUser, loginThroughUi, openApp, WebUser } from './support/app';
+import { createApiUser, expectWrongCredentials, loginThroughUi, openApp, WebUser } from './support/app';
 import { testIds } from './support/testIds';
 
 let user: WebUser;
@@ -34,22 +34,17 @@ test('a user can log in and land on the wardrobe tabs', async ({ page }) => {
 test('wrong credentials show an inline error and keep the user on login', async ({
   page,
 }) => {
-  await page.getByTestId(testIds.login.emailInput).fill(user.email);
-  await page.getByTestId(testIds.login.passwordInput).fill('TotallyWrong123!');
-  await page.getByTestId(testIds.login.submitButton).click();
-
   // Deliberate text assertion: the error copy is behaviour, not chrome.
-  await expect(page.getByText('Wrong email or password')).toBeVisible();
+  // Goes through expectWrongCredentials rather than a one-shot submit so a
+  // login throttled by another spec's logins retries instead of failing on
+  // "Something went wrong" — see that helper's doc comment.
+  await expectWrongCredentials(page, user.email, 'TotallyWrong123!');
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
 });
 
 test('an unknown email shows the same message as a wrong password', async ({ page }) => {
-  await page.getByTestId(testIds.login.emailInput).fill(`nobody-${Date.now()}@example.com`);
-  await page.getByTestId(testIds.login.passwordInput).fill('Password123!');
-  await page.getByTestId(testIds.login.submitButton).click();
-
   // Deliberate text assertion: the error copy is behaviour, not chrome.
-  await expect(page.getByText('Wrong email or password')).toBeVisible();
+  await expectWrongCredentials(page, `nobody-${Date.now()}@example.com`, 'Password123!');
 });
 
 test('QA-19: the server error banner clears as soon as the email field changes', async ({
