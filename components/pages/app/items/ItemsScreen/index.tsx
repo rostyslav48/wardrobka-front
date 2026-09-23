@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { useModal } from '@/context/ModalContext';
@@ -55,11 +55,33 @@ function matchesSearch(item: WardrobeItem, query: string): boolean {
 export default function ItemsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { show } = useModal();
-  const { items, isLoading, activeFiltersCount, filters, applyFilters, clearFilters } =
-    useWardrobe();
+  const {
+    items,
+    isLoading,
+    error,
+    activeFiltersCount,
+    filters,
+    applyFilters,
+    clearFilters,
+    refresh,
+  } = useWardrobe();
   const [search, setSearch] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   usePendingImagePolling(items);
+
+  // QA-53/62: pulling to refresh a failed load looked identical to it doing
+  // nothing - no spinner ever showed, and a failed retry left the same
+  // silence. `isRefreshing` tracks only pulls started here, not the initial
+  // load or the pending-image poll, both of which also flip `isLoading`.
+  useEffect(() => {
+    if (!isLoading) setIsRefreshing(false);
+  }, [isLoading]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    refresh();
+  };
 
   const hasSearch = search.trim().length > 0;
   const visibleItems = hasSearch ? items.filter((item) => matchesSearch(item, search)) : items;
@@ -91,7 +113,16 @@ export default function ItemsScreen() {
 
   return (
     <View style={styles.root} testID="items-screen">
-      <UiPage tabBarInset>
+      <UiPage
+        tabBarInset
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.textSecondary}
+          />
+        }
+      >
         {/* Spec 6.3: "Wardrobe" 28/400 Newsreader left, "N ITEMS" right. */}
         <View style={styles.titleRow}>
           <UiTitle sizeL>Wardrobe</UiTitle>
@@ -138,6 +169,8 @@ export default function ItemsScreen() {
           <ItemsGrid
             items={visibleItems}
             isLoading={isLoading}
+            error={error}
+            onRetry={refresh}
             hasActiveSearchOrFilters={hasActiveSearchOrFilters}
             onClearSearchAndFilters={clearSearchAndFilters}
           />

@@ -37,6 +37,8 @@ const MAPPING = {
   'arrow.right': 'arrow-forward',
   'calendar': 'calendar-today',
   'drop.fill': 'water-drop',
+  // QA-53/62: the shared "failed to load" state on Chat/Items/Log.
+  'exclamationmark.triangle.fill': 'error-outline',
 } as IconMapping;
 
 /**

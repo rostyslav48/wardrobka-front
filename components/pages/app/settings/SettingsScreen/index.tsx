@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import { useAuth } from '@/context/AuthContext';
 import { AuthApiService, ProfileData, UpdateProfilePayload } from '@/services/auth.service';
 import ProfileSection from '@/components/pages/app/settings/ProfileSection';
 import NotificationsSection from '@/components/pages/app/settings/NotificationsSection';
@@ -16,6 +17,7 @@ const appVersion = Constants.expoConfig?.version ?? '—';
 
 export default function SettingsScreen() {
   const toastRef = useRef<UiToastRef>(null);
+  const { updateUserData } = useAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +44,7 @@ export default function SettingsScreen() {
     AuthApiService.updateProfile(payload).subscribe({
       next: (updated) => {
         setProfile(updated);
+        updateUserData({ name: updated.name });
         onSuccess();
         toastRef.current?.show('Profile updated', 'success');
       },

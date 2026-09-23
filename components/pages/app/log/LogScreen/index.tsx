@@ -24,6 +24,7 @@ export default function LogScreen() {
   const [entries, setEntries] = useState<OutfitLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // undefined = sheet closed, null = add mode, OutfitLog = edit mode
   const [sheetEntry, setSheetEntry] = useState<OutfitLog | null | undefined>(
@@ -32,13 +33,18 @@ export default function LogScreen() {
 
   const fetchEntries = useCallback((silent = false) => {
     if (!silent) setIsLoading(true);
+    setError(null);
     return outfitLogService.getAll().subscribe({
       next: (data) => {
         setEntries(data);
         setIsLoading(false);
         setIsRefreshing(false);
       },
+      // QA-53/62: a failed fetch used to leave `entries` at [] and fall
+      // through to "Nothing logged yet" - indistinguishable from a genuinely
+      // empty log.
       error: () => {
+        setError('Failed to load your outfit log.');
         setIsLoading(false);
         setIsRefreshing(false);
       },
@@ -112,6 +118,15 @@ export default function LogScreen() {
             <LogEntrySkeleton />
             <LogEntrySkeleton />
           </View>
+        ) : error && entries.length === 0 ? (
+          <UiEmptyState
+            testID="log-error-state"
+            icon="exclamationmark.triangle.fill"
+            title="Couldn't load your outfit log"
+            subtitle="Check your connection and try again."
+            actionLabel="Retry"
+            onAction={() => fetchEntries()}
+          />
         ) : entries.length === 0 ? (
           <UiEmptyState
             icon="calendar"

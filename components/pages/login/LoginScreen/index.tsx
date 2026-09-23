@@ -65,7 +65,7 @@ export default function LoginScreen() {
         const statusCode = e.response?.statusCode;
 
         if (statusCode === 400 || statusCode === 409) {
-          setErrorMessage(e.response.message);
+          setErrorMessage(friendlyRegisterError(e.response.message));
         } else if (statusCode === 429) {
           setErrorMessage('Too many attempts. Please wait a moment and try again.');
         } else {
@@ -82,7 +82,7 @@ export default function LoginScreen() {
     const email = values.email.trim();
     const method = isLogin
       ? login(email, values.password)
-      : register(email, values.password, (values as RegisterForm).name);
+      : register(email, values.password, (values as RegisterForm).name.trim());
 
     return firstValueFrom(method);
   };

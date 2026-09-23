@@ -262,6 +262,7 @@ export default function LogEntrySheet({
               onSelectionChange={(ids) => { pendingItemIdsRef.current = ids; }}
               onConfirm={(ids) => {
                 setSelectedIds(ids);
+                if (ids.length > 0) setError(null);
                 setView('form');
               }}
             />

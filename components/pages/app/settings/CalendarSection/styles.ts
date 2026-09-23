@@ -36,6 +36,11 @@ export const styles = StyleSheet.create({
     borderRadius: radius.control,
     backgroundColor: colors.surface,
   },
+  // QA-04: the only other visible cue while `connect()`/`disconnect()` is
+  // pending - not a design value, snap table 8.6.
+  buttonBusy: {
+    opacity: 0.6,
+  },
   buttonText: {
     ...typography.valueEmphasis,
     color: colors.textPrimary,

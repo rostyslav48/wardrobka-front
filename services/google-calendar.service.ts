@@ -16,26 +16,33 @@ function parseCallbackStatus(resultUrl: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+export interface ConnectResult {
+  /** True when the user dismissed/cancelled the auth session themselves - QA-03: not an error. */
+  cancelled: boolean;
+  /** The callback's `status` query param ('ok' | 'denied' | 'scope_denied' | 'error'), or null. */
+  callbackStatus: string | null;
+}
+
 export const googleCalendarService = {
   /**
    * Runs the full OAuth round trip: fetches the auth URL from the backend,
    * opens it in an in-app browser session, and waits for Google to redirect
-   * back to `CALENDAR_RETURN_URL`. Returns the callback's `status` query param
-   * ('ok' | 'denied' | 'scope_denied' | 'error'), or null if the session was
-   * cancelled/dismissed or the auth URL couldn't be fetched.
+   * back to `CALENDAR_RETURN_URL`.
    *
    * Does not itself refresh calendar state — the caller (CalendarContext)
    * re-fetches status/occasions afterward, since that backend round trip is
    * the source of truth regardless of what this resolves to.
    */
-  async connect(): Promise<string | null> {
+  async connect(): Promise<ConnectResult> {
     try {
       const { url } = await firstValueFrom(calendarService.getAuthUrl());
       const result = await WebBrowser.openAuthSessionAsync(url, CALENDAR_RETURN_URL);
-      if (result.type !== 'success') return null;
-      return parseCallbackStatus(result.url);
+      // `WebBrowser`'s own 'cancel'/'dismiss' result types are exactly a
+      // user-initiated close of the auth sheet, not a failure - QA-03.
+      if (result.type !== 'success') return { cancelled: true, callbackStatus: null };
+      return { cancelled: false, callbackStatus: parseCallbackStatus(result.url) };
     } catch {
-      return null;
+      return { cancelled: false, callbackStatus: null };
     }
   },
 

@@ -10,6 +10,9 @@ import { spacing, tracking, typography } from '@/theme/layout';
  * section 8.9 of the spec.
  */
 export const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   // The greeting has no 6.2 counterpart - it stands where 6.1 puts the
   // masthead - so its trailing gap takes 6.2's own inter-block rhythm.
   greetingSection: {

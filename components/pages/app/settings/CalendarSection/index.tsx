@@ -19,8 +19,12 @@ export default function CalendarSection({ onNotify }: Props) {
 
   const handleConnect = async () => {
     setIsBusy(true);
-    const nextStatus = await connect();
+    const { status: nextStatus, cancelled } = await connect();
     setIsBusy(false);
+    // QA-03: the user closing the Google sign-in sheet themselves is not an
+    // error - only report a failure when a session actually ran and did not
+    // end up connected.
+    if (cancelled) return;
     onNotify?.(
       nextStatus === 'active'
         ? 'Google Calendar connected'
@@ -62,22 +66,26 @@ export default function CalendarSection({ onNotify }: Props) {
         </Text>
       ) : status === 'active' ? (
         <Pressable
-          style={styles.button}
+          style={[styles.button, isBusy && styles.buttonBusy]}
           onPress={handleDisconnect}
           disabled={isBusy}
           hitSlop={8}
         >
-          <Text style={styles.buttonText}>Disconnect</Text>
+          <Text style={styles.buttonText}>
+            {isBusy ? 'Disconnecting…' : 'Disconnect'}
+          </Text>
         </Pressable>
       ) : (
+        // QA-04: nothing changed for the several seconds it takes the OS
+        // sign-in sheet to appear, so a second tap landed in that window.
         <Pressable
-          style={styles.button}
+          style={[styles.button, isBusy && styles.buttonBusy]}
           onPress={handleConnect}
           disabled={isBusy}
           hitSlop={8}
         >
           <Text style={styles.buttonText}>
-            {status === 'revoked' ? 'Reconnect' : 'Connect'}
+            {isBusy ? 'Connecting…' : status === 'revoked' ? 'Reconnect' : 'Connect'}
           </Text>
         </Pressable>
       )}

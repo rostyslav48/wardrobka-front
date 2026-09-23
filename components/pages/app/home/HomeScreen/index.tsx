@@ -1,6 +1,6 @@
-import { Alert, Pressable, RefreshControl, View } from 'react-native';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Pressable, RefreshControl, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { aiAssistantService } from '@/services/ai-assistant.service';
@@ -12,6 +12,7 @@ import UiEmptyState from '@/components/ui/UiEmptyState';
 import UiPage from '@/components/ui/UiPage';
 import UiSkeletonCard from '@/components/ui/UiSkeletonCard';
 import UiTitle from '@/components/ui/UiTitle';
+import UiToast, { UiToastRef } from '@/components/ui/UiToast';
 import PromptShortcutChips from '@/components/ui/PromptShortcutChips';
 import QuickChatInput from '@/components/ui/QuickChatInput';
 import UpcomingOccasions from '@/components/pages/app/home/UpcomingOccasions';
@@ -27,6 +28,7 @@ function getGreeting(name?: string | null): string {
 export default function HomeScreen() {
   const { userData } = useAuth();
   const { items: wardrobeItems } = useWardrobe();
+  const toastRef = useRef<UiToastRef>(null);
 
   const [suggestions, setSuggestions] = useState<AssistantOutfitSuggestionDto[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
@@ -44,6 +46,26 @@ export default function HomeScreen() {
     });
     return () => sub.unsubscribe();
   }, []);
+
+  // QA-25: suggestions were only ever fetched once, on mount, so a chat
+  // started from Home (or from Chat directly) never showed up back on Home
+  // without a full logout/login. Every focus *after* the first (the mount
+  // effect above owns that one) now re-fetches, silently — no skeleton flash
+  // on a screen the user already saw.
+  const hasMountedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasMountedRef.current) {
+        hasMountedRef.current = true;
+        return;
+      }
+      const sub = aiAssistantService.getRecentSuggestions().subscribe({
+        next: (data) => setSuggestions(data),
+        error: () => {},
+      });
+      return () => sub.unsubscribe();
+    }, []),
+  );
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -70,7 +92,9 @@ export default function HomeScreen() {
         },
         error: () => {
           setIsSubmitting(false);
-          Alert.alert('Error', 'Failed to start a chat. Please try again.');
+          // QA-54: every other screen surfaces failures through the in-app
+          // toast; a native Alert here was the one exception.
+          toastRef.current?.show('Failed to start a chat. Please try again.', 'error');
         },
       });
     },
@@ -93,6 +117,7 @@ export default function HomeScreen() {
   }));
 
   return (
+    <View style={styles.root}>
     <UiPage
       tabBarInset
       refreshControl={
@@ -174,5 +199,7 @@ export default function HomeScreen() {
         )}
       </View>
     </UiPage>
+    <UiToast ref={toastRef} />
+    </View>
   );
 }

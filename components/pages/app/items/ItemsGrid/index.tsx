@@ -10,6 +10,9 @@ interface Props {
   /** Visible items after search/filters - what actually renders in the grid. */
   items: WardrobeItem[];
   isLoading: boolean;
+  /** Set by `WardrobeContext` when the fetch itself failed - QA-53/62. */
+  error?: string | null;
+  onRetry?: () => void;
   /** True when a search query or filter chip is narrowing `items`. */
   hasActiveSearchOrFilters?: boolean;
   onClearSearchAndFilters?: () => void;
@@ -28,6 +31,8 @@ function chunk<T>(list: T[], size: number): T[][] {
 export default function ItemsGrid({
   items,
   isLoading,
+  error,
+  onRetry,
   hasActiveSearchOrFilters = false,
   onClearSearchAndFilters,
 }: Props) {
@@ -36,7 +41,7 @@ export default function ItemsGrid({
   // would hide the images the poll exists to reveal.
   if (isLoading && items.length === 0) {
     return (
-      <View style={styles.grid}>
+      <View style={styles.grid} testID="items-loading-skeleton">
         {Array.from({ length: 3 }).map((_, i) => (
           <View key={i} style={styles.row}>
             <ItemSkeleton />
@@ -44,6 +49,22 @@ export default function ItemsGrid({
           </View>
         ))}
       </View>
+    );
+  }
+
+  // QA-53/62: a failed fetch on an otherwise-empty wardrobe used to render
+  // the same "your wardrobe is empty" copy as a genuinely empty one - the
+  // user had no way to tell a real fetch failure from having no items.
+  if (error && items.length === 0) {
+    return (
+      <UiEmptyState
+        testID="items-error-state"
+        icon="exclamationmark.triangle.fill"
+        title="Couldn't load your wardrobe"
+        subtitle="Check your connection and try again."
+        actionLabel="Retry"
+        onAction={onRetry}
+      />
     );
   }
 
