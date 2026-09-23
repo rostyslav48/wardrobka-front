@@ -6,7 +6,7 @@
  * tab's first focus.
  */
 import { test, expect, Page } from '@playwright/test';
-import { createApiUser, loginThroughUi, openApp, WebUser } from './support/app';
+import { createApiUser, loginThroughUi, WebUser } from './support/app';
 import { testIds } from './support/testIds';
 import { ItemStatus, ImageStatus, ItemType, Season, WardrobeItem } from '@/types/wardrobe';
 
@@ -94,6 +94,36 @@ test('QA-40: search filters the grid by name/brand/type, case-insensitive', asyn
   await expect(page.getByText('Red Hoodie')).toBeVisible();
   await expect(page.getByText('Blue Denim Jacket')).toBeHidden();
   await expect(page.getByText('White Tee')).toBeHidden();
+  await expect(page.getByText('1 OF 3 ITEMS')).toBeVisible();
+});
+
+test('QA-41: a server-side filter chip keeps the real total in the header', async ({ page }) => {
+  // Unlike search, filters are sent as query params and narrowed server-side -
+  // `items` in WardrobeContext IS the narrowed response, so the header must
+  // fall back to a separately-tracked total rather than `items.length`.
+  await page.route('**/wardrobe*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const url = new URL(route.request().url());
+    const type = url.searchParams.get('type');
+    const filtered = type ? THREE_ITEMS.filter((item) => item.type === type) : THREE_ITEMS;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(filtered),
+    });
+  });
+
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+  await expect(page.getByText('3 ITEMS')).toBeVisible();
+
+  await page.getByTestId(testIds.items.filterButton).click();
+  await page.getByText('jacket', { exact: true }).click();
+  await page.getByText('Apply', { exact: true }).click();
+
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+  await expect(page.getByText('Red Hoodie')).toBeHidden();
   await expect(page.getByText('1 OF 3 ITEMS')).toBeVisible();
 });
 

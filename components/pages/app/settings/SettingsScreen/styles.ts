@@ -19,8 +19,13 @@ export const styles = StyleSheet.create({
   profileBlock: {
     marginTop: spacing.sectionLg,
   },
+  // QA-55: ~= 3 UiInputs + a UiButton (ProfileSection's loaded height), so
+  // swapping the spinner for the form doesn't shift Notifications/Calendar/
+  // Sign out down.
   loader: {
-    marginVertical: spacing['3xl'],
+    height: 230,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   separator: {
     height: 1,

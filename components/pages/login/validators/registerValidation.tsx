@@ -20,10 +20,12 @@ export const RegisterSchema = LoginSchema.shape({
 // RegisterSchema mirrors the server's own rules, the client should catch
 // these before they round-trip, but a few (unmirrored password rules, a
 // backend-only field) can still reach here - QA-18 asks that whatever does
-// gets friendly copy instead of the raw class-validator text.
+// gets friendly copy instead of the raw class-validator text. Used on both
+// the register AND login paths (a malformed-email 400 on login hits the same
+// class-validator text), hence the name - not register-specific.
 const RAW_VALIDATION_MESSAGE = /^\w+ (must|should)\b/i;
 
-export function friendlyRegisterError(message: string): string {
+export function friendlyAuthError(message: string): string {
   if (RAW_VALIDATION_MESSAGE.test(message)) {
     return 'Please check your details and try again.';
   }

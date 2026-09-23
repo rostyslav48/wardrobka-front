@@ -57,6 +57,7 @@ export default function ItemsScreen() {
   const { show } = useModal();
   const {
     items,
+    total,
     isLoading,
     error,
     activeFiltersCount,
@@ -125,8 +126,12 @@ export default function ItemsScreen() {
         <View style={styles.titleRow}>
           <UiTitle sizeL>Wardrobe</UiTitle>
           <UiTitle style={styles.itemCount}>
-            {hasActiveSearchOrFilters && visibleItems.length !== items.length
-              ? `${visibleItems.length} OF ${items.length} ITEMS`
+            {/* QA-41: filters are server-side, so `items` here is already the
+                narrowed response with no total of its own - `total` (tracked
+                in WardrobeContext from the last unfiltered fetch) keeps this
+                accurate for a filter chip, not just the client-side search. */}
+            {hasActiveSearchOrFilters
+              ? `${visibleItems.length} OF ${total} ITEMS`
               : `${items.length} ITEMS`}
           </UiTitle>
         </View>
@@ -135,7 +140,11 @@ export default function ItemsScreen() {
           <View style={styles.searchBarWrapper}>
             <SearchBar value={search} onChangeText={setSearch} />
           </View>
-          <Pressable style={styles.filterButton} onPress={openFiltersModal}>
+          <Pressable
+            style={styles.filterButton}
+            onPress={openFiltersModal}
+            testID="items-filter-button"
+          >
             <IconSymbol
               name="line.3.horizontal.decrease"
               size={iconSize.mdPlus}

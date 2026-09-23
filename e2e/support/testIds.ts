@@ -58,6 +58,7 @@ export const testIds = Object.freeze({
     includeOccasionsSwitch: 'settings-notifications-include-occasions-switch',
   }),
   items: Object.freeze({
+    filterButton: 'items-filter-button',
     searchInput: 'items-search-input',
     loadingSkeleton: 'items-loading-skeleton',
     emptyState: 'items-empty-state',

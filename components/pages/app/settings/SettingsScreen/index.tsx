@@ -64,9 +64,14 @@ export default function SettingsScreen() {
           <UiTitle sizeL>Settings</UiTitle>
         </View>
 
+        {/* QA-55: a fixed-height loader (matching ProfileSection's loaded
+            height) instead of a small spinner in an unsized block, so the
+            page doesn't grow by ~150pt once the profile arrives. */}
         <View style={styles.profileBlock}>
           {isLoading ? (
-            <ActivityIndicator style={styles.loader} color={colors.textSecondary} />
+            <View style={styles.loader}>
+              <ActivityIndicator color={colors.textSecondary} />
+            </View>
           ) : profile ? (
             <ProfileSection profile={profile} onSave={handleSave} />
           ) : null}

@@ -12,7 +12,7 @@ import UiError from '@/components/ui/UiError';
 import { LoginSchema } from '@/components/pages/login/validators/loginValidation';
 import {
   RegisterSchema,
-  friendlyRegisterError,
+  friendlyAuthError,
 } from '@/components/pages/login/validators/registerValidation';
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
@@ -49,7 +49,7 @@ export default function LoginScreen() {
         if (statusCode === 401 || statusCode === 404) {
           setErrorMessage('Wrong email or password');
         } else if (statusCode === 400) {
-          setErrorMessage(e.response.message);
+          setErrorMessage(friendlyAuthError(e.response.message));
         } else if (statusCode === 429) {
           setErrorMessage('Too many attempts. Please wait a moment and try again.');
         } else {
@@ -68,7 +68,7 @@ export default function LoginScreen() {
         const statusCode = e.response?.statusCode;
 
         if (statusCode === 400 || statusCode === 409) {
-          setErrorMessage(friendlyRegisterError(e.response.message));
+          setErrorMessage(friendlyAuthError(e.response.message));
         } else if (statusCode === 429) {
           setErrorMessage('Too many attempts. Please wait a moment and try again.');
         } else {

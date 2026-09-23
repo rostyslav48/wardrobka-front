@@ -96,6 +96,9 @@ export default function ItemPickerSheet({
                     key={item.id}
                     style={[styles.cell, isSelected && styles.cellSelected]}
                     onPress={() => toggle(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.name}
+                    accessibilityState={{ selected: isSelected }}
                   >
                     {item.img_url ? (
                       <Image
@@ -127,6 +130,8 @@ export default function ItemPickerSheet({
       <Pressable
         style={[styles.confirmButton, { marginBottom: bottomInset }]}
         onPress={() => onConfirm(Array.from(selected))}
+        accessibilityRole="button"
+        accessibilityLabel={derivedConfirmLabel}
       >
         <Text style={styles.confirmLabel}>{derivedConfirmLabel}</Text>
       </Pressable>

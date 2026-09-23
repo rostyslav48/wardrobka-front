@@ -119,7 +119,21 @@ export default function NotificationsSection({ onNotify }: Props) {
     [prefs, persist],
   );
 
-  if (!isReady) return null;
+  // QA-55: this used to `return null` while `loadPrefs`/`hasPermission`
+  // resolved, so the section popped into existence (and pushed Calendar/Sign
+  // out down) once ready. Reserving the two always-present rows' height keeps
+  // the page's layout stable across that load - the Time row below is real,
+  // state-dependent content (only ever shown once `prefs.enabled` is known),
+  // not a loading artifact, so it isn't part of this placeholder.
+  if (!isReady) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
+        <View style={styles.rowSkeleton} />
+        <View style={styles.rowSkeleton} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

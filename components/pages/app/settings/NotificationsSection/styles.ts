@@ -40,6 +40,14 @@ export const styles = StyleSheet.create({
     ...typography.valueEmphasis,
     color: colors.brand,
   },
+  // QA-55: placeholder for a `row` while prefs/permission load - same
+  // approximate height as a label+hint row with a switch, so the section
+  // doesn't grow once real content replaces it.
+  rowSkeleton: {
+    height: 44,
+    borderRadius: radius.control,
+    backgroundColor: colors.surface,
+  },
   blockedNotice: {
     gap: spacing.xs,
     padding: spacing.lg,

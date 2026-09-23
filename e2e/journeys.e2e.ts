@@ -55,6 +55,21 @@ test('an unknown email shows the same message as a wrong password', async ({ pag
 test('QA-19: the server error banner clears as soon as the email field changes', async ({
   page,
 }) => {
+  // Stubbed rather than driven off a real wrong password: POST /auth/login is
+  // throttled to 10 requests/60s per IP, and a real 429's body carries no
+  // `statusCode` (BUG-F06), so a login attempt landing on the throttle window
+  // renders "Something went wrong" instead of "Wrong email or password" and
+  // fails this test's precondition before it ever reaches the behaviour under
+  // test - clearing the banner on input change.
+  await page.route('**/auth/login', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Unauthorized', statusCode: 401 }),
+    });
+  });
+
   await page.getByTestId(testIds.login.emailInput).fill(user.email);
   await page.getByTestId(testIds.login.passwordInput).fill('TotallyWrong123!');
   await page.getByTestId(testIds.login.submitButton).click();
