@@ -52,6 +52,20 @@ test('an unknown email shows the same message as a wrong password', async ({ pag
   await expect(page.getByText('Wrong email or password')).toBeVisible();
 });
 
+test('QA-19: the server error banner clears as soon as the email field changes', async ({
+  page,
+}) => {
+  await page.getByTestId(testIds.login.emailInput).fill(user.email);
+  await page.getByTestId(testIds.login.passwordInput).fill('TotallyWrong123!');
+  await page.getByTestId(testIds.login.submitButton).click();
+
+  await expect(page.getByText('Wrong email or password')).toBeVisible();
+
+  await page.getByTestId(testIds.login.emailInput).fill(`${user.email}x`);
+
+  await expect(page.getByText('Wrong email or password')).toBeHidden();
+});
+
 test('client-side validation blocks an empty submit', async ({ page }) => {
   await page.getByTestId(testIds.login.submitButton).click();
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();

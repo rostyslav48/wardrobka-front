@@ -17,7 +17,7 @@ interface WardrobeContextValue {
   activeFiltersCount: number;
   applyFilters: (filters: WardrobeFilters) => void;
   clearFilters: () => void;
-  refresh: () => void;
+  refresh: (onSettled?: () => void) => void;
   removeItem: (id: number) => void;
   upsertItem: (item: WardrobeItem) => void;
 }
@@ -34,21 +34,26 @@ export function WardrobeProvider({ children }: PropsWithChildren) {
     (v) => v !== undefined && v !== null,
   ).length;
 
-  const fetchItems = useCallback((activeFilters: WardrobeFilters) => {
-    setIsLoading(true);
-    setError(null);
-    const sub = wardrobeService.getItems(activeFilters).subscribe({
-      next: (data) => {
-        setItems(data);
-        setIsLoading(false);
-      },
-      error: () => {
-        setError('Failed to load wardrobe items.');
-        setIsLoading(false);
-      },
-    });
-    return () => sub.unsubscribe();
-  }, []);
+  const fetchItems = useCallback(
+    (activeFilters: WardrobeFilters, onSettled?: () => void) => {
+      setIsLoading(true);
+      setError(null);
+      const sub = wardrobeService.getItems(activeFilters).subscribe({
+        next: (data) => {
+          setItems(data);
+          setIsLoading(false);
+          onSettled?.();
+        },
+        error: () => {
+          setError('Failed to load wardrobe items.');
+          setIsLoading(false);
+          onSettled?.();
+        },
+      });
+      return () => sub.unsubscribe();
+    },
+    [],
+  );
 
   useEffect(() => {
     return fetchItems(filters);
@@ -58,7 +63,7 @@ export function WardrobeProvider({ children }: PropsWithChildren) {
 
   const clearFilters = () => setFilters({});
 
-  const refresh = () => fetchItems(filters);
+  const refresh = (onSettled?: () => void) => fetchItems(filters, onSettled);
 
   const removeItem = (id: number) =>
     setItems((prev) => prev.filter((item) => item.id !== id));

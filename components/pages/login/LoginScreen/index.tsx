@@ -10,7 +10,10 @@ import UiFormField from '@/components/ui/form/UiFormField';
 import UiInput from '@/components/ui/form/UiInput';
 import UiError from '@/components/ui/UiError';
 import { LoginSchema } from '@/components/pages/login/validators/loginValidation';
-import { RegisterSchema } from '@/components/pages/login/validators/registerValidation';
+import {
+  RegisterSchema,
+  friendlyRegisterError,
+} from '@/components/pages/login/validators/registerValidation';
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
 import UiTitle from '@/components/ui/UiTitle';

@@ -59,9 +59,11 @@ export const testIds = Object.freeze({
   }),
   items: Object.freeze({
     searchInput: 'items-search-input',
+    loadingSkeleton: 'items-loading-skeleton',
     emptyState: 'items-empty-state',
     noMatchState: 'items-no-match-state',
     noMatchClear: 'items-no-match-state-action',
+    errorState: 'items-error-state',
   }),
   item: Object.freeze({
     photoPicker: 'item-photo-picker',

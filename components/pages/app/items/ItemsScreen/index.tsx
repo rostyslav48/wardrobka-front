@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
@@ -72,15 +72,13 @@ export default function ItemsScreen() {
 
   // QA-53/62: pulling to refresh a failed load looked identical to it doing
   // nothing - no spinner ever showed, and a failed retry left the same
-  // silence. `isRefreshing` tracks only pulls started here, not the initial
-  // load or the pending-image poll, both of which also flip `isLoading`.
-  useEffect(() => {
-    if (!isLoading) setIsRefreshing(false);
-  }, [isLoading]);
-
+  // silence. `isRefreshing` is cleared by `refresh`'s own onSettled callback,
+  // so it tracks only the pull started here, not the initial load or the
+  // pending-image poll (both of which also flip `isLoading`, via a separate
+  // fetch that never calls this callback).
   const handleRefresh = () => {
     setIsRefreshing(true);
-    refresh();
+    refresh(() => setIsRefreshing(false));
   };
 
   const hasSearch = search.trim().length > 0;
