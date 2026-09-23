@@ -11,6 +11,7 @@ import LogEntrySheet from '@/components/pages/app/log/LogEntrySheet';
 import UiPage from '@/components/ui/UiPage';
 import UiTitle from '@/components/ui/UiTitle';
 import UiEmptyState from '@/components/ui/UiEmptyState';
+import UiInlineError from '@/components/ui/UiInlineError';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { styles } from './styles';
 
@@ -137,6 +138,13 @@ export default function LogScreen() {
           />
         ) : (
           <View style={styles.list}>
+            {error ? (
+              <UiInlineError
+                testID="log-error-banner"
+                message="Couldn't refresh your outfit log."
+                onRetry={() => fetchEntries()}
+              />
+            ) : null}
             {entries.map((entry) => (
               <LogEntryCard
                 key={entry.id}

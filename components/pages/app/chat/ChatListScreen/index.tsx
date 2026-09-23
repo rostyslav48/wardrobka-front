@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { aiAssistantService } from '@/services/ai-assistant.service';
@@ -8,6 +8,7 @@ import SessionListItem from '@/components/pages/app/chat/SessionListItem';
 import UiPage from '@/components/ui/UiPage';
 import UiTitle from '@/components/ui/UiTitle';
 import UiEmptyState from '@/components/ui/UiEmptyState';
+import UiInlineError from '@/components/ui/UiInlineError';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import { iconSize, spacing } from '@/theme/layout';
@@ -78,13 +79,15 @@ export default function ChatListScreen() {
           <View style={styles.centered}>
             <ActivityIndicator color={colors.textPrimary} size="large" />
           </View>
-        ) : error ? (
-          <View style={styles.centered}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable style={styles.retryButton} onPress={() => fetchSessions()}>
-              <Text style={styles.retryLabel}>Retry</Text>
-            </Pressable>
-          </View>
+        ) : error && sessions.length === 0 ? (
+          <UiEmptyState
+            testID="chat-error-state"
+            icon="exclamationmark.triangle.fill"
+            title="Couldn't load your chats"
+            subtitle="Check your connection and try again."
+            actionLabel="Retry"
+            onAction={() => fetchSessions()}
+          />
         ) : sessions.length === 0 ? (
           <UiEmptyState
             icon="bubble.left.and.bubble.right.fill"
@@ -95,6 +98,13 @@ export default function ChatListScreen() {
           />
         ) : (
           <View style={styles.list}>
+            {error ? (
+              <UiInlineError
+                testID="chat-error-banner"
+                message="Couldn't refresh your chats."
+                onRetry={() => fetchSessions()}
+              />
+            ) : null}
             {sessions.map((session) => (
               <SessionListItem
                 key={session.id}

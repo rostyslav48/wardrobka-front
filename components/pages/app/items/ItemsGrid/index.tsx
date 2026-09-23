@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { WardrobeItem } from '@/types/wardrobe';
 import UiEmptyState from '@/components/ui/UiEmptyState';
+import UiInlineError from '@/components/ui/UiInlineError';
 import ItemCard from '@/components/pages/app/items/ItemCard';
 import ItemSkeleton from '@/components/pages/app/items/ItemSkeleton';
 import { styles } from './styles';
@@ -94,8 +95,18 @@ export default function ItemsGrid({
     );
   }
 
+  // QA-53/62: items already loaded, but the latest refetch failed - keep the
+  // list the user can still read and tell them the refresh failed instead of
+  // silently discarding it or replacing it with a full-page error state.
   return (
     <View style={styles.grid}>
+      {error ? (
+        <UiInlineError
+          testID="items-error-banner"
+          message="Couldn't refresh your wardrobe."
+          onRetry={onRetry}
+        />
+      ) : null}
       {chunk(items, 2).map((row, i) => (
         <View key={i} style={styles.row}>
           {row.map((item) => (

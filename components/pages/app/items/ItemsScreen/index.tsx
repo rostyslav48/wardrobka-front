@@ -168,7 +168,7 @@ export default function ItemsScreen() {
             items={visibleItems}
             isLoading={isLoading}
             error={error}
-            onRetry={refresh}
+            onRetry={() => refresh()}
             hasActiveSearchOrFilters={hasActiveSearchOrFilters}
             onClearSearchAndFilters={clearSearchAndFilters}
           />

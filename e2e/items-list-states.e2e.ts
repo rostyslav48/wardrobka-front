@@ -151,3 +151,60 @@ test('QA-53: a failed fetch shows an error state, not an empty-wardrobe state', 
   await expect(page.getByTestId(testIds.items.errorState)).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId(testIds.items.emptyState)).not.toBeAttached();
 });
+
+test('QA-53: retrying the failed-fetch error state refetches and does not throw', async ({
+  page,
+}) => {
+  let getCalls = 0;
+  await page.route('**/wardrobe*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    getCalls++;
+    await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+  });
+  const pageErrors: string[] = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+
+  await expect(page.getByTestId(testIds.items.errorState)).toBeVisible({ timeout: 10_000 });
+  const callsBeforeRetry = getCalls;
+
+  await page.getByTestId(testIds.items.errorStateRetry).click();
+
+  await expect.poll(() => getCalls).toBeGreaterThan(callsBeforeRetry);
+  await expect(page.getByTestId(testIds.items.errorState)).toBeVisible();
+  expect(pageErrors, 'clicking Retry on the wardrobe error state must not throw').toEqual([]);
+});
+
+test('QA-53/62: a failed refetch on an already-loaded wardrobe shows a banner and keeps the list', async ({
+  page,
+}) => {
+  let fail = false;
+  await page.route('**/wardrobe*', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    if (fail) {
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(THREE_ITEMS),
+    });
+  });
+
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+
+  fail = true;
+  // usePendingImagePolling refetches on every focus - refocusing the tab
+  // stands in for the pull-to-refresh gesture react-native-web can't drive.
+  await page.getByTestId(testIds.tabs.home).click();
+  await page.getByTestId(testIds.tabs.items).click();
+
+  await expect(page.getByTestId(testIds.items.errorBanner)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+  await expect(page.getByTestId(testIds.items.emptyState)).not.toBeAttached();
+});
