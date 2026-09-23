@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/context/AuthContext';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { ModalProvider } from '@/context/ModalContext';
 import { colors } from '@/theme/colors';
 
@@ -50,9 +50,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={navigationTheme}>
-      <Head>
-        <title>Wardrobe Assistant</title>
-      </Head>
+      {/* expo-router's Head needs a handoff `origin` in the config on native
+          (Expo 57) and throws without one; the title only matters on web. */}
+      {Platform.OS === 'web' && (
+        <Head>
+          <title>Wardrobe Assistant</title>
+        </Head>
+      )}
       <AuthProvider>
         <ModalProvider>
           <Slot />
