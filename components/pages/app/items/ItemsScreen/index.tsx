@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
@@ -11,8 +12,9 @@ import UiTitle from '@/components/ui/UiTitle';
 import FiltersPopup from '@/components/pages/app/items/FiltersPopup';
 import ItemsGrid from '@/components/pages/app/items/ItemsGrid';
 import SearchBar from '@/components/pages/app/items/SearchBar';
+import { usePendingImagePolling } from '@/components/pages/app/items/usePendingImagePolling';
 import { SEASON_OPTIONS, STATUS_OPTIONS, SWATCHES } from '@/components/pages/app/items/itemForm';
-import { WardrobeFilters } from '@/types/wardrobe';
+import { WardrobeFilters, WardrobeItem } from '@/types/wardrobe';
 import { styles } from './styles';
 
 // Spec 6.3's applied-filter chip row. Only the fields `FiltersPopup` actually
@@ -39,11 +41,34 @@ function chipLabel(field: FilterField, filters: WardrobeFilters): string | null 
   }
 }
 
+/** name/brand/type match, case-insensitive and trimmed - QA-40. */
+function matchesSearch(item: WardrobeItem, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return (
+    item.name.toLowerCase().includes(needle) ||
+    (item.brand ?? '').toLowerCase().includes(needle) ||
+    item.type.toLowerCase().includes(needle)
+  );
+}
+
 export default function ItemsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { show } = useModal();
   const { items, isLoading, activeFiltersCount, filters, applyFilters, clearFilters } =
     useWardrobe();
+  const [search, setSearch] = useState('');
+
+  usePendingImagePolling(items);
+
+  const hasSearch = search.trim().length > 0;
+  const visibleItems = hasSearch ? items.filter((item) => matchesSearch(item, search)) : items;
+  const hasActiveSearchOrFilters = hasSearch || activeFiltersCount > 0;
+
+  const clearSearchAndFilters = () => {
+    setSearch('');
+    clearFilters();
+  };
 
   const openFiltersModal = () => {
     show({
@@ -70,12 +95,16 @@ export default function ItemsScreen() {
         {/* Spec 6.3: "Wardrobe" 28/400 Newsreader left, "N ITEMS" right. */}
         <View style={styles.titleRow}>
           <UiTitle sizeL>Wardrobe</UiTitle>
-          <UiTitle style={styles.itemCount}>{items.length} ITEMS</UiTitle>
+          <UiTitle style={styles.itemCount}>
+            {hasActiveSearchOrFilters && visibleItems.length !== items.length
+              ? `${visibleItems.length} OF ${items.length} ITEMS`
+              : `${items.length} ITEMS`}
+          </UiTitle>
         </View>
 
         <View style={styles.searchRow}>
           <View style={styles.searchBarWrapper}>
-            <SearchBar />
+            <SearchBar value={search} onChangeText={setSearch} />
           </View>
           <Pressable style={styles.filterButton} onPress={openFiltersModal}>
             <IconSymbol
@@ -106,7 +135,12 @@ export default function ItemsScreen() {
         ) : null}
 
         <View style={styles.grid}>
-          <ItemsGrid items={items} isLoading={isLoading} />
+          <ItemsGrid
+            items={visibleItems}
+            isLoading={isLoading}
+            hasActiveSearchOrFilters={hasActiveSearchOrFilters}
+            onClearSearchAndFilters={clearSearchAndFilters}
+          />
         </View>
       </UiPage>
 

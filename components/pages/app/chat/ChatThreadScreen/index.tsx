@@ -170,6 +170,7 @@ export default function ChatThreadScreen() {
         <ItemPickerSheet
           items={wardrobeItems}
           selectedIds={selectedItems.map((i) => i.id)}
+          bottomInset={insets.bottom}
           onConfirm={(ids) => {
             setSelectedItems(wardrobeItems.filter((i) => ids.includes(i.id)));
             hide();

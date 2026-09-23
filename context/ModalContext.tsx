@@ -1,5 +1,5 @@
 import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, Dimensions } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, Dimensions, View } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { styles } from './styles';
 
@@ -67,17 +67,22 @@ export const ModalProvider = ({ children }: PropsWithChildren) => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
+          {/* `accessible={false}` on both wrappers below - without it either
+              one becomes a single accessibility node that swallows every
+              chip/button the modal's content renders. */}
           <AnimatedPressable
+            accessible={false}
             style={[styles.backdrop, backdropStyle]}
             onPress={() => value.hide()}>
-            <Pressable onPress={() => {}}>
-              <Animated.ScrollView 
-                keyboardDismissMode="on-drag"
-                style={[styles.scrollView, contentStyle]}
-                contentContainerStyle={styles.scrollViewContent}
-              >
+            <Pressable accessible={false} onPress={() => {}}>
+              {/* A plain `Animated.View`, not a `ScrollView` - modal content
+                  owns its own scrolling (`UiPopup`, `ItemPickerSheet`'s bounded
+                  list); nesting a second scroller here fought them and broke
+                  a `FlatList` consumer outright. */}
+              <Animated.View style={[styles.sheet, contentStyle]}>
+                <View style={styles.grabber} />
                 {modal?.content}
-              </Animated.ScrollView>
+              </Animated.View>
             </Pressable>
           </AnimatedPressable>
         </KeyboardAvoidingView>

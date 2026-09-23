@@ -57,6 +57,12 @@ export const testIds = Object.freeze({
     dailyReminderSwitch: 'settings-notifications-daily-switch',
     includeOccasionsSwitch: 'settings-notifications-include-occasions-switch',
   }),
+  items: Object.freeze({
+    searchInput: 'items-search-input',
+    emptyState: 'items-empty-state',
+    noMatchState: 'items-no-match-state',
+    noMatchClear: 'items-no-match-state-action',
+  }),
   item: Object.freeze({
     photoPicker: 'item-photo-picker',
     photoAnalyzing: 'item-photo-analyzing',

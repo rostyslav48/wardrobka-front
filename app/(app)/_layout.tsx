@@ -83,6 +83,10 @@ export default function AuthLayout() {
               name="chat/[sessionId]"
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+              name="outfit-history"
+              options={{ headerShown: false }}
+            />
           </Stack>
 
           <UiToast ref={toastRef} />

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
-  FlatList,
   Image,
   Pressable,
+  ScrollView,
   Text,
   View,
 } from 'react-native';
@@ -10,6 +10,14 @@ import { WardrobeItem } from '@/types/wardrobe';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { colors } from '@/theme/colors';
 import { styles } from './styles';
+
+const COLUMNS = 3;
+
+function chunk<T>(list: T[], size: number): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < list.length; i += size) rows.push(list.slice(i, i + size));
+  return rows;
+}
 
 interface Props {
   items: WardrobeItem[];
@@ -20,6 +28,12 @@ interface Props {
   hideHeader?: boolean;
   onSelectionChange?: (ids: number[]) => void;
   onConfirm: (ids: number[]) => void;
+  /**
+   * Extra bottom padding for the confirm button, e.g. a safe-area inset when
+   * this sheet is the only thing between its content and the device edge.
+   * `LogEntrySheet` already pads its own wrapper, so it leaves this at 0.
+   */
+  bottomInset?: number;
 }
 
 export default function ItemPickerSheet({
@@ -31,6 +45,7 @@ export default function ItemPickerSheet({
   hideHeader = false,
   onSelectionChange,
   onConfirm,
+  bottomInset = 0,
 }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
 
@@ -62,50 +77,57 @@ export default function ItemPickerSheet({
         </View>
       )}
 
-      <FlatList
-        data={items}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={3}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.grid}
-        style={styles.list}
-        renderItem={({ item }) => {
-          const isSelected = selected.has(item.id);
-          return (
-            <Pressable
-              style={[styles.cell, isSelected && styles.cellSelected]}
-              onPress={() => toggle(item.id)}
-            >
-              {item.img_url ? (
-                <Image
-                  source={{ uri: item.img_url }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.placeholder}>
-                  <IconSymbol name="tshirt.fill" size={24} color={colors.textSecondary} />
-                </View>
-              )}
-              {isSelected && (
-                <View style={styles.checkOverlay}>
-                  <IconSymbol name="checkmark" size={16} color={colors.accentText} />
-                </View>
-              )}
-              <Text style={styles.itemName} numberOfLines={1}>
-                {item.name}
-              </Text>
-            </Pressable>
-          );
-        }}
-        ListEmptyComponent={
+      {/* A plain View grid, not a `FlatList` - some call sites render this
+          sheet inside another scroll container, and a virtualized list nested
+          in a plain ScrollView is invalid RN. Item counts here are a
+          wardrobe, not a feed, so virtualization buys nothing. */}
+      <ScrollView style={styles.list} contentContainerStyle={styles.grid}>
+        {items.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No items in your wardrobe yet.</Text>
           </View>
-        }
-      />
+        ) : (
+          chunk(items, COLUMNS).map((row, i) => (
+            <View key={i} style={styles.row}>
+              {row.map((item) => {
+                const isSelected = selected.has(item.id);
+                return (
+                  <Pressable
+                    key={item.id}
+                    style={[styles.cell, isSelected && styles.cellSelected]}
+                    onPress={() => toggle(item.id)}
+                  >
+                    {item.img_url ? (
+                      <Image
+                        source={{ uri: item.img_url }}
+                        style={styles.image}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.placeholder}>
+                        <IconSymbol name="tshirt.fill" size={24} color={colors.textSecondary} />
+                      </View>
+                    )}
+                    {isSelected && (
+                      <View style={styles.checkOverlay}>
+                        <IconSymbol name="checkmark" size={16} color={colors.accentText} />
+                      </View>
+                    )}
+                    <Text style={styles.itemName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))
+        )}
+      </ScrollView>
 
-      <Pressable style={styles.confirmButton} onPress={() => onConfirm(Array.from(selected))}>
+      <Pressable
+        style={[styles.confirmButton, { marginBottom: bottomInset }]}
+        onPress={() => onConfirm(Array.from(selected))}
+      >
         <Text style={styles.confirmLabel}>{derivedConfirmLabel}</Text>
       </Pressable>
     </View>
