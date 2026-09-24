@@ -79,7 +79,19 @@ export const ModalProvider = ({ children }: PropsWithChildren) => {
                   owns its own scrolling (`UiPopup`, `ItemPickerSheet`'s bounded
                   list); nesting a second scroller here fought them and broke
                   a `FlatList` consumer outright. */}
-              <Animated.View style={[styles.sheet, contentStyle]}>
+              {/* QA-63: `styles.sheet`'s `maxHeight: '88%'` resolved against
+                  this Pressable's own height, which is itself auto-computed
+                  from this very sheet's content (Yoga has no definite parent
+                  height to resolve the percentage against here, unlike
+                  `LogEntrySheet`'s sheet, whose parent is a `flex: 1` view).
+                  That circular reference clips ~12% off every `useModal()`
+                  sheet's bottom regardless of content or safe-area inset - a
+                  clamp against a concrete pixel value has a real, non-circular
+                  height to resolve against. */}
+              <Animated.View
+                testID="modal-sheet"
+                style={[styles.sheet, { maxHeight: SCREEN_HEIGHT * 0.88 }, contentStyle]}
+              >
                 <View style={styles.grabber} />
                 {modal?.content}
               </Animated.View>

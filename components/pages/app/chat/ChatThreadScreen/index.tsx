@@ -210,17 +210,18 @@ export default function ChatThreadScreen() {
   const openPicker = () => {
     show({
       content: (
-        // QA-63: `ModalContext`'s sheet sizes itself to this content, so the
-        // bottom safe-area inset has to be real padding here to be included
-        // in that height - `ItemPickerSheet`'s own `bottomInset` prop applies
-        // it as a margin on the confirm button instead, which left the sheet
-        // background short of the screen edge. `LogEntrySheet` (the correct
-        // picker) pads its own sheet wrapper the same way and never passes
-        // `bottomInset`.
+        // QA-63: the sheet background falling short of the screen edge was
+        // `ModalContext`'s `maxHeight: '88%'` clamp, fixed there (see that
+        // file). This wrapper's own `paddingBottom: insets.bottom` - real
+        // padding, included in the sheet's content height, unlike
+        // `ItemPickerSheet`'s `bottomInset` prop which applies as a margin
+        // on the confirm button - is kept so the inset itself still lands
+        // inside the sheet now that the clamp isn't clipping content.
         <View style={[styles.pickerSheetWrapper, { paddingBottom: insets.bottom }]}>
           <ItemPickerSheet
             items={wardrobeItems}
             selectedIds={selectedItems.map((i) => i.id)}
+            confirmTestID="chat-picker-confirm-button"
             onConfirm={(ids) => {
               setSelectedItems(wardrobeItems.filter((i) => ids.includes(i.id)));
               hide();

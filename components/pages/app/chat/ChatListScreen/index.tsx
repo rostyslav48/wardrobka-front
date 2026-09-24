@@ -117,8 +117,11 @@ export default function ChatListScreen() {
       </UiPage>
 
       <Pressable
+        testID="chat-new-session-button"
         style={[styles.fab, { bottom: tabBarHeight + spacing.gutter }]}
         onPress={() => router.push('/chat/new')}
+        accessibilityRole="button"
+        accessibilityLabel="New chat"
       >
         <IconSymbol name="plus" size={iconSize.xl} color={colors.accentText} />
       </Pressable>

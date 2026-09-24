@@ -423,4 +423,36 @@ test.describe('authenticated app shell', () => {
 
     expect(errors, 'outfit history must render without an unhandled error').toEqual([]);
   });
+
+  test('QA-63: the chat item picker sheet reaches the bottom of the screen', async ({
+    page,
+  }) => {
+    // QA's repro viewport - the bug is a Yoga `maxHeight: '88%'` percentage
+    // resolving against the sheet's own indefinite-height wrapper instead of
+    // the screen, not an iOS-only safe-area effect (insets.bottom is 0 on
+    // web), so it reproduces here.
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await page.getByTestId(testIds.tabs.chat).click();
+    await page.getByTestId(testIds.chat.newSessionButton).click();
+    await page.getByTestId(testIds.chat.attachButton).click();
+
+    const sheet = page.getByTestId(testIds.modal.sheet);
+    const confirmButton = page.getByTestId(testIds.chat.pickerConfirmButton);
+    await expect(sheet).toBeVisible();
+    await expect(confirmButton).toBeVisible();
+
+    const sheetBox = await sheet.boundingBox();
+    const confirmBox = await confirmButton.boundingBox();
+    if (!sheetBox || !confirmBox) {
+      throw new Error('expected bounding boxes for the sheet and confirm button');
+    }
+
+    // The sheet's background must run flush to the screen edge.
+    expect(Math.abs(844 - (sheetBox.y + sheetBox.height))).toBeLessThan(2);
+    // The confirm button's box must stay inside the sheet's own box - if it
+    // doesn't, `overflow: hidden` on the sheet is clipping it, which is
+    // exactly QA-63's "Confirm button's lower corners" defect.
+    expect(confirmBox.y + confirmBox.height).toBeLessThanOrEqual(sheetBox.y + sheetBox.height + 1);
+  });
 });
