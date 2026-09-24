@@ -78,4 +78,10 @@ export const styles = StyleSheet.create({
     ...typography.overflowChip,
     color: colors.error,
   },
+
+  // QA-63: `ModalContext`'s sheet hugs its content's height, so the bottom
+  // safe-area inset has to be real space *inside* that content (padding) to
+  // be included in it - not a margin on the last child, which left the sheet
+  // background short of the screen edge and clipped the confirm button.
+  pickerSheetWrapper: {},
 });

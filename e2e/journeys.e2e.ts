@@ -100,6 +100,68 @@ test('register rejects a password confirmation mismatch', async ({ page }) => {
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
 });
 
+// QA-64: on a small screen the submit button can be hidden behind the
+// keyboard, so Return has to be able to both move focus and submit without
+// the button ever being tapped. This can't reproduce the keyboard overlap
+// itself on web (no on-screen keyboard, no small viewport), but the focus
+// chaining and submit-on-last-field wiring are plain DOM behaviour and are
+// fully exercisable here.
+test('QA-64: Return advances focus through the register form and submits on the last field', async ({
+  page,
+}) => {
+  await page.getByTestId(testIds.login.switchModeLink).click();
+
+  await page.getByTestId(testIds.login.emailInput).fill(`qa64-${Date.now()}@example.com`);
+  await page.getByTestId(testIds.login.emailInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.nameInput)).toBeFocused();
+
+  await page.getByTestId(testIds.login.nameInput).fill('QA64 User');
+  await page.getByTestId(testIds.login.nameInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.passwordInput)).toBeFocused();
+
+  await page.getByTestId(testIds.login.passwordInput).fill('Password123!');
+  await page.getByTestId(testIds.login.passwordInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.confirmPasswordInput)).toBeFocused();
+
+  // A mismatched confirmation keeps Formik's client-side validation from
+  // ever calling `onSubmit` (same as "register rejects a password
+  // confirmation mismatch" above) — proving Return on the last field reaches
+  // `handleSubmit()` without spending the signup endpoint's 5/60s throttle.
+  await page.getByTestId(testIds.login.confirmPasswordInput).fill('Different123!');
+  await page.getByTestId(testIds.login.confirmPasswordInput).press('Enter');
+
+  await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
+});
+
+test('QA-64: Return advances focus from email to password and submits the login form', async ({
+  page,
+}) => {
+  // Mirrors `loginThroughUi`'s retry-on-429: `POST /auth/login` is throttled
+  // to 10 requests/60s and shared with every other login in this file.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.getByTestId(testIds.login.emailInput).fill(user.email);
+    await page.getByTestId(testIds.login.emailInput).press('Enter');
+    await expect(page.getByTestId(testIds.login.passwordInput)).toBeFocused();
+
+    await page.getByTestId(testIds.login.passwordInput).fill(user.password);
+    await page.getByTestId(testIds.login.passwordInput).press('Enter');
+
+    const loggedIn = await expect(page.getByTestId(testIds.login.heading))
+      .toBeHidden({ timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (loggedIn) return;
+
+    await page.waitForTimeout(45_000);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId(testIds.login.heading).waitFor({ timeout: 45_000 });
+  }
+  await expect(
+    page.getByTestId(testIds.login.heading),
+    'login via Return never completed',
+  ).toBeHidden();
+});
+
 test('QA-22: a short password is not blocked client-side on login — it reaches the server', async ({
   page,
 }) => {

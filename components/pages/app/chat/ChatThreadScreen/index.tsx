@@ -122,12 +122,13 @@ export default function ChatThreadScreen() {
 
   // QA-30: focusing the composer opened the keyboard without keeping the
   // newest messages in view, leaving them behind it. `keyboardWillShow` fires
-  // before the keyboard is fully up on iOS, matching the composer's own
-  // reposition; `keyboardDidShow` is the closest Android has.
+  // *before* `KeyboardAvoidingView` has shrunk the list on iOS, so the
+  // scroll landed on the list's still-tall, pre-resize end. `keyboardDidShow`
+  // fires once the keyboard (and the resize it drives) has settled, on both
+  // platforms.
   useEffect(() => {
-    const sub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => listRef.current?.scrollToEnd({ animated: true }),
+    const sub = Keyboard.addListener('keyboardDidShow', () =>
+      listRef.current?.scrollToEnd({ animated: true }),
     );
     return () => sub.remove();
   }, []);
@@ -209,15 +210,23 @@ export default function ChatThreadScreen() {
   const openPicker = () => {
     show({
       content: (
-        <ItemPickerSheet
-          items={wardrobeItems}
-          selectedIds={selectedItems.map((i) => i.id)}
-          bottomInset={insets.bottom}
-          onConfirm={(ids) => {
-            setSelectedItems(wardrobeItems.filter((i) => ids.includes(i.id)));
-            hide();
-          }}
-        />
+        // QA-63: `ModalContext`'s sheet sizes itself to this content, so the
+        // bottom safe-area inset has to be real padding here to be included
+        // in that height - `ItemPickerSheet`'s own `bottomInset` prop applies
+        // it as a margin on the confirm button instead, which left the sheet
+        // background short of the screen edge. `LogEntrySheet` (the correct
+        // picker) pads its own sheet wrapper the same way and never passes
+        // `bottomInset`.
+        <View style={[styles.pickerSheetWrapper, { paddingBottom: insets.bottom }]}>
+          <ItemPickerSheet
+            items={wardrobeItems}
+            selectedIds={selectedItems.map((i) => i.id)}
+            onConfirm={(ids) => {
+              setSelectedItems(wardrobeItems.filter((i) => ids.includes(i.id)));
+              hide();
+            }}
+          />
+        </View>
       ),
     });
   };
