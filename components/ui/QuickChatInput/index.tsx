@@ -41,7 +41,10 @@ export default function QuickChatInput({
         />
       </View>
       <Pressable
-        style={[styles.sendButton, canSubmit && styles.sendButtonActive]}
+        style={[
+          styles.sendButton,
+          (canSubmit || isLoading) && styles.sendButtonActive,
+        ]}
         onPress={canAttemptSubmit ? () => onSubmit() : undefined}
         disabled={!canAttemptSubmit}
       >

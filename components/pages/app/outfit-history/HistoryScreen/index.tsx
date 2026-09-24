@@ -22,6 +22,18 @@ export default function HistoryScreen() {
 
   const [suggestions, setSuggestions] = useState<AssistantOutfitSuggestionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // QA-58: the initial fetch (kicked off the instant this screen mounts, at
+  // the very start of the push) can resolve while the push's own ~300ms
+  // slide is still running, swapping skeleton -> real card mid-transition for
+  // a couple of frames. Rather than holding a skeleton on screen for a
+  // minimum stretch (which still swaps mid-push on anything slower than the
+  // threshold), gate its *entry*: only show it once the fetch has been
+  // pending longer than the threshold, so a response that lands inside the
+  // push never renders a skeleton at all - it goes straight from nothing to
+  // the real card.
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -29,14 +41,8 @@ export default function HistoryScreen() {
   const offsetRef = useRef(0);
   const isFetchingRef = useRef(false);
   const toastRef = useRef<UiToastRef>(null);
-  // QA-58: the initial fetch (kicked off the instant this screen mounts, at
-  // the very start of the push) can resolve while the push's own ~300ms
-  // slide is still running, swapping skeleton -> real card mid-transition
-  // for a couple of frames. Holding the skeleton for a minimum stretch
-  // keeps it on screen for the whole push on a fast response, without
-  // adding any wait on a slow one.
-  const loadStartedAtRef = useRef(0);
-  const MIN_SKELETON_MS = 150;
+  const skeletonTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const SKELETON_DELAY_MS = 150;
 
   // Track which sessions still exist so a tap on a suggestion whose
   // originating conversation was deleted shows a toast instead of navigating
@@ -57,6 +63,13 @@ export default function HistoryScreen() {
     return () => sub.unsubscribe();
   }, []);
 
+  const clearSkeletonTimer = useCallback(() => {
+    if (skeletonTimerRef.current) {
+      clearTimeout(skeletonTimerRef.current);
+      skeletonTimerRef.current = null;
+    }
+  }, []);
+
   const fetchPage = useCallback((offset: number, silent = false) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
@@ -64,7 +77,10 @@ export default function HistoryScreen() {
     if (!silent) {
       if (offset === 0) {
         setIsLoading(true);
-        loadStartedAtRef.current = Date.now();
+        skeletonTimerRef.current = setTimeout(() => {
+          skeletonTimerRef.current = null;
+          setShowSkeleton(true);
+        }, SKELETON_DELAY_MS);
       } else {
         setIsLoadingMore(true);
       }
@@ -83,25 +99,29 @@ export default function HistoryScreen() {
         offsetRef.current = offset + page.length;
 
         if (offset === 0 && !silent) {
-          const elapsed = Date.now() - loadStartedAtRef.current;
-          if (elapsed < MIN_SKELETON_MS) {
-            setTimeout(() => setIsLoading(false), MIN_SKELETON_MS - elapsed);
-          } else {
-            setIsLoading(false);
-          }
-        } else {
-          setIsLoading(false);
+          clearSkeletonTimer();
+          setShowSkeleton(false);
+          setHasLoadedOnce(true);
         }
+        setIsLoading(false);
         finish();
       },
       error: () => {
+        if (offset === 0 && !silent) {
+          clearSkeletonTimer();
+          setShowSkeleton(false);
+          setHasLoadedOnce(true);
+        }
         setIsLoading(false);
         finish();
       },
     });
 
-    return () => sub.unsubscribe();
-  }, []);
+    return () => {
+      sub.unsubscribe();
+      clearSkeletonTimer();
+    };
+  }, [clearSkeletonTimer]);
 
   useEffect(() => {
     const unsubscribePage = fetchPage(0);
@@ -193,12 +213,14 @@ export default function HistoryScreen() {
         onEndReached={handleLoadMore}
         contentStyle={styles.content}
       >
-        {isLoading ? (
-          <View style={styles.list}>
-            <UiSkeletonCard />
-            <UiSkeletonCard />
-            <UiSkeletonCard />
-          </View>
+        {!hasLoadedOnce ? (
+          showSkeleton ? (
+            <View style={styles.list}>
+              <UiSkeletonCard />
+              <UiSkeletonCard />
+              <UiSkeletonCard />
+            </View>
+          ) : null
         ) : suggestions.length === 0 ? (
           <UiEmptyState
             icon="sparkles"
