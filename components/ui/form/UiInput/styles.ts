@@ -25,6 +25,12 @@ export const styles = StyleSheet.create({
     borderColor: colors.surface,
     backgroundColor: colors.surface,
   },
+  container__focused: {
+    borderColor: colors.brand,
+  },
+  container__error: {
+    borderColor: colors.error,
+  },
   input__readonly: {
     color: colors.textSecondary,
   },

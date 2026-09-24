@@ -13,6 +13,7 @@ type Props = PropsWithChildren<{
   onPress: (event?: UiButtonClickEvent) => void;
   secondary?: boolean;
   enableLoader?: boolean;
+  disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }>;
@@ -27,6 +28,7 @@ export default function UiButton({
   children,
   secondary,
   enableLoader = false,
+  disabled = false,
   style,
   testID,
 }: Props) {
@@ -46,9 +48,14 @@ export default function UiButton({
 
   return (
     <TouchableOpacity
-      style={[styles.button, secondary && styles.button__secondary, style]}
+      style={[
+        styles.button,
+        secondary && styles.button__secondary,
+        disabled && styles.button__disabled,
+        style,
+      ]}
       onPress={handleClick}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       testID={testID}
       accessibilityRole="button"
     >

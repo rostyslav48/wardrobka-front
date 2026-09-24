@@ -15,4 +15,7 @@ export const styles = StyleSheet.create({
     borderWidth: border.hairline,
     borderColor: colors.border,
   },
+  button__disabled: {
+    opacity: 0.5,
+  },
 });

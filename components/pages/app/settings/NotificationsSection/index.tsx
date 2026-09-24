@@ -166,7 +166,10 @@ export default function NotificationsSection({ onNotify }: Props) {
         </View>
         <Switch
           testID="settings-notifications-include-occasions-switch"
-          value={prefs.includeOccasions}
+          // QA-10: an ON-and-disabled switch read as active even while the
+          // parent reminder was off; show it off (not just dimmed) whenever
+          // there is no reminder for it to gate, instead of the stored value.
+          value={prefs.enabled && prefs.includeOccasions}
           onValueChange={handleIncludeOccasionsToggle}
           disabled={!prefs.enabled}
           trackColor={{ false: colors.border, true: colors.brand }}
@@ -185,6 +188,9 @@ export default function NotificationsSection({ onNotify }: Props) {
               value={timeToDate(prefs.time)}
               onChange={handleTimeChange}
               themeVariant="dark"
+              // QA-13: without this the selected time uses iOS's system blue
+              // instead of the app's brand accent.
+              accentColor={colors.brand}
             />
           ) : (
             <Pressable onPress={() => setIsPickerOpen(true)} hitSlop={8}>

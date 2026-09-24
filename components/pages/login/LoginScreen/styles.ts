@@ -3,11 +3,16 @@ import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
+  // QA-23: this was `justifyContent: 'center'` with `height: '100%'`, so
+  // every time an error line or the server-error banner appeared/disappeared
+  // the taller/shorter content re-centred, jumping the whole form by
+  // 15-20 pt. Anchoring from the top instead keeps everything above the
+  // error in a fixed position; `paddingTop` approximates where centred
+  // content used to land at the form's usual (no-error) height.
   container: {
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
-    height: '100%',
+    paddingTop: spacing.statusBar + spacing['3xl'],
   },
   // 30 - not on the redesign scale (spacing tops out at spacing['3xl']=28
   // below spacing.statusBar=62). This screen was never restyled onto the

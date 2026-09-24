@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { WardrobeItem } from '@/types/wardrobe';
@@ -28,6 +29,17 @@ export default function ChatInputBar({
 }: Props) {
   const canSend = value.trim().length > 0 && !isSending;
 
+  // QA-31: after sending, the multiline input kept its grown height for a
+  // moment (RN's own content-size layout pass lags a frame or two behind the
+  // text clearing), leaving the placeholder top-aligned in a still-tall box.
+  // Tracking the measured height ourselves lets us snap it back to `null`
+  // (the field's natural single-line height) the instant `value` clears,
+  // instead of waiting on that layout pass.
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
+  useEffect(() => {
+    if (value === '') setMeasuredHeight(null);
+  }, [value]);
+
   return (
     <View style={[styles.wrapper, { paddingBottom: bottomInset + spacing.sm }]}>
       {selectedItems.length > 0 && (
@@ -42,7 +54,12 @@ export default function ChatInputBar({
               <Text style={styles.chipLabel} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Pressable onPress={() => onRemoveItem(item.id)} hitSlop={6}>
+              <Pressable
+                onPress={() => onRemoveItem(item.id)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${item.name}`}
+              >
                 <IconSymbol name="xmark" size={iconSize.sm} color={colors.textSecondary} />
               </Pressable>
             </View>
@@ -56,6 +73,8 @@ export default function ChatInputBar({
           onPress={onOpenPicker}
           disabled={isSending}
           hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Attach items"
         >
           <IconSymbol
             name="paperclip"
@@ -68,9 +87,12 @@ export default function ChatInputBar({
             51px + a 48px r24 `accent` send button. */}
         <View style={styles.inputWrapper}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, measuredHeight != null && { height: measuredHeight }]}
             value={value}
             onChangeText={onChangeText}
+            onContentSizeChange={(e) =>
+              setMeasuredHeight(e.nativeEvent.contentSize.height)
+            }
             placeholder="Message your stylist…"
             placeholderTextColor={colors.placeholder}
             multiline
@@ -92,6 +114,8 @@ export default function ChatInputBar({
           onPress={onSend}
           disabled={!canSend}
           hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
         >
           <IconSymbol
             name="arrow.right"

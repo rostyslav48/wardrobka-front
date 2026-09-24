@@ -80,8 +80,17 @@ export default function HomeScreen() {
 
   const handleSubmit = useCallback(
     (overridePrompt?: string) => {
-      const prompt = (overridePrompt ?? inputValue).trim();
-      if (!prompt || isSubmitting) return;
+      const raw = overridePrompt ?? inputValue;
+      const prompt = raw.trim();
+      if (isSubmitting) return;
+      if (!prompt) {
+        // QA-27: a whitespace-only prompt is still not sent (there is
+        // nothing to ask), but it used to leave the spaces sitting in the
+        // field with no sign anything happened. Clearing it is the
+        // feedback - the field visibly responds to the tap.
+        if (raw) setInputValue('');
+        return;
+      }
 
       setIsSubmitting(true);
       aiAssistantService.chat({ prompt }).subscribe({
@@ -193,7 +202,15 @@ export default function HomeScreen() {
               key={s.id}
               suggestion={s}
               thumbnails={s.thumbnails}
-              onPress={() => router.push(`/chat/${s.sessionId}`)}
+              // QA-37: the suggestion already carries the session's topic -
+              // pass it along so the thread header doesn't fall back to
+              // "Chat".
+              onPress={() =>
+                router.push({
+                  pathname: '/chat/[sessionId]',
+                  params: { sessionId: s.sessionId, topic: s.sessionTopic },
+                })
+              }
             />
           ))
         )}

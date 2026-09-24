@@ -35,7 +35,13 @@ test('BUG-F03 expo-notifications is called unguarded on web', async ({ page }) =
   ).toEqual([]);
 });
 
-test('BUG-F04 the "Forgot Password?" link is inert', async ({ page }) => {
+test('BUG-F04 / QA-20 the "Forgot Password?" entry point is hidden, not inert', async ({
+  page,
+}) => {
+  // BUG-F04 was "the link is inert" (navigates nowhere useful). QA-20's fix
+  // is the report's second option: since there is no support address and no
+  // reset flow yet, the entry point itself is removed rather than left
+  // pointing at a dead end.
   await openApp(page, '/');
   const booted = await page
     .getByTestId(testIds.login.heading)
@@ -43,8 +49,5 @@ test('BUG-F04 the "Forgot Password?" link is inert', async ({ page }) => {
     .catch(() => false);
   test.skip(!booted, 'blocked by BUG-F01');
 
-  const before = page.url();
-  await page.getByTestId(testIds.login.forgotPasswordLink).click();
-  await page.waitForTimeout(1_000);
-  expect(page.url(), 'the link must navigate somewhere').not.toBe(before);
+  await expect(page.getByTestId(testIds.login.forgotPasswordLink)).toHaveCount(0);
 });

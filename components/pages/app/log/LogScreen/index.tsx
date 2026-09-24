@@ -107,7 +107,12 @@ export default function LogScreen() {
             same title-row shape as Items/Chat. */}
         <View style={styles.header}>
           <UiTitle sizeL>Outfit Log</UiTitle>
-          <Pressable style={styles.addButton} onPress={handleOpenAdd} hitSlop={8}>
+          <Pressable
+            style={styles.addButton}
+            onPress={handleOpenAdd}
+            hitSlop={8}
+            testID="log-add-entry-button"
+          >
             <IconSymbol name="plus" size={iconSize.sm} color={colors.accentText} />
             <Text style={styles.addButtonText}>Add entry</Text>
           </Pressable>
@@ -129,12 +134,14 @@ export default function LogScreen() {
             onAction={() => fetchEntries()}
           />
         ) : entries.length === 0 ? (
+          // QA-52: the header's "Add entry" pill (spec 6.5) is always on
+          // screen, so this empty state used to repeat it as a second,
+          // identical action right below.
           <UiEmptyState
+            testID="log-empty-state"
             icon="calendar"
             title="Nothing logged yet"
             subtitle="Log what you wore and the outfit history builds itself."
-            actionLabel="+ Add entry"
-            onAction={handleOpenAdd}
           />
         ) : (
           <View style={styles.list}>

@@ -20,17 +20,17 @@ export default function ProfileSection({ profile, onSave }: Props) {
   return (
     <Formik
       initialValues={{ name: profile.name, city: profile.city ?? '' }}
+      // QA-07: without this, initialValues freeze at first mount - after a
+      // successful save `profile` (and the payload diff below) updates but
+      // `dirty` never resets, so Save stays enabled and a second tap ships
+      // an empty PATCH with a bogus success toast.
+      enableReinitialize
       validationSchema={profileSchema}
       onSubmit={(values, helpers) => {
         const payload: UpdateProfilePayload = {};
         if (values.name !== profile.name) payload.name = values.name;
         if ((values.city || null) !== profile.city)
           payload.city = values.city || null;
-
-        if (Object.keys(payload).length === 0) {
-          helpers.setSubmitting(false);
-          return;
-        }
 
         onSave(
           payload,
@@ -43,6 +43,7 @@ export default function ProfileSection({ profile, onSave }: Props) {
         values,
         errors,
         touched,
+        dirty,
         handleChange,
         handleSubmit,
         isSubmitting,
@@ -53,6 +54,8 @@ export default function ProfileSection({ profile, onSave }: Props) {
               value={values.name}
               onChange={handleChange('name')}
               placeholder="Name"
+              testID="settings-profile-name-input"
+              hasError={touched.name && !!errors.name}
             />
           </UiFormField>
 
@@ -70,10 +73,22 @@ export default function ProfileSection({ profile, onSave }: Props) {
               value={values.city}
               onChange={handleChange('city')}
               placeholder="City (optional)"
+              testID="settings-profile-city-input"
+              // QA-12: matches profileSchema's max(100) so the limit is
+              // enforced by the keyboard, not only on Save.
+              maxLength={100}
+              hasError={touched.city && !!errors.city}
             />
           </UiFormField>
 
-          <UiButton enableLoader={isSubmitting} onPress={() => handleSubmit()}>
+          {/* QA-07: Save no longer submits an empty payload silently -
+              disabled until the form is dirty. */}
+          <UiButton
+            enableLoader={isSubmitting}
+            disabled={!dirty}
+            onPress={() => handleSubmit()}
+            testID="settings-profile-save-button"
+          >
             <Text style={styles.saveButtonText}>Save</Text>
           </UiButton>
         </View>

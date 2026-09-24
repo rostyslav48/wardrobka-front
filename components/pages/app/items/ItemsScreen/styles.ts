@@ -31,6 +31,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.cardPad,
+    // QA-46: the filter button sits flush with the page's right gutter, so
+    // the badge's own -6 overhang (spec 6.3's "overhanging the button's
+    // top-right") landed past `UiPage`'s ScrollView bounds and got clipped.
+    // Reserving that same 6px here nudges the button left just enough for
+    // the badge to clear it.
+    paddingRight: 6,
   },
   searchBarWrapper: {
     flex: 1,

@@ -166,6 +166,13 @@ export default function NewItemScreen() {
             next: (attributes) => {
               applyAnalyzedAttributes(attributes);
               setAnalyzing(false);
+              // QA-44: the "Analyzing…" overlay is on screen only for as
+              // long as the request takes, which can be under a frame - too
+              // brief to register. This message persists until the next
+              // photo pick or submit, so the user has a way to know the
+              // fields below were filled in automatically even if they
+              // missed the overlay.
+              setAnalysisMessage('Filled in from your photo — check the details below.');
             },
             error: (error: ApiError) => {
               setAnalysisMessage(
@@ -274,14 +281,13 @@ export default function NewItemScreen() {
                 <Image source={{ uri: imageUri }} style={styles.photo} resizeMode="cover" />
               ) : (
                 <View style={styles.photoPlaceholder}>
+                  {/* QA-45: the separate "CAMERA"/"GALLERY" hints implied two
+                      tap targets when the whole area is one (it opens the
+                      same "Add Photo" choice either way) - dropped rather
+                      than split into two buttons, per the finding's second
+                      option. */}
                   <IconSymbol name="camera.fill" size={iconSize.xxl} color={colors.textSecondary} />
                   <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
-                  <View style={styles.photoActions}>
-                    <IconSymbol name="camera.fill" size={iconSize.md} color={colors.textSecondary} />
-                    <Text style={styles.photoActionText}>CAMERA</Text>
-                    <IconSymbol name="photo.on.rectangle" size={iconSize.md} color={colors.textSecondary} />
-                    <Text style={styles.photoActionText}>GALLERY</Text>
-                  </View>
                 </View>
               )}
               {analyzing && (
