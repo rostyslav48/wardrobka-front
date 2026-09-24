@@ -100,6 +100,47 @@ test('register rejects a password confirmation mismatch', async ({ page }) => {
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
 });
 
+test('QA-22: a short password is not blocked client-side on login — it reaches the server', async ({
+  page,
+}) => {
+  let receivedPassword: string | undefined;
+  await page.route('**/auth/login', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    receivedPassword = route.request().postDataJSON()?.password;
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Unauthorized', statusCode: 401 }),
+    });
+  });
+
+  await page.getByTestId(testIds.login.emailInput).fill(user.email);
+  await page.getByTestId(testIds.login.passwordInput).fill('abc');
+  await page.getByTestId(testIds.login.submitButton).click();
+
+  await expect(page.getByText('Wrong email or password')).toBeVisible();
+  expect(
+    receivedPassword,
+    'a <8-char password must reach the server on login, not get stopped by client validation',
+  ).toBe('abc');
+});
+
+test('QA-21 / QA-20: there is no Forgot Password entry point to lose the typed login fields to', async ({
+  page,
+}) => {
+  await expect(page.getByTestId(testIds.login.forgotPasswordLink)).toHaveCount(0);
+
+  await page.getByTestId(testIds.login.emailInput).fill(user.email);
+  await page.getByTestId(testIds.login.passwordInput).fill('whatever-was-typed');
+
+  // Nothing on this screen can navigate the fields away and back, so they
+  // simply keep what was typed.
+  await expect(page.getByTestId(testIds.login.emailInput)).toHaveValue(user.email);
+  await expect(page.getByTestId(testIds.login.passwordInput)).toHaveValue(
+    'whatever-was-typed',
+  );
+});
+
 test('a logged-in session survives a page reload', async ({ page }) => {
   await loginThroughUi(page, user);
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -181,6 +222,42 @@ test.describe('authenticated app shell', () => {
   test('the settings tab shows the signed-in profile', async ({ page }) => {
     await page.getByTestId(testIds.tabs.settings).click();
     await expect(page.getByText(user.name, { exact: false }).first()).toBeVisible();
+  });
+
+  test('QA-07: Save on the profile form is disabled until something changes', async ({
+    page,
+  }) => {
+    await page.getByTestId(testIds.tabs.settings).click();
+    await expect(page.getByTestId('settings-profile-name-input')).toBeVisible();
+
+    let patchCalled = false;
+    await page.route('**/auth/profile', async (route) => {
+      if (route.request().method() === 'PATCH') patchCalled = true;
+      await route.continue();
+    });
+
+    // No edits made — clicking Save must not fire a PATCH (QA-07: it used to
+    // silently no-op with an empty payload; it's disabled now).
+    await page.getByTestId('settings-profile-save-button').click({ force: true });
+    await page.waitForTimeout(1_000);
+    expect(patchCalled, 'Save must not submit when the form has no changes').toBe(false);
+
+    // Sanity check the wiring: an actual edit does enable it.
+    await page.getByTestId('settings-profile-name-input').fill(`${user.name} Edited`);
+    await page.getByTestId('settings-profile-save-button').click();
+    await expect.poll(() => patchCalled).toBe(true);
+  });
+
+  test('QA-12: the city field stops accepting characters at its 100-character limit', async ({
+    page,
+  }) => {
+    await page.getByTestId(testIds.tabs.settings).click();
+    const cityInput = page.getByTestId('settings-profile-city-input');
+    await expect(cityInput).toBeVisible();
+
+    await cityInput.click();
+    await cityInput.pressSequentially('x'.repeat(110));
+    await expect(cityInput).toHaveValue('x'.repeat(100));
   });
 
   test('the log tab renders', async ({ page }) => {

@@ -36,14 +36,18 @@ export default function QuickChatInput({
         />
       </View>
       <Pressable
-        style={[styles.sendButton, !canSubmit && styles.sendButtonDisabled]}
+        style={[styles.sendButton, canSubmit && styles.sendButtonActive]}
         onPress={canSubmit ? () => onSubmit() : undefined}
         disabled={!canSubmit}
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.accentText} />
         ) : (
-          <IconSymbol name="arrow.right" size={iconSize.lg} color={colors.accentText} />
+          <IconSymbol
+            name="arrow.right"
+            size={iconSize.lg}
+            color={canSubmit ? colors.accentText : colors.textSecondary}
+          />
         )}
       </Pressable>
     </View>

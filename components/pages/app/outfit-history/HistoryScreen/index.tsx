@@ -120,14 +120,16 @@ export default function HistoryScreen() {
   }, []);
 
   const handleOpenSession = useCallback(
-    (sessionId: string) => {
+    (sessionId: string, topic: string) => {
       // Only block navigation when we positively know the session is gone;
       // if the sessions list hasn't loaded yet, stay optimistic.
       if (validSessionIds && !validSessionIds.has(sessionId)) {
         toastRef.current?.show('This conversation is no longer available', 'error');
         return;
       }
-      router.push(`/chat/${sessionId}`);
+      // QA-37: the suggestion already carries the session's topic - pass it
+      // along so the thread header doesn't fall back to "Chat".
+      router.push({ pathname: '/chat/[sessionId]', params: { sessionId, topic } });
     },
     [validSessionIds],
   );
@@ -192,7 +194,7 @@ export default function HistoryScreen() {
                 suggestion={item}
                 thumbnails={resolveThumbnails(item.wardrobeItemIds)}
                 itemNames={resolveItemNames(item.wardrobeItemIds)}
-                onPress={() => handleOpenSession(item.sessionId)}
+                onPress={() => handleOpenSession(item.sessionId, item.sessionTopic)}
                 onDelete={() => handleDelete(item.id)}
               />
             ))}

@@ -209,7 +209,10 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
               value={draft.favourite === true}
               onValueChange={(val) => set('favourite', val || undefined)}
               trackColor={{ false: colors.border, true: colors.accent }}
-              thumbColor={colors.accentText}
+              // QA-47: `accentText` (near-black) on the `border` off-track
+              // (dark grey) was invisible off. Settings' switches use this
+              // light thumb colour in both states - matched here.
+              thumbColor={colors.textPrimary}
             />
           </View>
         </View>

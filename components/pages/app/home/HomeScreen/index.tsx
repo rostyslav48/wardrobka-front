@@ -193,7 +193,15 @@ export default function HomeScreen() {
               key={s.id}
               suggestion={s}
               thumbnails={s.thumbnails}
-              onPress={() => router.push(`/chat/${s.sessionId}`)}
+              // QA-37: the suggestion already carries the session's topic -
+              // pass it along so the thread header doesn't fall back to
+              // "Chat".
+              onPress={() =>
+                router.push({
+                  pathname: '/chat/[sessionId]',
+                  params: { sessionId: s.sessionId, topic: s.sessionTopic },
+                })
+              }
             />
           ))
         )}

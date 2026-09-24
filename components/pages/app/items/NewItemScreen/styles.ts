@@ -96,19 +96,6 @@ export const styles = StyleSheet.create({
     letterSpacing: tracking.rowLabel,
     color: colors.textSecondary,
   },
-  // Spec 6.7: "CAMERA / GALLERY row (gap 18, 14px icons, 10/500 ls 0.8 labels)".
-  photoActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.section,
-    marginTop: spacing['3xs'],
-  },
-  // Spec 4.3's meta-line role names "CAMERA" and "GALLERY" verbatim.
-  photoActionText: {
-    ...typography.meta,
-    letterSpacing: tracking.meta,
-    color: colors.textSecondary,
-  },
   changePhotoBtn: {
     alignSelf: 'center',
   },

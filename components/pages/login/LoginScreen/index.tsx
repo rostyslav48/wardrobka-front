@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -134,6 +134,7 @@ export default function LoginScreen() {
                   testID="login-email-input"
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  hasError={!!errors.email}
                 />
               </UiFormField>
 
@@ -144,6 +145,7 @@ export default function LoginScreen() {
                     onChange={onFieldChange('name')}
                     placeholder="Name"
                     testID="login-name-input"
+                    hasError={!!errors.name}
                   />
                 </UiFormField>
               )}
@@ -155,6 +157,7 @@ export default function LoginScreen() {
                   placeholder="Password"
                   isSecureText={true}
                   testID="login-password-input"
+                  hasError={!!errors.password}
                 />
               </UiFormField>
 
@@ -167,6 +170,7 @@ export default function LoginScreen() {
                       placeholder="Confirm password"
                       isSecureText={true}
                       testID="login-confirm-password-input"
+                      hasError={!!errors.confirmPassword}
                     />
                   </UiFormField>
                 </>
@@ -200,14 +204,10 @@ export default function LoginScreen() {
             {isLogin ? 'Switch to Register' : 'Switch to Login'}
           </Text>
         </UiButton>
-        {isLogin && (
-          <TouchableOpacity
-            onPress={() => router.push('/forgot-password')}
-            testID="login-forgot-password-link"
-          >
-            <Text style={styles.link}>Forgot Password?</Text>
-          </TouchableOpacity>
-        )}
+        {/* QA-20: no support address and no password reset exist yet, so
+            "Forgot Password?" was a dead end ("Contact support" with no way
+            to actually contact anyone). Hiding the entry point until a real
+            reset flow exists, per the finding's second option. */}
       </View>
     </UiPage>
   );

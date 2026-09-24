@@ -1,7 +1,12 @@
 import * as Yup from 'yup';
-import { LoginSchema } from './loginValidation';
+import { emailSchema } from './loginValidation';
 
-export const RegisterSchema = LoginSchema.shape({
+export const RegisterSchema = Yup.object().shape({
+  email: emailSchema,
+  // Registration keeps the min(8) rule that login (QA-22) dropped.
+  password: Yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .required('Password is required'),
   confirmPassword: Yup.string()
     .required('Password confirmation is required')
     .oneOf([Yup.ref('password')], 'Passwords must match'),

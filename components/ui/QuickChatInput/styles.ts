@@ -32,16 +32,19 @@ export const styles = StyleSheet.create({
     padding: 0,
     maxHeight: 100,
   },
+  // QA-26: this used to be `accent` always, with a 0.4-opacity "disabled"
+  // overlay - enabled and disabled read as the same button. Matches
+  // `ChatInputBar`'s send button now: muted by default, `accent` once
+  // there's text to send.
   sendButton: {
     width: 48,
     height: 48,
     borderRadius: radius.round,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendButtonDisabled: {
-    // Not a design value - snap table 8.6.
-    opacity: 0.4,
+  sendButtonActive: {
+    backgroundColor: colors.accent,
   },
 });

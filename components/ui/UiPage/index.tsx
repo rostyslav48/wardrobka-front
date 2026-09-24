@@ -1,5 +1,13 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-import { PropsWithChildren, ReactElement, ReactNode, useRef } from 'react';
+import {
+  ForwardedRef,
+  forwardRef,
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import {
   LayoutChangeEvent,
   NativeScrollEvent,
@@ -48,7 +56,17 @@ type Props = PropsWithChildren<{
   onEndReachedThreshold?: number;
 }>;
 
-type ScrollProps = Omit<Props, 'tabBarInset'> & { bottomInset: number };
+/** Imperative handle for screens that need to reset scroll position, e.g. on
+ * tab focus (QA-11: tab screens stay mounted, so a screen left mid-scroll
+ * shows that same offset - with the scrollable title gone - on return). */
+export interface UiPageHandle {
+  scrollToTop: () => void;
+}
+
+type ScrollProps = Omit<Props, 'tabBarInset'> & {
+  bottomInset: number;
+  innerRef: ForwardedRef<UiPageHandle>;
+};
 
 function PageScrollView({
   children,
@@ -59,10 +77,15 @@ function PageScrollView({
   header,
   onEndReached,
   onEndReachedThreshold = 0.3,
+  innerRef,
 }: ScrollProps) {
   const insets = useSafeAreaInsets();
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+
+  useImperativeHandle(innerRef, () => ({
+    scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: false }),
+  }));
   const hasFiredRef = useRef(false);
   // Mirrors FlatList's own onEndReached, which also fires on content-size
   // change (not only on scroll) - a page of results short enough not to
@@ -172,10 +195,15 @@ function TabBarInsetPage(props: Omit<ScrollProps, 'bottomInset'>) {
   return <PageScrollView {...props} bottomInset={useBottomTabBarHeight()} />;
 }
 
-export default function UiPage({ tabBarInset = false, ...rest }: Props) {
+function UiPage(
+  { tabBarInset = false, ...rest }: Props,
+  ref: ForwardedRef<UiPageHandle>,
+) {
   return tabBarInset ? (
-    <TabBarInsetPage {...rest} />
+    <TabBarInsetPage {...rest} innerRef={ref} />
   ) : (
-    <PageScrollView {...rest} bottomInset={0} />
+    <PageScrollView {...rest} bottomInset={0} innerRef={ref} />
   );
 }
+
+export default forwardRef(UiPage);

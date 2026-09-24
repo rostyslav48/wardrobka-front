@@ -69,6 +69,24 @@ export default function ChatThreadScreen() {
   // only messages added after that animate.
   const hasScrolledOnMountRef = useRef(false);
 
+  // QA-37: a session opened without a `topic` param (e.g. one just created
+  // from the Home ask field/chips, whose `ChatResponse` carries no topic)
+  // showed "Chat" forever. `GET /ai-assistant/sessions` - already used by
+  // ChatListScreen - has it once the backend has generated one; this
+  // backfills it without a backend change. If the topic isn't ready yet
+  // either, this quietly stays "Chat" for the rest of the visit.
+  useEffect(() => {
+    if (!activeSessionId || sessionTopic) return;
+    const sub = aiAssistantService.getSessions().subscribe({
+      next: (sessions) => {
+        const match = sessions.find((s) => s.id === activeSessionId);
+        if (match?.topic) setSessionTopic(match.topic);
+      },
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [activeSessionId, sessionTopic]);
+
   // ── Fetch message history ────────────────────────────────────────────────────
 
   useEffect(() => {

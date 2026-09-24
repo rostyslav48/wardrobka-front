@@ -129,12 +129,13 @@ export default function LogScreen() {
             onAction={() => fetchEntries()}
           />
         ) : entries.length === 0 ? (
+          // QA-52: the header's "Add entry" pill (spec 6.5) is always on
+          // screen, so this empty state used to repeat it as a second,
+          // identical action right below.
           <UiEmptyState
             icon="calendar"
             title="Nothing logged yet"
             subtitle="Log what you wore and the outfit history builds itself."
-            actionLabel="+ Add entry"
-            onAction={handleOpenAdd}
           />
         ) : (
           <View style={styles.list}>
