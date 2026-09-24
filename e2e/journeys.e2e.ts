@@ -103,6 +103,14 @@ test('register rejects a password confirmation mismatch', async ({ page }) => {
 test('QA-22: a short password is not blocked client-side on login — it reaches the server', async ({
   page,
 }) => {
+  // This is a client-only regression test for the scope this lane can touch:
+  // it asserts the request leaves the browser instead of being rejected by
+  // Yup before the network call. It stubs a 401 rather than hitting the real
+  // gateway because the gateway still enforces MinLength(8) server-side
+  // (apps/auth/src/dto/login.request.ts) and would answer a real 3-char
+  // password with 400 "Password is too short" today - see state.md's QA-22
+  // entry for the backend change this would need to actually let a legacy
+  // short password authenticate.
   let receivedPassword: string | undefined;
   await page.route('**/auth/login', async (route) => {
     if (route.request().method() !== 'POST') return route.continue();
@@ -246,6 +254,18 @@ test.describe('authenticated app shell', () => {
     await page.getByTestId('settings-profile-name-input').fill(`${user.name} Edited`);
     await page.getByTestId('settings-profile-save-button').click();
     await expect.poll(() => patchCalled).toBe(true);
+
+    // Regression for the reinitialize fix: after a successful save, Save
+    // must go back to disabled rather than staying enabled forever because
+    // Formik's initialValues never tracked the newly-saved profile.
+    patchCalled = false;
+    await expect(page.getByText('Profile updated')).toBeVisible();
+    await page.getByTestId('settings-profile-save-button').click({ force: true });
+    await page.waitForTimeout(1_000);
+    expect(
+      patchCalled,
+      'Save must go back to disabled after a successful save, not stay enabled forever',
+    ).toBe(false);
   });
 
   test('QA-12: the city field stops accepting characters at its 100-character limit', async ({
@@ -258,6 +278,20 @@ test.describe('authenticated app shell', () => {
     await cityInput.click();
     await cityInput.pressSequentially('x'.repeat(110));
     await expect(cityInput).toHaveValue('x'.repeat(100));
+  });
+
+  test('QA-52: the empty log offers exactly one add-entry control', async ({
+    page,
+  }) => {
+    // The freshly-created e2e user has no outfit-log entries, so this hits
+    // the empty state without stubbing anything.
+    await page.getByTestId(testIds.tabs.log).click();
+    await expect(page.getByTestId(testIds.log.emptyState)).toBeVisible();
+
+    // Before the fix, the empty state repeated the header's "Add entry"
+    // pill as a second, identical action right below it.
+    await expect(page.getByTestId(`${testIds.log.emptyState}-action`)).toHaveCount(0);
+    await expect(page.getByTestId('log-add-entry-button')).toHaveCount(1);
   });
 
   test('the log tab renders', async ({ page }) => {

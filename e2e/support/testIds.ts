@@ -76,6 +76,7 @@ export const testIds = Object.freeze({
   log: Object.freeze({
     errorState: 'log-error-state',
     errorBanner: 'log-error-banner',
+    emptyState: 'log-empty-state',
   }),
   item: Object.freeze({
     photoPicker: 'item-photo-picker',

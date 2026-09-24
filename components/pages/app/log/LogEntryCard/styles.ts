@@ -58,6 +58,11 @@ export const styles = StyleSheet.create({
     ...typography.overflowChip,
     color: colors.textPrimary,
   },
+  itemNames: {
+    ...typography.body,
+    letterSpacing: tracking.body,
+    color: colors.textPrimary,
+  },
   note: {
     ...typography.body,
     letterSpacing: tracking.body,

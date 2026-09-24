@@ -29,6 +29,14 @@ export default function HistoryScreen() {
   const offsetRef = useRef(0);
   const isFetchingRef = useRef(false);
   const toastRef = useRef<UiToastRef>(null);
+  // QA-58: the initial fetch (kicked off the instant this screen mounts, at
+  // the very start of the push) can resolve while the push's own ~300ms
+  // slide is still running, swapping skeleton -> real card mid-transition
+  // for a couple of frames. Holding the skeleton for a minimum stretch
+  // keeps it on screen for the whole push on a fast response, without
+  // adding any wait on a slow one.
+  const loadStartedAtRef = useRef(0);
+  const MIN_SKELETON_MS = 150;
 
   // Track which sessions still exist so a tap on a suggestion whose
   // originating conversation was deleted shows a toast instead of navigating
@@ -56,26 +64,39 @@ export default function HistoryScreen() {
     if (!silent) {
       if (offset === 0) {
         setIsLoading(true);
+        loadStartedAtRef.current = Date.now();
       } else {
         setIsLoadingMore(true);
       }
     }
+
+    const finish = () => {
+      setIsRefreshing(false);
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
+    };
 
     const sub = aiAssistantService.getOutfitSuggestions(PAGE_SIZE, offset).subscribe({
       next: (page) => {
         setSuggestions((prev) => (offset === 0 ? page : [...prev, ...page]));
         setHasMore(page.length === PAGE_SIZE);
         offsetRef.current = offset + page.length;
-        setIsLoading(false);
-        setIsRefreshing(false);
-        setIsLoadingMore(false);
-        isFetchingRef.current = false;
+
+        if (offset === 0 && !silent) {
+          const elapsed = Date.now() - loadStartedAtRef.current;
+          if (elapsed < MIN_SKELETON_MS) {
+            setTimeout(() => setIsLoading(false), MIN_SKELETON_MS - elapsed);
+          } else {
+            setIsLoading(false);
+          }
+        } else {
+          setIsLoading(false);
+        }
+        finish();
       },
       error: () => {
         setIsLoading(false);
-        setIsRefreshing(false);
-        setIsLoadingMore(false);
-        isFetchingRef.current = false;
+        finish();
       },
     });
 

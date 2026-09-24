@@ -20,6 +20,11 @@ export default function ProfileSection({ profile, onSave }: Props) {
   return (
     <Formik
       initialValues={{ name: profile.name, city: profile.city ?? '' }}
+      // QA-07: without this, initialValues freeze at first mount - after a
+      // successful save `profile` (and the payload diff below) updates but
+      // `dirty` never resets, so Save stays enabled and a second tap ships
+      // an empty PATCH with a bogus success toast.
+      enableReinitialize
       validationSchema={profileSchema}
       onSubmit={(values, helpers) => {
         const payload: UpdateProfilePayload = {};

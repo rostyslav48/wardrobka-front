@@ -4,12 +4,14 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
+  UIManager,
   View,
 } from 'react-native';
 import Animated, {
@@ -37,6 +39,21 @@ import { styles } from './styles';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// QA-59: the "New entry" form <-> "Select items worn" picker swap was a bare
+// conditional render - content changed and the sheet height jumped in one
+// frame. LayoutAnimation on the surrounding view swap gives it a transition
+// without restructuring the two content branches into a crossfade.
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function animateViewSwap() {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+}
 
 function toUnixSeconds(date: Date): number {
   const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -240,6 +257,7 @@ export default function LogEntrySheet({
                 view === 'items'
                   ? () => {
                       setSelectedIds(pendingItemIdsRef.current);
+                      animateViewSwap();
                       setView('form');
                     }
                   : handleClose
@@ -263,6 +281,7 @@ export default function LogEntrySheet({
               onConfirm={(ids) => {
                 setSelectedIds(ids);
                 if (ids.length > 0) setError(null);
+                animateViewSwap();
                 setView('form');
               }}
             />
@@ -321,7 +340,7 @@ export default function LogEntrySheet({
                     Items{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
                   </Text>
                   <Pressable
-                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; animateViewSwap(); setView('items'); }}
                     hitSlop={8}
                   >
                     <Text style={styles.changeLink}>
@@ -364,7 +383,7 @@ export default function LogEntrySheet({
                 ) : (
                   <Pressable
                     style={styles.emptyItemsButton}
-                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; animateViewSwap(); setView('items'); }}
                   >
                     <IconSymbol name="plus" size={iconSize.mdPlus} color={colors.textSecondary} />
                     <Text style={styles.emptyItemsText}>Tap to select items worn</Text>

@@ -46,6 +46,18 @@ export default function LogEntryCard({ entry, wardrobeItems, onPress }: Props) {
         <IconSymbol name="chevron.right" size={iconSize.sm} color={colors.textSecondary} />
       </View>
 
+      {/* QA-51: with placeholder (image-less) thumbnails the grid alone
+          carried no information - same generic hanger icon in every tile,
+          no name, no count. This line names what's logged even when every
+          thumbnail is a placeholder. */}
+      {items.length > 0 && (
+        <Text style={styles.itemNames} numberOfLines={1}>
+          {`${items.length} item${items.length === 1 ? '' : 's'} — ${items
+            .map((item) => item.name)
+            .join(', ')}`}
+        </Text>
+      )}
+
       {items.length > 0 && (
         <View style={styles.thumbRow}>
           {visibleItems.map((item, i) => (
