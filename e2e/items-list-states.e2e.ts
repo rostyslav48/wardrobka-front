@@ -279,3 +279,45 @@ test('QA-41 regression: a client-side search matching nothing must not be report
   await expect(page.getByTestId(testIds.items.noMatchState)).toBeVisible();
   await expect(page.getByTestId(testIds.items.errorState)).not.toBeAttached();
 });
+
+test('QA-63: the Filters sheet stays inside the screen and its Apply button is reachable', async ({
+  page,
+}) => {
+  // Regression cover for the shared `ModalContext` sheet container that QA-63
+  // changed (`maxHeight: '88%'` -> 88% of the live window height). Filters is
+  // the tallest `useModal()` sheet, so on an iPhone SE-sized viewport its
+  // content overflows the clamp and `UiPopup`'s ScrollView has to take over.
+  await stubWardrobe(page, THREE_ITEMS);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+
+  await page.getByTestId(testIds.items.filterButton).click();
+  const sheet = page.getByTestId(testIds.modal.sheet);
+  await expect(sheet).toBeVisible();
+  // Let the 300 ms slide-in finish before measuring.
+  await expect
+    .poll(async () => {
+      const box = await sheet.boundingBox();
+      return box ? Math.round(box.y + box.height) : null;
+    })
+    .toBe(667);
+
+  const sheetBox = await sheet.boundingBox();
+  if (!sheetBox) throw new Error('expected a bounding box for the modal sheet');
+  expect(sheetBox.y).toBeGreaterThanOrEqual(0);
+  expect(sheetBox.height).toBeLessThanOrEqual(667 * 0.88 + 1);
+
+  const apply = page.getByText('Apply', { exact: true });
+  await apply.scrollIntoViewIfNeeded();
+  const applyBox = await apply.boundingBox();
+  if (!applyBox) throw new Error('expected a bounding box for the Apply button');
+  expect(applyBox.y).toBeGreaterThanOrEqual(sheetBox.y);
+  expect(applyBox.y + applyBox.height).toBeLessThanOrEqual(sheetBox.y + sheetBox.height + 1);
+
+  // Still a working sheet, not just a well-sized one.
+  await page.getByText('jacket', { exact: true }).click();
+  await apply.click();
+  await expect(sheet).not.toBeVisible();
+});

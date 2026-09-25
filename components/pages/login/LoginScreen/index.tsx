@@ -1,7 +1,7 @@
-import { Text, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { colors } from '@/theme/colors';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { ApiError } from '@/services/http.service';
@@ -34,6 +34,13 @@ export default function LoginScreen() {
 
   const [isLogin, setIsLogin] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // QA-64: on a small screen the submit button can be hidden behind the
+  // keyboard. Return chains focus through the form and submits on the last
+  // field, so the button never has to be reachable to complete the form.
+  const nameInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (token) {
@@ -135,29 +142,46 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   hasError={!!errors.email}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() =>
+                    (isLogin ? passwordInputRef : nameInputRef).current?.focus()
+                  }
                 />
               </UiFormField>
 
               {!isLogin && (
                 <UiFormField errorMessage={errors.name}>
                   <UiInput
+                    ref={nameInputRef}
                     value={values.name}
                     onChange={onFieldChange('name')}
                     placeholder="Name"
                     testID="login-name-input"
                     hasError={!!errors.name}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
                   />
                 </UiFormField>
               )}
 
               <UiFormField errorMessage={errors.password}>
                 <UiInput
+                  ref={passwordInputRef}
                   value={values.password}
                   onChange={onFieldChange('password')}
                   placeholder="Password"
                   isSecureText={true}
                   testID="login-password-input"
                   hasError={!!errors.password}
+                  returnKeyType={isLogin ? 'done' : 'next'}
+                  blurOnSubmit={isLogin}
+                  onSubmitEditing={
+                    isLogin
+                      ? () => handleSubmit()
+                      : () => confirmPasswordInputRef.current?.focus()
+                  }
                 />
               </UiFormField>
 
@@ -165,12 +189,15 @@ export default function LoginScreen() {
                 <>
                   <UiFormField errorMessage={errors.confirmPassword}>
                     <UiInput
+                      ref={confirmPasswordInputRef}
                       value={values.confirmPassword}
                       onChange={onFieldChange('confirmPassword')}
                       placeholder="Confirm password"
                       isSecureText={true}
                       testID="login-confirm-password-input"
                       hasError={!!errors.confirmPassword}
+                      returnKeyType="done"
+                      onSubmitEditing={() => handleSubmit()}
                     />
                   </UiFormField>
                 </>

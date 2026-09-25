@@ -72,6 +72,15 @@ export const testIds = Object.freeze({
   chat: Object.freeze({
     errorState: 'chat-error-state',
     errorBanner: 'chat-error-banner',
+    newSessionButton: 'chat-new-session-button',
+    attachButton: 'chat-attach-button',
+    pickerConfirmButton: 'chat-picker-confirm-button',
+  }),
+  modal: Object.freeze({
+    // Set once on `ModalContext`'s own sheet `Animated.View`, so it's shared
+    // by every `useModal()` consumer (Filters, the Log picker, this chat
+    // picker) - only one is ever visible at a time.
+    sheet: 'modal-sheet',
   }),
   log: Object.freeze({
     errorState: 'log-error-state',

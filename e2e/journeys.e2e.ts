@@ -100,6 +100,68 @@ test('register rejects a password confirmation mismatch', async ({ page }) => {
   await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
 });
 
+// QA-64: on a small screen the submit button can be hidden behind the
+// keyboard, so Return has to be able to both move focus and submit without
+// the button ever being tapped. This can't reproduce the keyboard overlap
+// itself on web (no on-screen keyboard, no small viewport), but the focus
+// chaining and submit-on-last-field wiring are plain DOM behaviour and are
+// fully exercisable here.
+test('QA-64: Return advances focus through the register form and submits on the last field', async ({
+  page,
+}) => {
+  await page.getByTestId(testIds.login.switchModeLink).click();
+
+  await page.getByTestId(testIds.login.emailInput).fill(`qa64-${Date.now()}@example.com`);
+  await page.getByTestId(testIds.login.emailInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.nameInput)).toBeFocused();
+
+  await page.getByTestId(testIds.login.nameInput).fill('QA64 User');
+  await page.getByTestId(testIds.login.nameInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.passwordInput)).toBeFocused();
+
+  await page.getByTestId(testIds.login.passwordInput).fill('Password123!');
+  await page.getByTestId(testIds.login.passwordInput).press('Enter');
+  await expect(page.getByTestId(testIds.login.confirmPasswordInput)).toBeFocused();
+
+  // A mismatched confirmation keeps Formik's client-side validation from
+  // ever calling `onSubmit` (same as "register rejects a password
+  // confirmation mismatch" above) — proving Return on the last field reaches
+  // `handleSubmit()` without spending the signup endpoint's 5/60s throttle.
+  await page.getByTestId(testIds.login.confirmPasswordInput).fill('Different123!');
+  await page.getByTestId(testIds.login.confirmPasswordInput).press('Enter');
+
+  await expect(page.getByTestId(testIds.login.heading)).toBeVisible();
+});
+
+test('QA-64: Return advances focus from email to password and submits the login form', async ({
+  page,
+}) => {
+  // Mirrors `loginThroughUi`'s retry-on-429: `POST /auth/login` is throttled
+  // to 10 requests/60s and shared with every other login in this file.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.getByTestId(testIds.login.emailInput).fill(user.email);
+    await page.getByTestId(testIds.login.emailInput).press('Enter');
+    await expect(page.getByTestId(testIds.login.passwordInput)).toBeFocused();
+
+    await page.getByTestId(testIds.login.passwordInput).fill(user.password);
+    await page.getByTestId(testIds.login.passwordInput).press('Enter');
+
+    const loggedIn = await expect(page.getByTestId(testIds.login.heading))
+      .toBeHidden({ timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (loggedIn) return;
+
+    await page.waitForTimeout(45_000);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId(testIds.login.heading).waitFor({ timeout: 45_000 });
+  }
+  await expect(
+    page.getByTestId(testIds.login.heading),
+    'login via Return never completed',
+  ).toBeHidden();
+});
+
 test('QA-22: a short password is not blocked client-side on login — it reaches the server', async ({
   page,
 }) => {
@@ -360,5 +422,45 @@ test.describe('authenticated app shell', () => {
     ).toBeVisible({ timeout: 10_000 });
 
     expect(errors, 'outfit history must render without an unhandled error').toEqual([]);
+  });
+
+  test('QA-63: the chat item picker sheet reaches the bottom of the screen', async ({
+    page,
+  }) => {
+    // QA's repro viewport - the bug is a Yoga `maxHeight: '88%'` percentage
+    // resolving against the sheet's own indefinite-height wrapper instead of
+    // the screen, not an iOS-only safe-area effect (insets.bottom is 0 on
+    // web), so it reproduces here.
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await page.getByTestId(testIds.tabs.chat).click();
+    await page.getByTestId(testIds.chat.newSessionButton).click();
+    await page.getByTestId(testIds.chat.attachButton).click();
+
+    const sheet = page.getByTestId(testIds.modal.sheet);
+    const confirmButton = page.getByTestId(testIds.chat.pickerConfirmButton);
+    await expect(sheet).toBeVisible();
+    await expect(confirmButton).toBeVisible();
+    // `ModalContext` slides the sheet up over 300 ms; measuring before that
+    // finishes reads a mid-animation position, not the resting layout.
+    await expect
+      .poll(async () => {
+        const box = await sheet.boundingBox();
+        return box ? Math.round(box.y + box.height) : null;
+      })
+      .toBe(844);
+
+    const sheetBox = await sheet.boundingBox();
+    const confirmBox = await confirmButton.boundingBox();
+    if (!sheetBox || !confirmBox) {
+      throw new Error('expected bounding boxes for the sheet and confirm button');
+    }
+
+    // The sheet's background must run flush to the screen edge.
+    expect(Math.abs(844 - (sheetBox.y + sheetBox.height))).toBeLessThan(2);
+    // The confirm button's box must stay inside the sheet's own box - if it
+    // doesn't, `overflow: hidden` on the sheet is clipping it, which is
+    // exactly QA-63's "Confirm button's lower corners" defect.
+    expect(confirmBox.y + confirmBox.height).toBeLessThanOrEqual(sheetBox.y + sheetBox.height + 1);
   });
 });

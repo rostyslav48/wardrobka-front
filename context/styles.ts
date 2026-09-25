@@ -13,12 +13,14 @@ export const styles = StyleSheet.create({
   },
   // Same shell `LogEntrySheet` draws by hand (`colors.sheet`, `radius.sheet`
   // on the top corners, a 36x4 grabber) - this is the generic version every
-  // `useModal()` consumer gets.
+  // `useModal()` consumer gets. `maxHeight` is deliberately absent here -
+  // QA-63 found `'88%'` resolves against this sheet's own indefinite-height
+  // wrapper, not the screen, so it's applied inline in `ModalContext.tsx` as
+  // a concrete pixel value instead.
   sheet: {
     backgroundColor: colors.sheet,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
-    maxHeight: '88%',
     overflow: 'hidden',
   },
   grabber: {

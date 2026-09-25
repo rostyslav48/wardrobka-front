@@ -69,6 +69,7 @@ export default function ChatInputBar({
 
       <View style={styles.row}>
         <Pressable
+          testID="chat-attach-button"
           style={styles.iconButton}
           onPress={onOpenPicker}
           disabled={isSending}

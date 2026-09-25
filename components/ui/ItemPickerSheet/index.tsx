@@ -34,6 +34,7 @@ interface Props {
    * `LogEntrySheet` already pads its own wrapper, so it leaves this at 0.
    */
   bottomInset?: number;
+  confirmTestID?: string;
 }
 
 export default function ItemPickerSheet({
@@ -46,6 +47,7 @@ export default function ItemPickerSheet({
   onSelectionChange,
   onConfirm,
   bottomInset = 0,
+  confirmTestID,
 }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
 
@@ -128,6 +130,7 @@ export default function ItemPickerSheet({
       </ScrollView>
 
       <Pressable
+        testID={confirmTestID}
         style={[styles.confirmButton, { marginBottom: bottomInset }]}
         onPress={() => onConfirm(Array.from(selected))}
         accessibilityRole="button"
