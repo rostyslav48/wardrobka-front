@@ -1,5 +1,13 @@
 import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, Dimensions, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Dimensions,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { styles } from './styles';
 
@@ -31,6 +39,10 @@ export const useModal = (): ModalContextType => {
 export const ModalProvider = ({ children }: PropsWithChildren) => {
   const [modal, setModal] = useState<ModalConfig | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  // Live window height for the sheet's `maxHeight` below - the module-level
+  // `SCREEN_HEIGHT` is read once at import and goes stale on a web resize or
+  // a rotation, which would let the sheet grow past the top of the screen.
+  const { height: windowHeight } = useWindowDimensions();
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(SCREEN_HEIGHT);
@@ -90,7 +102,7 @@ export const ModalProvider = ({ children }: PropsWithChildren) => {
                   height to resolve against. */}
               <Animated.View
                 testID="modal-sheet"
-                style={[styles.sheet, { maxHeight: SCREEN_HEIGHT * 0.88 }, contentStyle]}
+                style={[styles.sheet, { maxHeight: windowHeight * 0.88 }, contentStyle]}
               >
                 <View style={styles.grabber} />
                 {modal?.content}

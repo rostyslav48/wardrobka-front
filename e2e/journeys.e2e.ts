@@ -441,6 +441,14 @@ test.describe('authenticated app shell', () => {
     const confirmButton = page.getByTestId(testIds.chat.pickerConfirmButton);
     await expect(sheet).toBeVisible();
     await expect(confirmButton).toBeVisible();
+    // `ModalContext` slides the sheet up over 300 ms; measuring before that
+    // finishes reads a mid-animation position, not the resting layout.
+    await expect
+      .poll(async () => {
+        const box = await sheet.boundingBox();
+        return box ? Math.round(box.y + box.height) : null;
+      })
+      .toBe(844);
 
     const sheetBox = await sheet.boundingBox();
     const confirmBox = await confirmButton.boundingBox();
