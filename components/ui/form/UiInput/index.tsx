@@ -1,5 +1,6 @@
 import {
   KeyboardTypeOptions,
+  TextInputProps,
   Pressable,
   ReturnKeyTypeOptions,
   TextInput,
@@ -28,6 +29,10 @@ interface Props {
   /** Keeps the keyboard up across a Return-driven focus handoff; defaults to
    * RN's own default (true) when omitted. */
   blurOnSubmit?: boolean;
+  /** BUG-iOS-02: tells iOS AutoFill (and the browser) what the field holds, so
+   * a Strong Password suggestion lands on the password fields, not on name. */
+  textContentType?: TextInputProps['textContentType'];
+  autoComplete?: TextInputProps['autoComplete'];
 }
 
 function UiInput(
@@ -45,6 +50,8 @@ function UiInput(
     returnKeyType,
     onSubmitEditing,
     blurOnSubmit,
+    textContentType,
+    autoComplete,
   }: Props,
   ref: React.ForwardedRef<TextInput>,
 ) {
@@ -80,6 +87,8 @@ function UiInput(
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}
         blurOnSubmit={blurOnSubmit}
+        textContentType={textContentType}
+        autoComplete={autoComplete}
       />
       {isSecureText && (
         <Pressable

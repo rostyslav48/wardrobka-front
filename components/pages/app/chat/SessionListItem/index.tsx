@@ -1,5 +1,9 @@
 import { Pressable, Text, View } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { AssistantSessionDto } from '@/types/ai-assistant';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { styles } from './styles';
 
 // QA-36: every row showed a full "22 Sep 2026" date, even for sessions from
@@ -35,9 +39,12 @@ function formatSessionDate(dateStr: string): string {
 interface Props {
   session: AssistantSessionDto;
   onPress: () => void;
+  /** QA-35: asked for once the row is swiped open and Delete is tapped. The
+   * caller confirms before deleting anything. */
+  onDelete: () => void;
 }
 
-export default function SessionListItem({ session, onPress }: Props) {
+export default function SessionListItem({ session, onPress, onDelete }: Props) {
   const dateString = formatSessionDate(session.createdAt);
 
   const preview =
@@ -45,8 +52,41 @@ export default function SessionListItem({ session, onPress }: Props) {
       ? session.latestMessage?.content
       : undefined;
 
+  // QA-35: swipe left to reveal Delete. The row closes again as soon as
+  // Delete is tapped - the confirm dialog decides what happens next, and a
+  // cancelled or failed delete must leave an ordinary, closed row behind.
+  // VoiceOver/TalkBack users cannot swipe, so the same action is offered as
+  // an accessibility action on the row.
   return (
-    <Pressable style={styles.container} onPress={onPress}>
+    <ReanimatedSwipeable
+      testID={`chat-session-row-${session.id}`}
+      friction={2}
+      rightThreshold={40}
+      overshootRight={false}
+      renderRightActions={(_progress, _translation, swipeable) => (
+        <Pressable
+          testID={`chat-session-delete-${session.id}`}
+          style={styles.deleteAction}
+          onPress={() => {
+            swipeable.close();
+            onDelete();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Delete chat"
+        >
+          <IconSymbol name="trash" size={iconSize.lg} color={colors.textPrimary} />
+          <Text style={styles.deleteLabel}>Delete</Text>
+        </Pressable>
+      )}
+    >
+    <Pressable
+      style={styles.container}
+      onPress={onPress}
+      accessibilityActions={[{ name: 'delete', label: 'Delete chat' }]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'delete') onDelete();
+      }}
+    >
       <View style={styles.body}>
         <Text style={styles.topic} numberOfLines={1}>
           {session.topic || 'Chat'}
@@ -59,5 +99,6 @@ export default function SessionListItem({ session, onPress }: Props) {
       </View>
       <Text style={styles.date}>{dateString}</Text>
     </Pressable>
+    </ReanimatedSwipeable>
   );
 }

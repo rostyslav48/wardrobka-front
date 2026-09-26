@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { styles } from './styles';
+import { GRABBER_BLOCK_HEIGHT, styles } from './styles';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -22,6 +22,15 @@ type ModalConfig = {
 type ModalContextType = {
   show: (config: ModalConfig) => void;
   hide: () => void;
+  /**
+   * QA-67: the most height the sheet's content may take - the sheet's own cap
+   * less the grabber above the content. Content that scrolls (`UiPopup`)
+   * bounds itself with this directly rather than relying on the sheet's
+   * `maxHeight` to shrink it from above, which left the Filters sheet's
+   * `ScrollView` at full content height on an iPhone SE: it could not scroll
+   * and the sheet clipped its footer.
+   */
+  contentMaxHeight: number;
 };
 
 const ModalContext = createContext<ModalContextType | null>(null);
@@ -47,7 +56,10 @@ export const ModalProvider = ({ children }: PropsWithChildren) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(SCREEN_HEIGHT);
 
+  const sheetMaxHeight = windowHeight * 0.88;
+
   const value = {
+    contentMaxHeight: sheetMaxHeight - GRABBER_BLOCK_HEIGHT,
     show: (config: ModalConfig) => {
       setModal(config);
       setIsVisible(true);
@@ -102,7 +114,7 @@ export const ModalProvider = ({ children }: PropsWithChildren) => {
                   height to resolve against. */}
               <Animated.View
                 testID="modal-sheet"
-                style={[styles.sheet, { maxHeight: windowHeight * 0.88 }, contentStyle]}
+                style={[styles.sheet, { maxHeight: sheetMaxHeight }, contentStyle]}
               >
                 <View style={styles.grabber} />
                 {modal?.content}

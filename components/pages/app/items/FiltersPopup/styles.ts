@@ -9,9 +9,12 @@ import { border, fontFamily, radius, spacing, tracking, typography } from '@/the
  * scale entries and match exactly (6 and 11).
  */
 export const styles = StyleSheet.create({
+  // The last section keeps the section gap (`sheetSection`) above the footer
+  // it used to sit next to, now that the footer is pinned outside the scroll
+  // body (QA-67).
   content: {
     gap: spacing.sheetSection,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.sheetSection,
   },
 
   section: {
@@ -139,6 +142,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
   },
 
   footerButtonWrapper: {

@@ -1,5 +1,6 @@
 import { Pressable, Switch, Text, View } from 'react-native';
 import { FormikErrors } from 'formik';
+import { KeyboardController } from 'react-native-keyboard-controller';
 import { colors } from '@/theme/colors';
 import UiFormField from '@/components/ui/form/UiFormField';
 import UiInput from '@/components/ui/form/UiInput';
@@ -41,6 +42,15 @@ export default function ItemFormFields({
   brandTestID,
   colorSwatchTestID,
 }: Props) {
+  // QA-06: chips, swatches and the switch are Pressables that handle their own
+  // tap, so the page's `keyboardShouldPersistTaps="handled"` left the keyboard
+  // up after picking one - and the next taps landed on its keys. Choosing a
+  // non-text value is leaving the text field, so it closes the keyboard.
+  const onPick = (field: FieldName, value: ItemFormValues[FieldName]) => {
+    void KeyboardController.dismiss();
+    onFieldChange(field, value);
+  };
+
   return (
     <>
       {/* Spec 4.3's section-eyebrow role names "REQUIRED" among the strings it covers. */}
@@ -60,7 +70,7 @@ export default function ItemFormFields({
         <UiSelect
           options={TYPE_OPTIONS}
           value={values.type || undefined}
-          onChange={(v) => onFieldChange('type', v ?? '')}
+          onChange={(v) => onPick('type', v ?? '')}
           required
           horizontal
         />
@@ -77,7 +87,7 @@ export default function ItemFormFields({
               <Pressable
                 testID={colorSwatchTestID?.(label)}
                 style={[styles.swatch, { backgroundColor: hex }]}
-                onPress={() => onFieldChange('color', values.color === hex ? '' : hex)}
+                onPress={() => onPick('color', values.color === hex ? '' : hex)}
               />
             </View>
           ))}
@@ -89,7 +99,7 @@ export default function ItemFormFields({
         <UiSelect
           options={SEASON_OPTIONS}
           value={values.season || undefined}
-          onChange={(v) => onFieldChange('season', v ?? '')}
+          onChange={(v) => onPick('season', v ?? '')}
           required
         />
       </UiFormField>
@@ -99,7 +109,7 @@ export default function ItemFormFields({
         <UiSelect
           options={STATUS_OPTIONS}
           value={values.status}
-          onChange={(v) => onFieldChange('status', v ?? ItemStatus.Active)}
+          onChange={(v) => onPick('status', v ?? ItemStatus.Active)}
           required
         />
       </UiFormField>
@@ -136,7 +146,7 @@ export default function ItemFormFields({
         <UiSelect
           options={FIT_OPTIONS}
           value={values.fit_type || undefined}
-          onChange={(v) => onFieldChange('fit_type', v ?? '')}
+          onChange={(v) => onPick('fit_type', v ?? '')}
         />
       </UiFormField>
 
@@ -145,7 +155,7 @@ export default function ItemFormFields({
         <UiSelect
           options={SIZE_OPTIONS}
           value={values.size || undefined}
-          onChange={(v) => onFieldChange('size', v ?? '')}
+          onChange={(v) => onPick('size', v ?? '')}
         />
       </UiFormField>
 
@@ -162,7 +172,7 @@ export default function ItemFormFields({
         <Text style={styles.favouriteLabel}>Favourite</Text>
         <Switch
           value={values.favourite}
-          onValueChange={(v) => onFieldChange('favourite', v)}
+          onValueChange={(v) => onPick('favourite', v)}
           trackColor={{ false: colors.border, true: colors.accent }}
           thumbColor={colors.accentText}
         />

@@ -3,6 +3,8 @@ import { Slot } from 'expo-router';
 import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AuthProvider } from '@/context/AuthContext';
 import { Alert, LogBox, Platform } from 'react-native';
@@ -47,21 +49,33 @@ export default function RootLayout() {
     }
   });
 
+  // `KeyboardProvider` (QA-57): every keyboard-driven layout in the app -
+  // the chat composer, the auth/settings/add-item forms and their accessory
+  // toolbar - reads frame-synced keyboard state from it. On web its bindings
+  // are no-op stubs, so it renders its children unchanged.
+  // `GestureHandlerRootView`: the chat sessions list's swipe-to-delete rows
+  // (QA-35) are gesture-handler swipeables, which need this ancestor.
   return (
-    <ThemeProvider value={navigationTheme}>
-      {/* expo-router's Head needs a handoff `origin` in the config on native
+    <GestureHandlerRootView style={rootStyle}>
+      <KeyboardProvider>
+        <ThemeProvider value={navigationTheme}>
+          {/* expo-router's Head needs a handoff `origin` in the config on native
           (Expo 57) and throws without one; the title only matters on web. */}
-      {Platform.OS === 'web' && (
-        <Head>
-          <title>Wardrobe Assistant</title>
-        </Head>
-      )}
-      <AuthProvider>
-        <ModalProvider>
-          <Slot />
-          <StatusBar style="light" />
-        </ModalProvider>
-      </AuthProvider>
-    </ThemeProvider>
+          {Platform.OS === 'web' && (
+            <Head>
+              <title>Wardrobe Assistant</title>
+            </Head>
+          )}
+          <AuthProvider>
+            <ModalProvider>
+              <Slot />
+              <StatusBar style="light" />
+            </ModalProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const rootStyle = { flex: 1 };

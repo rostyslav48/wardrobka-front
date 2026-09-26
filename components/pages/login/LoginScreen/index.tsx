@@ -17,7 +17,15 @@ import {
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
 import UiTitle from '@/components/ui/UiTitle';
+import UiKeyboardToolbar from '@/components/ui/UiKeyboardToolbar';
 import { styles } from './styles';
+
+// QA-64: how far above the keyboard the focused field is kept. Enough for the
+// submit button under the last field (51pt plus the form's 12pt gap) to stay
+// in view with it, so on an iPhone SE the Register button is reachable
+// without dismissing the keyboard - including when iOS adds its Passwords
+// bar, which is part of the keyboard frame the library measures.
+const KEYBOARD_BOTTOM_OFFSET = 72;
 
 interface LoginForm {
   email: string;
@@ -88,13 +96,21 @@ export default function LoginScreen() {
     );
   };
 
-  const onSubmit = (values: LoginForm | RegisterForm): Promise<unknown> => {
+  const onSubmit = async (values: LoginForm | RegisterForm): Promise<void> => {
     const email = values.email.trim();
     const method = isLogin
       ? login(email, values.password)
       : register(email, values.password, (values as RegisterForm).name.trim());
 
-    return firstValueFrom(method);
+    // QA-66: `login`/`register` have already put the failure in the banner.
+    // Re-throwing it out of `onSubmit` only made Formik log "An unhandled
+    // error was caught from submitForm()" on every failed attempt. Resolving
+    // still ends `isSubmitting`, so the button's loader stops either way.
+    try {
+      await firstValueFrom(method);
+    } catch {
+      // handled in login/register above
+    }
   };
 
   const switchMode = () => {
@@ -102,8 +118,11 @@ export default function LoginScreen() {
     setErrorMessage('');
   };
 
+  // A fragment root: `UiKeyboardToolbar` positions itself absolutely against
+  // the route's own screen container, next to the page.
   return (
-    <UiPage topInset={0}>
+    <>
+    <UiPage topInset={0} keyboardBottomOffset={KEYBOARD_BOTTOM_OFFSET}>
       <View style={styles.container}>
         <UiTitle sizeL style={styles.title} testID="login-heading">
           {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -141,6 +160,8 @@ export default function LoginScreen() {
                   testID="login-email-input"
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  textContentType="emailAddress"
+                  autoComplete="email"
                   hasError={!!errors.email}
                   returnKeyType="next"
                   blurOnSubmit={false}
@@ -158,6 +179,8 @@ export default function LoginScreen() {
                     onChange={onFieldChange('name')}
                     placeholder="Name"
                     testID="login-name-input"
+                    textContentType="name"
+                    autoComplete="name"
                     hasError={!!errors.name}
                     returnKeyType="next"
                     blurOnSubmit={false}
@@ -174,6 +197,11 @@ export default function LoginScreen() {
                   placeholder="Password"
                   isSecureText={true}
                   testID="login-password-input"
+                  // BUG-iOS-02: both Register password fields are
+                  // `newPassword`, so iOS puts its Strong Password cover on
+                  // them rather than on the name field.
+                  textContentType={isLogin ? 'password' : 'newPassword'}
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   hasError={!!errors.password}
                   returnKeyType={isLogin ? 'done' : 'next'}
                   blurOnSubmit={isLogin}
@@ -195,6 +223,8 @@ export default function LoginScreen() {
                       placeholder="Confirm password"
                       isSecureText={true}
                       testID="login-confirm-password-input"
+                      textContentType="newPassword"
+                      autoComplete="new-password"
                       hasError={!!errors.confirmPassword}
                       returnKeyType="done"
                       onSubmitEditing={() => handleSubmit()}
@@ -237,5 +267,7 @@ export default function LoginScreen() {
             reset flow exists, per the finding's second option. */}
       </View>
     </UiPage>
+    <UiKeyboardToolbar />
+    </>
   );
 }

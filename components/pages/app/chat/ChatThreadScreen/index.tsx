@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   Text,
   View,
 } from 'react-native';
+import {
+  KeyboardChatScrollView,
+  KeyboardEvents,
+  KeyboardStickyView,
+} from 'react-native-keyboard-controller';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { aiAssistantService } from '@/services/ai-assistant.service';
@@ -28,11 +30,11 @@ import { styles } from './styles';
 
 const NEW_SESSION_PARAM = 'new';
 
-// Not a `UiPage` screen: this is a keyboard-avoiding view with a pinned input
-// bar, not a scroll page - `UiPage`'s own `ScrollView` + safe-area wrapper
-// would fight the `KeyboardAvoidingView` below rather than help it, so this
-// screen keeps its own direct `useSafeAreaInsets()` call. Deliberate
-// exception, recorded in state.md.
+// Not a `UiPage` screen: this is a chat list with a keyboard-pinned input bar,
+// not a scroll page - `UiPage`'s own `ScrollView` + safe-area wrapper would
+// fight the keyboard handling below rather than help it, so this screen keeps
+// its own direct `useSafeAreaInsets()` call. Deliberate exception, recorded in
+// state.md.
 export default function ChatThreadScreen() {
   const {
     sessionId,
@@ -120,14 +122,14 @@ export default function ChatThreadScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated }), 80);
   }, [messages]);
 
-  // QA-30: focusing the composer opened the keyboard without keeping the
-  // newest messages in view, leaving them behind it. `keyboardWillShow` fires
-  // *before* `KeyboardAvoidingView` has shrunk the list on iOS, so the
-  // scroll landed on the list's still-tall, pre-resize end. `keyboardDidShow`
-  // fires once the keyboard (and the resize it drives) has settled, on both
-  // platforms.
+  // QA-30: focusing the composer must keep the newest reply in view above
+  // it. The list's `KeyboardChatScrollView` (below) lifts its content frame by
+  // frame with the keyboard, so a list already at its end stays there for the
+  // whole animation. This covers the remaining case - the list scrolled up
+  // when the composer is focused - by settling on the end once the keyboard
+  // is up; for a list already at the end it is a no-op.
   useEffect(() => {
-    const sub = Keyboard.addListener('keyboardDidShow', () =>
+    const sub = KeyboardEvents.addListener('keyboardDidShow', () =>
       listRef.current?.scrollToEnd({ animated: true }),
     );
     return () => sub.remove();
@@ -137,7 +139,9 @@ export default function ChatThreadScreen() {
 
   const handleSend = () => {
     const prompt = inputText.trim();
-    if (!prompt || isSending) return;
+    // QA-34: attached items alone are a sendable message - the assistant
+    // comments on them or asks what the user wants to know.
+    if ((!prompt && selectedItems.length === 0) || isSending) return;
 
     setSendError(null);
     setInputText('');
@@ -147,10 +151,12 @@ export default function ChatThreadScreen() {
 
     // Optimistic user message
     const optimisticId = `temp-${Date.now()}`;
+    // An attachment-only message shows the same stand-in the server stores
+    // for it ("Attached 2 items") until the refetch below replaces it.
     const optimistic: AssistantMessageDto = {
       id: optimisticId,
       role: 'user',
-      content: prompt,
+      content: prompt || describeAttachments(contextItemIds.length),
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, optimistic]);
@@ -240,12 +246,15 @@ export default function ChatThreadScreen() {
 
   const visibleMessages = messages; // system messages filtered at fetch time
 
+  // QA-57 / BUG-iOS-06: the list and the composer both follow the keyboard
+  // frame by frame (react-native-keyboard-controller) instead of RN's
+  // `KeyboardAvoidingView`, which jumped the composer to its final spot in one
+  // frame and left it ~42pt above the keyboard. The composer pads itself by
+  // `insets.bottom` for the home indicator; the keyboard covers that area, so
+  // both views move by the keyboard height *less* that inset, which puts the
+  // composer's own bottom padding directly on the keyboard.
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
@@ -277,6 +286,9 @@ export default function ChatThreadScreen() {
       ) : (
         <FlatList
           ref={listRef}
+          renderScrollComponent={(props) => (
+            <KeyboardChatScrollView {...props} offset={insets.bottom} />
+          )}
           data={visibleMessages}
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.messageList}
@@ -287,6 +299,7 @@ export default function ChatThreadScreen() {
         />
       )}
 
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
       {/* Error toast */}
       {sendError ? (
         <View style={styles.errorBar}>
@@ -308,6 +321,13 @@ export default function ChatThreadScreen() {
         isSending={isSending}
         bottomInset={insets.bottom}
       />
-    </KeyboardAvoidingView>
+      </KeyboardStickyView>
+    </View>
   );
 }
+
+// Mirrors the backend's stand-in text for an attachment-only message
+// (ConversationService.handleChat), so the optimistic bubble matches the
+// persisted one.
+const describeAttachments = (count: number) =>
+  `Attached ${count} ${count === 1 ? 'item' : 'items'}`;

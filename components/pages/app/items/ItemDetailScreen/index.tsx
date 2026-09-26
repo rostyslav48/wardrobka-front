@@ -8,10 +8,11 @@ import { wardrobeService } from '@/services/wardrobe.service';
 import { ApiError } from '@/services/http.service';
 import { ImageStatus, WardrobeItem } from '@/types/wardrobe';
 import { colors } from '@/theme/colors';
-import { iconSize } from '@/theme/layout';
+import { iconSize, spacing } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import UiButton from '@/components/ui/UiButton';
 import UiPage from '@/components/ui/UiPage';
+import UiKeyboardToolbar from '@/components/ui/UiKeyboardToolbar';
 import UiTitle from '@/components/ui/UiTitle';
 import UiError from '@/components/ui/UiError';
 import ItemFormFields from '@/components/pages/app/items/ItemFormFields';
@@ -311,7 +312,11 @@ export default function ItemDetailScreen() {
       onSubmit={onSubmit}
     >
       {({ values, errors, isSubmitting, setFieldValue, handleSubmit }) => (
+        // Fragment: `UiKeyboardToolbar` (QA-06) positions itself against the
+        // route's screen container, next to the page.
+        <>
         <UiPage
+          keyboardBottomOffset={spacing.xl}
           header={
             <View style={styles.header}>
               <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
@@ -398,6 +403,8 @@ export default function ItemDetailScreen() {
             <UiTitle sizeS style={styles.submitLabel}>Save changes</UiTitle>
           </UiButton>
         </UiPage>
+        <UiKeyboardToolbar />
+        </>
       )}
     </Formik>
   );

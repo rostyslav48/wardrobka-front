@@ -18,9 +18,14 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import { styles } from './styles';
 import { spacing } from '@/theme/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KEYBOARD_TOOLBAR_HEIGHT } from '@/components/ui/UiKeyboardToolbar';
 
 type Props = PropsWithChildren<{
   /**
@@ -54,6 +59,16 @@ type Props = PropsWithChildren<{
    */
   onEndReached?: () => void;
   onEndReachedThreshold?: number;
+  /**
+   * QA-64/QA-06: set on form screens. The page scrolls with the keyboard
+   * (react-native-keyboard-controller's `KeyboardAwareScrollView`), keeping the
+   * focused field this many points above the keyboard, and adds the keyboard's
+   * height to the scrollable range so every field and the submit button below
+   * it stay reachable. Leave unset on screens without text inputs.
+   * Such a page is expected to mount `UiKeyboardToolbar` (QA-06); the
+   * toolbar's height is added on top of this offset and of the scroll range.
+   */
+  keyboardBottomOffset?: number;
 }>;
 
 /** Imperative handle for screens that need to reset scroll position, e.g. on
@@ -77,14 +92,20 @@ function PageScrollView({
   header,
   onEndReached,
   onEndReachedThreshold = 0.3,
+  keyboardBottomOffset,
   innerRef,
 }: ScrollProps) {
   const insets = useSafeAreaInsets();
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const keyboardScrollRef = useRef<KeyboardAwareScrollViewRef>(null);
 
   useImperativeHandle(innerRef, () => ({
-    scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: false }),
+    scrollToTop: () =>
+      (keyboardScrollRef.current ?? scrollRef.current)?.scrollTo({
+        y: 0,
+        animated: false,
+      }),
   }));
   const hasFiredRef = useRef(false);
   // Mirrors FlatList's own onEndReached, which also fires on content-size
@@ -143,47 +164,63 @@ function PageScrollView({
       }
     : undefined;
 
+  // QA-69: the horizontal page padding lives on the scroll *content*, not on
+  // a wrapper around the scroll view - on the wrapper it pulled the scroll
+  // view (and so its vertical indicator) ~20px in from the screen edge. The
+  // content keeps the same inset either way. It is still not on the scroll
+  // view's own `style`: react-native-web clones a `refreshControl` with
+  // `style: props.style` and keeps it on the scroll view too, so anything put
+  // there is applied twice on web.
+  const scrollProps = {
+    style: styles.scroll,
+    contentContainerStyle: [
+      styles.content,
+      { paddingBottom: insets.bottom + bottomInset },
+      contentStyle,
+    ],
+    refreshControl,
+    onScroll: handleScroll,
+    scrollEventThrottle: handleScroll ? 100 : undefined,
+    onLayout: handleLayout,
+    keyboardDismissMode: 'on-drag' as const,
+    // Not React Native's 'never' default, under which a child does not
+    // receive the tap that dismisses the keyboard. Every screen built on
+    // UiPage puts its inputs and buttons in this scroll view, so the first
+    // tap on a send button would otherwise be swallowed on iOS/Android.
+    keyboardShouldPersistTaps: 'handled' as const,
+  };
+
+  // The inner-height wrapper only mounts for onEndReached callers - it would
+  // otherwise sit between the flexGrow content container and its direct
+  // children for every screen, breaking any `contentStyle` that uses `gap`
+  // between multiple children (ItemDetailScreen and NewItemScreen's `form`
+  // style both do).
+  const body = onEndReached ? (
+    <View onLayout={handleInnerLayout}>{children}</View>
+  ) : (
+    children
+  );
+
   return (
-    // The page padding lives on this wrapper, not on the scroll view's own
-    // `style`: react-native-web clones a `refreshControl` with `style:
-    // props.style` and keeps it on the scroll view too, so anything put there
-    // is applied twice on web. It stays outside the scroller for the same
-    // reason it always did - the top offset must not scroll away under the
-    // content. The bottom inset belongs to the content, so it scrolls in.
+    // The top offset stays outside the scroller - it must not scroll away
+    // under the content. The bottom inset belongs to the content, so it
+    // scrolls in.
     <View style={[styles.container, { paddingTop: insets.top + topInset }]}>
-      {header}
-      <Animated.ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + bottomInset },
-          contentStyle,
-        ]}
-        refreshControl={refreshControl}
-        onScroll={handleScroll}
-        scrollEventThrottle={handleScroll ? 100 : undefined}
-        onLayout={handleLayout}
-        keyboardDismissMode="on-drag"
-        // Not React Native's 'never' default, under which a child does not
-        // receive the tap that dismisses the keyboard. Every screen built on
-        // UiPage puts its inputs and buttons in this scroll view, so the first
-        // tap on a send button would otherwise be swallowed on iOS/Android.
-        keyboardShouldPersistTaps="handled"
-      >
-        {
-          // The inner-height wrapper only mounts for onEndReached callers -
-          // it would otherwise sit between the flexGrow content container and
-          // its direct children for every screen, breaking any `contentStyle`
-          // that uses `gap` between multiple children (ItemDetailScreen and
-          // NewItemScreen's `form` style both do).
-          onEndReached ? (
-            <View onLayout={handleInnerLayout}>{children}</View>
-          ) : (
-            children
-          )
-        }
-      </Animated.ScrollView>
+      {header ? <View style={styles.header}>{header}</View> : null}
+      {keyboardBottomOffset !== undefined ? (
+        <KeyboardAwareScrollView
+          ref={keyboardScrollRef}
+          bottomOffset={keyboardBottomOffset + KEYBOARD_TOOLBAR_HEIGHT}
+          extraKeyboardSpace={KEYBOARD_TOOLBAR_HEIGHT}
+          {...scrollProps}
+        >
+          {body}
+        </KeyboardAwareScrollView>
+      ) : (
+        <Animated.ScrollView ref={scrollRef} {...scrollProps}>
+          {body}
+        </Animated.ScrollView>
+      )}
     </View>
   );
 }

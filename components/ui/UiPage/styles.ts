@@ -3,11 +3,16 @@ import { colors } from '@/theme/colors';
 import { pageInlineIntent } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
-  // The padded frame. It wraps the scroll view rather than being the scroll
-  // view, so that a `refreshControl` cannot duplicate it - see `index.tsx`.
+  // The frame around the scroll view. It carries only the top offset: the
+  // horizontal page padding is on `header` and `content` instead, so the
+  // scroll view spans the full width and its indicator sits on the screen
+  // edge (QA-69) - see `index.tsx`.
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+
+  header: {
     paddingInline: pageInlineIntent,
   },
 
@@ -19,5 +24,6 @@ export const styles = StyleSheet.create({
   // exactly one viewport, so anything taller than the screen was unreachable.
   content: {
     flexGrow: 1,
+    paddingInline: pageInlineIntent,
   },
 });
