@@ -1,7 +1,9 @@
-import { Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { useKeyboardState } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 import { colors } from '@/theme/colors';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { ApiError } from '@/services/http.service';
@@ -17,15 +19,15 @@ import {
 import UiPage from '@/components/ui/UiPage';
 import UiButton from '@/components/ui/UiButton';
 import UiTitle from '@/components/ui/UiTitle';
-import UiKeyboardToolbar from '@/components/ui/UiKeyboardToolbar';
+import UiKeyboardToolbar, { KEYBOARD_TOOLBAR_HEIGHT } from '@/components/ui/UiKeyboardToolbar';
+import { spacing } from '@/theme/layout';
 import { styles } from './styles';
 
-// QA-64: how far above the keyboard the focused field is kept. Enough for the
-// submit button under the last field (51pt plus the form's 12pt gap) to stay
-// in view with it, so on an iPhone SE the Register button is reachable
-// without dismissing the keyboard - including when iOS adds its Passwords
-// bar, which is part of the keyboard frame the library measures.
-const KEYBOARD_BOTTOM_OFFSET = 72;
+// QA-64 / QA-71: the gap kept between the keyboard toolbar and the submit
+// button (not the focused field) while any auth field is focused.
+const KEYBOARD_BOTTOM_OFFSET = spacing.xl;
+
+type AuthField = 'email' | 'name' | 'password' | 'confirmPassword';
 
 interface LoginForm {
   email: string;
@@ -49,12 +51,76 @@ export default function LoginScreen() {
   const nameInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const confirmPasswordInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
+
+  // QA-71: `UiPage` keeps the *focused field* a given distance above the
+  // keyboard toolbar. On an iPhone SE that left the submit button below the
+  // field behind the toolbar (Register with Password or Confirm focused, and
+  // Login once the error banner had pushed the button down). So the offset
+  // handed to `UiPage` is the button's distance below the focused field plus
+  // the usual gap, measured on focus and again whenever the form's layout
+  // changes: the library re-scrolls whenever `bottomOffset` changes, and its
+  // content inset (keyboard + toolbar) leaves the scroll range for it, since
+  // the Switch button sits below the submit button.
+  const formRef = useRef<View>(null);
+  const submitRef = useRef<View>(null);
+  const [focusedField, setFocusedField] = useState<AuthField | null>(null);
+  const [submitBelowField, setSubmitBelowField] = useState(0);
+  const [fieldHeight, setFieldHeight] = useState(0);
+  const keyboardHeight = useKeyboardState((state) => state.height);
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (token) {
       router.replace('/(app)/(tabs)');
     }
   }, [token]);
+
+  const fieldRefs: Record<AuthField, RefObject<TextInput | null>> = {
+    email: emailInputRef,
+    name: nameInputRef,
+    password: passwordInputRef,
+    confirmPassword: confirmPasswordInputRef,
+  };
+
+  const measureSubmitBelowField = () => {
+    // The keyboard, and so this offset, only exist on a device.
+    if (Platform.OS === 'web' || !focusedField) return;
+    const form = formRef.current;
+    const field = fieldRefs[focusedField].current;
+    const submit = submitRef.current;
+    if (!form || !field || !submit) return;
+    field.measureLayout(form, (_x, fieldY, _w, height) => {
+      submit.measureLayout(form, (_sx, submitY, _sw, submitHeight) => {
+        setFieldHeight(height);
+        setSubmitBelowField(Math.max(0, submitY + submitHeight - (fieldY + height)));
+      });
+    });
+  };
+
+  // Re-measured after every render: the banner and the field errors move the
+  // button while a field keeps focus. The state setters bail out when the
+  // numbers are unchanged, so this settles after one extra render.
+  useEffect(measureSubmitBelowField);
+
+  // The button is only worth chasing while the focused field stays on screen:
+  // on a short screen with every field showing an error, the whole run from
+  // field to button can be taller than the space above the keyboard. Then the
+  // offset is capped so the field (what the user is typing in) stays visible.
+  const visibleAboveToolbar =
+    windowHeight - insets.top - keyboardHeight - KEYBOARD_TOOLBAR_HEIGHT;
+  const maxSubmitBelowField = Math.max(
+    0,
+    visibleAboveToolbar - fieldHeight - 2 * KEYBOARD_BOTTOM_OFFSET,
+  );
+  // Only while the keyboard is up: the plain gap otherwise, so a later layout
+  // change does not re-scroll the page for a field that has lost focus.
+  const keyboardBottomOffset =
+    KEYBOARD_BOTTOM_OFFSET +
+    (focusedField && keyboardHeight > 0
+      ? Math.min(submitBelowField, maxSubmitBelowField)
+      : 0);
 
   const login = (email: string, password: string) => {
     return onLogin(email, password).pipe(
@@ -122,7 +188,7 @@ export default function LoginScreen() {
   // the route's own screen container, next to the page.
   return (
     <>
-    <UiPage topInset={0} keyboardBottomOffset={KEYBOARD_BOTTOM_OFFSET}>
+    <UiPage topInset={0} keyboardBottomOffset={keyboardBottomOffset}>
       <View style={styles.container}>
         <UiTitle sizeL style={styles.title} testID="login-heading">
           {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -151,9 +217,11 @@ export default function LoginScreen() {
             };
 
             return (
-            <View style={styles.formContent}>
+            <View ref={formRef} style={styles.formContent}>
               <UiFormField errorMessage={errors.email}>
                 <UiInput
+                  ref={emailInputRef}
+                  onFocus={() => setFocusedField('email')}
                   value={values.email}
                   onChange={onFieldChange('email')}
                   placeholder="Email"
@@ -175,6 +243,7 @@ export default function LoginScreen() {
                 <UiFormField errorMessage={errors.name}>
                   <UiInput
                     ref={nameInputRef}
+                    onFocus={() => setFocusedField('name')}
                     value={values.name}
                     onChange={onFieldChange('name')}
                     placeholder="Name"
@@ -192,6 +261,7 @@ export default function LoginScreen() {
               <UiFormField errorMessage={errors.password}>
                 <UiInput
                   ref={passwordInputRef}
+                  onFocus={() => setFocusedField('password')}
                   value={values.password}
                   onChange={onFieldChange('password')}
                   placeholder="Password"
@@ -218,6 +288,7 @@ export default function LoginScreen() {
                   <UiFormField errorMessage={errors.confirmPassword}>
                     <UiInput
                       ref={confirmPasswordInputRef}
+                      onFocus={() => setFocusedField('confirmPassword')}
                       value={values.confirmPassword}
                       onChange={onFieldChange('confirmPassword')}
                       placeholder="Confirm password"
@@ -235,17 +306,20 @@ export default function LoginScreen() {
 
               {errorMessage ? <UiError errorMessage={errorMessage} /> : null}
 
-              <UiButton
-                onPress={() => {
-                  handleSubmit();
-                }}
-                enableLoader={isSubmitting}
-                testID="login-submit-button"
-              >
-                <Text style={styles.buttonText}>
-                  {isLogin ? 'Login' : 'Register'}
-                </Text>
-              </UiButton>
+              {/* A plain View to measure: `UiButton` takes no ref. */}
+              <View ref={submitRef} collapsable={false}>
+                <UiButton
+                  onPress={() => {
+                    handleSubmit();
+                  }}
+                  enableLoader={isSubmitting}
+                  testID="login-submit-button"
+                >
+                  <Text style={styles.buttonText}>
+                    {isLogin ? 'Login' : 'Register'}
+                  </Text>
+                </UiButton>
+              </View>
             </View>
             );
           }}

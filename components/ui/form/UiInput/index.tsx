@@ -9,7 +9,21 @@ import {
 import { colors } from '@/theme/colors';
 import { forwardRef, useState } from 'react';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { border, spacing } from '@/theme/layout';
 import { styles } from './styles';
+
+/**
+ * QA-72: how much of a focused `UiInput` a keyboard-aware page must clear on
+ * top of its own offset. react-native-keyboard-controller's
+ * `KeyboardAwareScrollView` does not keep the field's bottom above the
+ * keyboard: once a selection event has arrived it replaces the field's height
+ * with the caret's bottom (`selection.end.y`, from `caretRect(for:)`, clamped
+ * to the field's height). On iOS that point came out 16 pt below the top of
+ * the 45 pt field, so 29 pt of it (the text's padding and the border) was not
+ * counted and ended up under the toolbar. Padding on both sides plus the
+ * border (32) covers that remainder with the text line included.
+ */
+export const INPUT_HEIGHT_BELOW_CARET = spacing.rowY * 2 + border.hairline * 2;
 
 interface Props {
   value: string;
@@ -33,6 +47,8 @@ interface Props {
    * a Strong Password suggestion lands on the password fields, not on name. */
   textContentType?: TextInputProps['textContentType'];
   autoComplete?: TextInputProps['autoComplete'];
+  /** QA-71: lets a form react to which of its fields has focus. */
+  onFocus?: () => void;
 }
 
 function UiInput(
@@ -52,6 +68,7 @@ function UiInput(
     blurOnSubmit,
     textContentType,
     autoComplete,
+    onFocus,
   }: Props,
   ref: React.ForwardedRef<TextInput>,
 ) {
@@ -82,7 +99,10 @@ function UiInput(
         keyboardType={keyboardType}
         autoCorrect={autoCapitalize === 'none' ? false : undefined}
         maxLength={maxLength}
-        onFocus={() => setIsFocused(true)}
+        onFocus={() => {
+          setIsFocused(true);
+          onFocus?.();
+        }}
         onBlur={() => setIsFocused(false)}
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}

@@ -3,12 +3,13 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   Text,
   View,
 } from 'react-native';
 import {
   KeyboardChatScrollView,
-  KeyboardEvents,
+  KeyboardController,
   KeyboardStickyView,
 } from 'react-native-keyboard-controller';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -119,21 +120,15 @@ export default function ChatThreadScreen() {
     if (messages.length === 0) return;
     const animated = hasScrolledOnMountRef.current;
     hasScrolledOnMountRef.current = true;
-    setTimeout(() => listRef.current?.scrollToEnd({ animated }), 80);
+    setTimeout(() => scrollListToEnd(listRef.current, animated), 80);
   }, [messages]);
 
-  // QA-30: focusing the composer must keep the newest reply in view above
-  // it. The list's `KeyboardChatScrollView` (below) lifts its content frame by
-  // frame with the keyboard, so a list already at its end stays there for the
-  // whole animation. This covers the remaining case - the list scrolled up
-  // when the composer is focused - by settling on the end once the keyboard
-  // is up; for a list already at the end it is a no-op.
-  useEffect(() => {
-    const sub = KeyboardEvents.addListener('keyboardDidShow', () =>
-      listRef.current?.scrollToEnd({ animated: true }),
-    );
-    return () => sub.remove();
-  }, []);
+  // QA-30 / QA-70: focusing the composer needs no scroll of its own here.
+  // `KeyboardChatScrollView`'s default `keyboardLiftBehavior="always"` lifts
+  // the content frame by frame with the keyboard, so the newest reply stays
+  // above the composer during and after the animation. A `keyboardDidShow`
+  // `scrollToEnd` that used to sit here undid that lift once the keyboard
+  // settled (see `scrollListToEnd` below).
 
   // ── Send message ─────────────────────────────────────────────────────────────
 
@@ -325,6 +320,25 @@ export default function ChatThreadScreen() {
     </View>
   );
 }
+
+// QA-70: `FlatList.scrollToEnd` targets content height minus viewport and
+// ignores the scroll view's bottom `contentInset` - which is how
+// `KeyboardChatScrollView` makes room for the keyboard - so with the keyboard
+// up it scrolled the newest message back behind the composer. The native
+// `scrollToEnd` (RCTScrollViewComponentView) adds `contentInset.bottom`, so it
+// is used while the keyboard is up. With the keyboard down there is no inset
+// and FlatList's own version stays: it estimates the end from its cell
+// metrics, so it also reaches the end of a long history whose cells have not
+// all rendered yet (QA-56).
+const scrollListToEnd = (list: FlatList | null, animated: boolean) => {
+  if (!list) return;
+  const scrollView = list.getNativeScrollRef() as ScrollView | null | undefined;
+  if (KeyboardController.isVisible() && typeof scrollView?.scrollToEnd === 'function') {
+    scrollView.scrollToEnd({ animated });
+  } else {
+    list.scrollToEnd({ animated });
+  }
+};
 
 // Mirrors the backend's stand-in text for an attachment-only message
 // (ConversationService.handleChat), so the optimistic bubble matches the

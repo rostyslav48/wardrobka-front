@@ -152,8 +152,18 @@ export const styles = StyleSheet.create({
   // Spec 6.7: "two 176 x 50 buttons". `UiButton` only accepts `style`
   // overrides (section 7.4), which is spec-sanctioned per 6.2's own hero
   // buttons.
+  // QA-73: a floor, not a fixed height - at the accessibility text sizes the
+  // label's line outgrew the fixed 50 and was clipped. The vertical padding
+  // is one hairline under `UiButton`'s 15 so that the secondary button's
+  // border fits too: at the default size its 20 pt label line + 2 x 14 + 2 x 1
+  // is exactly 50, and the borderless primary (48 of content) is held at 50
+  // by the floor with its label centred where it was. `flexGrow` keeps both
+  // buttons the same height when only one label wraps.
   footerButton: {
-    height: 50,
+    minHeight: 50,
+    paddingVertical: spacing.rowY - border.hairline,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
 
   buttonLabel__primary: {
