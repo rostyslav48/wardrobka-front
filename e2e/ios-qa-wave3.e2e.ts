@@ -470,3 +470,65 @@ test('QA-67: at 375x667 the Filters footer stays on screen, and the body scrolls
   await page.getByText('Apply', { exact: true }).click();
   await expect(sheet).not.toBeVisible();
 });
+
+// ─── QA-73 (wave 4): Filters footer labels at larger text ────────────────────
+//
+// A web proxy for iOS Dynamic Type, not a check of it. react-native-web sets
+// text sizes in px, so a larger root font size does not reach these labels;
+// the test enlarges the two labels' own font size and line height instead,
+// the way Dynamic Type scales both on iOS, and checks the buttons grow with
+// them rather than clipping. It also pins the buttons' default 50 px height.
+
+test('QA-73: the Filters footer buttons are 50 tall by default and grow with a larger label', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await stubWardrobe(page, ITEMS);
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.items).click();
+  await expect(page.getByText('Blue Denim Jacket')).toBeVisible();
+  await page.getByTestId(testIds.items.filterButton).click();
+  await expect(page.getByTestId(testIds.modal.sheet)).toBeVisible();
+
+  const labels = ['Clear all', 'Apply'];
+  const boxes = async () =>
+    Promise.all(
+      labels.map(async (label) => {
+        const button = await page.getByRole('button', { name: label, exact: true }).boundingBox();
+        const text = await page.getByText(label, { exact: true }).boundingBox();
+        if (!button || !text) throw new Error(`expected bounding boxes for ${label}`);
+        return { label, button, text };
+      }),
+    );
+
+  for (const { label, button } of await boxes()) {
+    expect(Math.round(button.height), `${label} default height`).toBe(50);
+  }
+
+  for (const label of labels) {
+    await page.getByText(label, { exact: true }).evaluate((el) => {
+      (el as HTMLElement).style.fontSize = '36px';
+      (el as HTMLElement).style.lineHeight = '44px';
+    });
+  }
+
+  // The sheet re-settles against the bottom edge after its content grows.
+  const sheet = page.getByTestId(testIds.modal.sheet);
+  await expect
+    .poll(async () => {
+      const box = await sheet.boundingBox();
+      return box ? Math.round(box.y + box.height) : null;
+    })
+    .toBe(667);
+
+  const grown = await boxes();
+  for (const { label, button, text } of grown) {
+    expect(text.height, `${label} label height`).toBeGreaterThanOrEqual(43);
+    // The label sits inside its button with the 15 px padding kept.
+    expect(text.y, `${label} label top`).toBeGreaterThanOrEqual(button.y + 14);
+    expect(text.y + text.height, `${label} label bottom`).toBeLessThanOrEqual(
+      button.y + button.height - 14,
+    );
+  }
+  expect(Math.round(grown[0].button.height)).toBe(Math.round(grown[1].button.height));
+});

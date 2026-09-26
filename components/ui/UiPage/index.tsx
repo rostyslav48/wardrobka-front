@@ -12,6 +12,7 @@ import {
   LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   RefreshControlProps,
   StyleProp,
   View,
@@ -26,6 +27,7 @@ import { styles } from './styles';
 import { spacing } from '@/theme/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KEYBOARD_TOOLBAR_HEIGHT } from '@/components/ui/UiKeyboardToolbar';
+import { INPUT_HEIGHT_BELOW_CARET } from '@/components/ui/form/UiInput';
 
 type Props = PropsWithChildren<{
   /**
@@ -67,6 +69,9 @@ type Props = PropsWithChildren<{
    * it stay reachable. Leave unset on screens without text inputs.
    * Such a page is expected to mount `UiKeyboardToolbar` (QA-06); the
    * toolbar's height is added on top of this offset and of the scroll range.
+   * So is the part of a `UiInput` the library does not count as the field
+   * (QA-72, see `INPUT_HEIGHT_BELOW_CARET`), so this offset is the gap
+   * between the whole field and the toolbar.
    */
   keyboardBottomOffset?: number;
 }>;
@@ -210,9 +215,18 @@ function PageScrollView({
       {keyboardBottomOffset !== undefined ? (
         <KeyboardAwareScrollView
           ref={keyboardScrollRef}
-          bottomOffset={keyboardBottomOffset + KEYBOARD_TOOLBAR_HEIGHT}
+          bottomOffset={
+            keyboardBottomOffset + KEYBOARD_TOOLBAR_HEIGHT + INPUT_HEIGHT_BELOW_CARET
+          }
           extraKeyboardSpace={KEYBOARD_TOOLBAR_HEIGHT}
           {...scrollProps}
+          // QA-71: with 'on-drag' a drag to reach the submit button under the
+          // keyboard dismissed the keyboard instead of scrolling. On iOS
+          // 'interactive' scrolls the form and only takes the keyboard down
+          // when the finger drags into it. Taps outside a field still dismiss
+          // it (QA-06): that comes from `keyboardShouldPersistTaps`, not from
+          // this mode.
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         >
           {body}
         </KeyboardAwareScrollView>
