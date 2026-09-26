@@ -10,6 +10,20 @@ import { colors } from '@/theme/colors';
 // anything before this file. `colors.background`'s literal is hand-kept in
 // sync (inline <style> can't import the TS token), same convention as the
 // splash-screen/adaptive-icon backgroundColor literals in app.json.
+// Web half of the app's one family (theme/layout.ts `fontFamily.body`); native
+// embeds the same files through app.json's `expo-font` plugin.
+const archivoFaces = [
+  [400, 'Regular'],
+  [500, 'Medium'],
+  [600, 'SemiBold'],
+  [700, 'Bold'],
+]
+  .map(
+    ([weight, name]) =>
+      `@font-face { font-family: 'Archivo'; font-weight: ${weight}; font-style: normal; font-display: swap; src: url('/fonts/Archivo-${name}.ttf') format('truetype'); }`,
+  )
+  .join('');
+
 export default function Root({ children }: PropsWithChildren) {
   return (
     <html lang="en">
@@ -23,7 +37,7 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
         <style
           dangerouslySetInnerHTML={{
-            __html: `html, body, #root { background-color: ${colors.background}; }`,
+            __html: `html, body, #root { background-color: ${colors.background}; }${archivoFaces}`,
           }}
         />
       </head>

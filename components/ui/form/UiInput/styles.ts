@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, radius, spacing, typography } from '@/theme/layout';
+import { border, fontFamily, radius, spacing, typography } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   container: {
@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
     padding: spacing.rowY,
     // Size only, not the whole role: a `lineHeight` on a React Native
     // `TextInput` clips the caret and the last descender on Android.
+    fontFamily: fontFamily.body,
     fontSize: typography.rowLabel.fontSize,
   },
   icon: {

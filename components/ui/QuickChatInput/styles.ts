@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, radius, spacing, typography } from '@/theme/layout';
+import { border, fontFamily, radius, spacing, typography } from '@/theme/layout';
 
 /**
  * Spec section 6.2, the ask block's input row: "flex gap 8: `UiInput` 306 x 51
@@ -27,6 +27,7 @@ export const styles = StyleSheet.create({
   },
   input: {
     // Size only: a `lineHeight` on a multiline `TextInput` clips descenders.
+    fontFamily: fontFamily.body,
     fontSize: typography.rowLabel.fontSize,
     color: colors.textPrimary,
     padding: 0,

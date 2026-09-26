@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/layout';
+import { fontFamily, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   container: {
@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
   // the literal is kept verbatim rather than snapped to a nearby token.
   buttonText: {
     fontWeight: 'bold',
+    fontFamily: fontFamily.body,
     fontSize: 16,
   },
 });

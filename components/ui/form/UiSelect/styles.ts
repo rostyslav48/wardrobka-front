@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, radius, spacing } from '@/theme/layout';
+import { border, fontFamily, radius, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   scroll: {
@@ -31,6 +31,7 @@ export const styles = StyleSheet.create({
   // on the React Native default family, so its 13/500 stays component-owned.
   // Tokenising it would change a design the mockup never made.
   chipText: {
+    fontFamily: fontFamily.body,
     fontSize: 13,
     fontWeight: '500',
     color: colors.textSecondary,

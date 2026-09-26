@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { spacing, tracking, typography } from '@/theme/layout';
+import { fontFamily, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Only the section header is on the redesign scale so far: it shares Home's
@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   hint: {
+    fontFamily: fontFamily.body,
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
@@ -41,11 +42,13 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
+    fontFamily: fontFamily.body,
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   cardMeta: {
+    fontFamily: fontFamily.body,
     fontSize: 13,
     color: colors.textSecondary,
   },

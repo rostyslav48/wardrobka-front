@@ -63,49 +63,60 @@ export const radius = {
 } as const;
 
 /**
- * Type - spec section 4.3, one entry per text role the artboard renders in
- * Archivo or Newsreader. Roles the mockup leaves on the React Native default
- * family (`-apple-system` in the sweep) are deliberately absent: pinning them
- * would change a design the mockup never restyled.
+ * Family - the app ships one face, Archivo (400/500/600/700), replacing spec
+ * section 4.4's Archivo + Newsreader pair. The files live in `public/fonts/`:
+ * app.json's `expo-font` plugin embeds them natively under the family name
+ * `Archivo`, and `app/+html.tsx` declares them as `@font-face` for web, so
+ * `fontFamily` + `fontWeight` resolves to the right file on every platform.
+ */
+export const fontFamily = {
+  body: 'Archivo',
+} as const;
+
+/**
+ * Type - spec section 4.3, one entry per text role the artboard renders.
+ * Every role carries `fontFamily.body`; the three title roles were Newsreader
+ * in the mockup and keep its sizes and weights in Archivo.
  *
  * `lineHeight` is the measured value where section 4.3 records one. Where it
  * records `normal`, the value is `round(fontSize x normalFactor)` using the
- * shipped font's own vertical metrics - Archivo 1.088 ((878 + 210) / 1000),
- * Newsreader 1.000 ((1470 + 530) / 2000). Section 8.3 lists both derivations.
+ * shipped font's own vertical metrics - Archivo 1.088 ((878 + 210) / 1000).
+ * Section 8.3 lists the derivation. `sheetTitle` was `normal` under
+ * Newsreader (1.000, so 22); under Archivo it is round(22 x 1.088) = 24.
  */
 export const typography = {
-  // Newsreader 400
-  screenTitle: { fontSize: 28, fontWeight: '400', lineHeight: 32 },
-  hero: { fontSize: 26, fontWeight: '400', lineHeight: 30 },
-  sheetTitle: { fontSize: 22, fontWeight: '400', lineHeight: 22 },
+  // Titles (Newsreader in the mockup)
+  screenTitle: { fontFamily: fontFamily.body, fontSize: 28, fontWeight: '400', lineHeight: 32 },
+  hero: { fontFamily: fontFamily.body, fontSize: 26, fontWeight: '400', lineHeight: 30 },
+  sheetTitle: { fontFamily: fontFamily.body, fontSize: 22, fontWeight: '400', lineHeight: 24 },
 
-  // Archivo
-  statNumeral: { fontSize: 20, fontWeight: '700', lineHeight: 24 },
-  button: { fontSize: 18, fontWeight: '600', lineHeight: 20 },
-  sessionTitle: { fontSize: 14.5, fontWeight: '500', lineHeight: 16 },
-  rowLabel: { fontSize: 14, fontWeight: '400', lineHeight: 15 },
-  valueEmphasis: { fontSize: 14, fontWeight: '500', lineHeight: 15 },
-  overflowChip: { fontSize: 13, fontWeight: '600', lineHeight: 14 },
-  pillLabel: { fontSize: 12.5, fontWeight: '600', lineHeight: 14 },
-  cardName: { fontSize: 12.5, fontWeight: '500', lineHeight: 16 },
-  chipLabel: { fontSize: 12, fontWeight: '500', lineHeight: 13 },
-  chipLabelSelected: { fontSize: 12, fontWeight: '600', lineHeight: 13 },
-  slotCaption: { fontSize: 11.5, fontWeight: '400', lineHeight: 15 },
-  body: { fontSize: 11.5, fontWeight: '400', lineHeight: 13 },
-  chipLabelApplied: { fontSize: 11.5, fontWeight: '500', lineHeight: 13 },
-  wordmark: { fontSize: 11, fontWeight: '600', lineHeight: 12 },
-  avatarInitials: { fontSize: 11, fontWeight: '600', lineHeight: 12 },
-  fieldLabel: { fontSize: 11, fontWeight: '500', lineHeight: 12 },
-  temperature: { fontSize: 11, fontWeight: '500', lineHeight: 12 },
-  eyebrow: { fontSize: 10, fontWeight: '600', lineHeight: 11 },
-  dateChip: { fontSize: 10, fontWeight: '500', lineHeight: 11 },
-  meta: { fontSize: 10, fontWeight: '500', lineHeight: 11 },
-  matchScore: { fontSize: 10, fontWeight: '500', lineHeight: 11 },
-  badgeNumeral: { fontSize: 10, fontWeight: '700', lineHeight: 11 },
-  statusLabel: { fontSize: 9.5, fontWeight: '600', lineHeight: 10 },
-  tabLabel: { fontSize: 9, fontWeight: '600', lineHeight: 10 },
-  statLabel: { fontSize: 9, fontWeight: '500', lineHeight: 10 },
-  swatchLabel: { fontSize: 9, fontWeight: '600', lineHeight: 10 },
+  // Body
+  statNumeral: { fontFamily: fontFamily.body, fontSize: 20, fontWeight: '700', lineHeight: 24 },
+  button: { fontFamily: fontFamily.body, fontSize: 18, fontWeight: '600', lineHeight: 20 },
+  sessionTitle: { fontFamily: fontFamily.body, fontSize: 14.5, fontWeight: '500', lineHeight: 16 },
+  rowLabel: { fontFamily: fontFamily.body, fontSize: 14, fontWeight: '400', lineHeight: 15 },
+  valueEmphasis: { fontFamily: fontFamily.body, fontSize: 14, fontWeight: '500', lineHeight: 15 },
+  overflowChip: { fontFamily: fontFamily.body, fontSize: 13, fontWeight: '600', lineHeight: 14 },
+  pillLabel: { fontFamily: fontFamily.body, fontSize: 12.5, fontWeight: '600', lineHeight: 14 },
+  cardName: { fontFamily: fontFamily.body, fontSize: 12.5, fontWeight: '500', lineHeight: 16 },
+  chipLabel: { fontFamily: fontFamily.body, fontSize: 12, fontWeight: '500', lineHeight: 13 },
+  chipLabelSelected: { fontFamily: fontFamily.body, fontSize: 12, fontWeight: '600', lineHeight: 13 },
+  slotCaption: { fontFamily: fontFamily.body, fontSize: 11.5, fontWeight: '400', lineHeight: 15 },
+  body: { fontFamily: fontFamily.body, fontSize: 11.5, fontWeight: '400', lineHeight: 13 },
+  chipLabelApplied: { fontFamily: fontFamily.body, fontSize: 11.5, fontWeight: '500', lineHeight: 13 },
+  wordmark: { fontFamily: fontFamily.body, fontSize: 11, fontWeight: '600', lineHeight: 12 },
+  avatarInitials: { fontFamily: fontFamily.body, fontSize: 11, fontWeight: '600', lineHeight: 12 },
+  fieldLabel: { fontFamily: fontFamily.body, fontSize: 11, fontWeight: '500', lineHeight: 12 },
+  temperature: { fontFamily: fontFamily.body, fontSize: 11, fontWeight: '500', lineHeight: 12 },
+  eyebrow: { fontFamily: fontFamily.body, fontSize: 10, fontWeight: '600', lineHeight: 11 },
+  dateChip: { fontFamily: fontFamily.body, fontSize: 10, fontWeight: '500', lineHeight: 11 },
+  meta: { fontFamily: fontFamily.body, fontSize: 10, fontWeight: '500', lineHeight: 11 },
+  matchScore: { fontFamily: fontFamily.body, fontSize: 10, fontWeight: '500', lineHeight: 11 },
+  badgeNumeral: { fontFamily: fontFamily.body, fontSize: 10, fontWeight: '700', lineHeight: 11 },
+  statusLabel: { fontFamily: fontFamily.body, fontSize: 9.5, fontWeight: '600', lineHeight: 10 },
+  tabLabel: { fontFamily: fontFamily.body, fontSize: 9, fontWeight: '600', lineHeight: 10 },
+  statLabel: { fontFamily: fontFamily.body, fontSize: 9, fontWeight: '500', lineHeight: 10 },
+  swatchLabel: { fontFamily: fontFamily.body, fontSize: 9, fontWeight: '600', lineHeight: 10 },
 } as const satisfies Record<string, TextStyle>;
 
 /**
@@ -145,16 +156,6 @@ export const tracking = {
   statLabel: 0.9,
   swatchLabel: 0,
 } as const satisfies Record<keyof typeof typography, number>;
-
-/**
- * Families - spec section 4.4. Neither ships in `assets/fonts/` yet; the phase
- * that lands typography has to add both before these resolve to anything but
- * the platform fallback.
- */
-export const fontFamily = {
-  display: 'Newsreader',
-  body: 'Archivo',
-} as const;
 
 /**
  * Borders - spec section 3, closing note: "Border widths are uniform: 1 px

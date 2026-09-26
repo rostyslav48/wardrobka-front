@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, pageInlineIntent, radius, spacing, tracking, typography } from '@/theme/layout';
+import { border, fontFamily, pageInlineIntent, radius, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Spec section 6.7's shared bottom-sheet shell, applied to the one sheet in
@@ -177,6 +177,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.control,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.cardPad,
+    fontFamily: fontFamily.body,
     fontSize: 16,
     color: colors.textPrimary,
     minHeight: 80,

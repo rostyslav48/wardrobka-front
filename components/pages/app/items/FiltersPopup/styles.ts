@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, radius, spacing, tracking, typography } from '@/theme/layout';
+import { border, fontFamily, radius, spacing, tracking, typography } from '@/theme/layout';
 
 /**
  * Spec section 6.7's bottom-sheet body: sections separated by `spacing.sheetSection`
@@ -54,6 +54,7 @@ export const styles = StyleSheet.create({
   // Snap table 8.7: same untokenised native role `UiSelect`'s own chip label
   // carries (13/500 textSecondary) - this chip is the same design.
   chipText: {
+    fontFamily: fontFamily.body,
     fontSize: 13,
     fontWeight: '500',
     color: colors.textSecondary,

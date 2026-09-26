@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, iconSize, radius, spacing, typography } from '@/theme/layout';
+import { border, fontFamily, iconSize, radius, spacing, typography } from '@/theme/layout';
 
 /**
  * Spec section 6.3: "UiInput 304 x 51 (r10, 1px border)". Snap table 8.1's
@@ -24,6 +24,7 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingRight: spacing.cardPad,
     paddingLeft: spacing.cardPad + iconSize.mdPlus,
+    fontFamily: fontFamily.body,
     fontSize: typography.rowLabel.fontSize,
   },
   icon: {

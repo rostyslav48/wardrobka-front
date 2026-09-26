@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { iconSize, radius, spacing } from '@/theme/layout';
+import { fontFamily, iconSize, radius, spacing } from '@/theme/layout';
 
 /**
  * Four of this component's text roles are the ones snap table 8.7 deliberately
@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
   // 8.7: component-owned role (11 / 600, ls 0.6).
   topic: {
     flex: 1,
+    fontFamily: fontFamily.body,
     fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
@@ -64,12 +65,14 @@ export const styles = StyleSheet.create({
   },
   // 8.7: component-owned role (14 / 700).
   overflowText: {
+    fontFamily: fontFamily.body,
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   // 8.7: component-owned role (14 / 400, line-height 20).
   summary: {
+    fontFamily: fontFamily.body,
     fontSize: 14,
     color: colors.textPrimary,
     lineHeight: 20,
@@ -81,6 +84,7 @@ export const styles = StyleSheet.create({
   // 8.7: component-owned role (12 / 500) - the caption row and the date read as
   // one row in the computed-style sweep, so both stay.
   itemName: {
+    fontFamily: fontFamily.body,
     fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
@@ -94,6 +98,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   date: {
+    fontFamily: fontFamily.body,
     fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',

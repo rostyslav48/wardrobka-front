@@ -1,5 +1,4 @@
-import { DarkTheme, Theme, ThemeProvider } from 'expo-router/react-navigation';
-import { useFonts } from 'expo-font';
+import { Theme, ThemeProvider } from 'expo-router/react-navigation';
 import { Slot } from 'expo-router';
 import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
@@ -9,6 +8,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { Alert, LogBox, Platform } from 'react-native';
 import { ModalProvider } from '@/context/ModalContext';
 import { colors } from '@/theme/colors';
+import { fontFamily } from '@/theme/layout';
 
 // Maestro runs (EXPO_PUBLIC_E2E=1): dev-only LogBox toasts sit over the tab
 // bar, so a tap meant for a tab opens the debugger instead.
@@ -20,9 +20,8 @@ if (process.env.EXPO_PUBLIC_E2E) LogBox.ignoreAllLogs();
 // branch off the OS/browser scheme setting painted light nav chrome on the
 // web build's first frame (the web-only hook it read from returned a light
 // default until hydration by design) and permanently on a device set to
-// light mode. `fonts` is the one field this object borrows from `DarkTheme`
-// rather than the palette - React Navigation's per-platform system font
-// stack, which `theme/colors.ts` has no equivalent for.
+// light mode. `fonts` puts React Navigation's own text (headers, tab labels)
+// on the app's one family, `fontFamily.body`.
 const navigationTheme: Theme = {
   dark: true,
   colors: {
@@ -33,24 +32,20 @@ const navigationTheme: Theme = {
     border: colors.border,
     notification: colors.error,
   },
-  fonts: DarkTheme.fonts,
+  fonts: {
+    regular: { fontFamily: fontFamily.body, fontWeight: '400' },
+    medium: { fontFamily: fontFamily.body, fontWeight: '500' },
+    bold: { fontFamily: fontFamily.body, fontWeight: '600' },
+    heavy: { fontFamily: fontFamily.body, fontWeight: '700' },
+  },
 };
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
   ErrorUtils.setGlobalHandler((error) => {
     if (!error.handled) {
       Alert.alert(error.message);
     }
   });
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
 
   return (
     <ThemeProvider value={navigationTheme}>

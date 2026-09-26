@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/layout';
+import { fontFamily, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   // QA-23: this was `justifyContent: 'center'` with `height: '100%'`, so
@@ -35,6 +35,7 @@ export const styles = StyleSheet.create({
   // `title` above.
   buttonText: {
     fontWeight: 'bold',
+    fontFamily: fontFamily.body,
     fontSize: 16,
   },
   link: {
@@ -46,6 +47,7 @@ export const styles = StyleSheet.create({
     // line height). Spreading the role would tighten the line box and
     // change rendered height, so only the exact-value spacing swap above
     // is applied and these two stay bare literals.
+    fontFamily: fontFamily.body,
     fontSize: 14,
     fontWeight: '500',
   },

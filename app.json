@@ -36,7 +36,33 @@
         }
       ],
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-font",
+        {
+          "ios": {
+            "fonts": [
+              "./public/fonts/Archivo-Regular.ttf",
+              "./public/fonts/Archivo-Medium.ttf",
+              "./public/fonts/Archivo-SemiBold.ttf",
+              "./public/fonts/Archivo-Bold.ttf"
+            ]
+          },
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Archivo",
+                "fontDefinitions": [
+                  { "path": "./public/fonts/Archivo-Regular.ttf", "weight": 400 },
+                  { "path": "./public/fonts/Archivo-Medium.ttf", "weight": 500 },
+                  { "path": "./public/fonts/Archivo-SemiBold.ttf", "weight": 600 },
+                  { "path": "./public/fonts/Archivo-Bold.ttf", "weight": 700 }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

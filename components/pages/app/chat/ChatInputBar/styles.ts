@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { border, pageInlineIntent, radius, spacing, typography } from '@/theme/layout';
+import { border, fontFamily, pageInlineIntent, radius, spacing, typography } from '@/theme/layout';
 
 /**
  * Spec 7.2: compose with the Home ask-input verbatim (`QuickChatInput`'s own
@@ -69,6 +69,7 @@ export const styles = StyleSheet.create({
   },
   input: {
     // Size only: a `lineHeight` on a multiline `TextInput` clips descenders.
+    fontFamily: fontFamily.body,
     fontSize: typography.rowLabel.fontSize,
     color: colors.textPrimary,
     padding: 0,
