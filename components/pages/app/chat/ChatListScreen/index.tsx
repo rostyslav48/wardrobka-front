@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  RefreshControl,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { aiAssistantService } from '@/services/ai-assistant.service';
@@ -20,6 +27,7 @@ export default function ChatListScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // QA-53/62: this screen never had a `RefreshControl` at all, so a pull
   // triggered nothing - no fetch, no spinner, no error. `silent` keeps a
@@ -47,6 +55,35 @@ export default function ChatListScreen() {
   const handleRefresh = () => {
     setIsRefreshing(true);
     fetchSessions(true);
+  };
+
+  // QA-35: the row stays until the server confirms the delete; on failure it
+  // stays and the inline banner says so.
+  const deleteSession = (session: AssistantSessionDto) => {
+    setDeleteError(null);
+    aiAssistantService.deleteSession(session.id).subscribe({
+      next: () =>
+        setSessions((prev) => prev.filter((s) => s.id !== session.id)),
+      error: () => setDeleteError("Couldn't delete the chat. Please try again."),
+    });
+  };
+
+  // `Alert.alert` is a no-op on react-native-web, so the browser build asks
+  // through the browser's own confirm dialog instead.
+  const confirmDelete = (session: AssistantSessionDto) => {
+    const title = 'Delete this chat?';
+    const message =
+      'Its messages and any outfit suggestions made in it will be removed. This cannot be undone.';
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) deleteSession(session);
+      return;
+    }
+
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteSession(session) },
+    ]);
   };
 
   const openSession = (session: AssistantSessionDto) => {
@@ -104,12 +141,15 @@ export default function ChatListScreen() {
                 message="Couldn't refresh your chats."
                 onRetry={() => fetchSessions()}
               />
+            ) : deleteError ? (
+              <UiInlineError testID="chat-delete-error-banner" message={deleteError} />
             ) : null}
             {sessions.map((session) => (
               <SessionListItem
                 key={session.id}
                 session={session}
                 onPress={() => openSession(session)}
+                onDelete={() => confirmDelete(session)}
               />
             ))}
           </View>

@@ -27,7 +27,9 @@ export default function ChatInputBar({
   isSending,
   bottomInset,
 }: Props) {
-  const canSend = value.trim().length > 0 && !isSending;
+  // QA-34: attached items alone make a sendable message.
+  const canSend =
+    (value.trim().length > 0 || selectedItems.length > 0) && !isSending;
 
   // QA-31: after sending, the multiline input kept its grown height for a
   // moment (RN's own content-size layout pass lags a frame or two behind the

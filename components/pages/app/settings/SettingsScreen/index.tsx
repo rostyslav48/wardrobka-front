@@ -11,7 +11,9 @@ import SignOutSection from '@/components/pages/app/settings/SignOutSection';
 import UiToast, { UiToastRef } from '@/components/ui/UiToast';
 import UiTitle from '@/components/ui/UiTitle';
 import UiPage, { UiPageHandle } from '@/components/ui/UiPage';
+import UiKeyboardToolbar from '@/components/ui/UiKeyboardToolbar';
 import { colors } from '@/theme/colors';
+import { spacing } from '@/theme/layout';
 import { styles } from './styles';
 
 const appVersion = Constants.expoConfig?.version ?? '—';
@@ -75,7 +77,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.root} testID="settings-screen">
-      <UiPage tabBarInset ref={pageRef}>
+      <UiPage tabBarInset ref={pageRef} keyboardBottomOffset={spacing.xl}>
         {/* sizeL: spec 6.6's "Settings" 28/400 - the same page-title role as
             Items/Chat/Log. */}
         <View style={styles.header}>
@@ -115,6 +117,7 @@ export default function SettingsScreen() {
       </UiPage>
 
       <UiToast ref={toastRef} />
+      <UiKeyboardToolbar />
     </View>
   );
 }

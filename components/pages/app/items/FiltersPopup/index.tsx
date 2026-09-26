@@ -112,7 +112,26 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
   };
 
   return (
-    <UiPopup fullScreen={false} title="Filters">
+    // QA-67: Clear all / Apply are the sheet's pinned footer, outside the
+    // scrolling body, so they stay on screen on an iPhone SE.
+    <UiPopup
+      fullScreen={false}
+      title="Filters"
+      footer={
+        <View style={styles.footer}>
+          <View style={styles.footerButtonWrapper}>
+            <UiButton secondary onPress={handleClear} style={styles.footerButton}>
+              <UiTitle sizeS style={styles.buttonLabel__secondary}>Clear all</UiTitle>
+            </UiButton>
+          </View>
+          <View style={styles.footerButtonWrapper}>
+            <UiButton onPress={handleApply} style={styles.footerButton}>
+              <UiTitle sizeS style={styles.buttonLabel__primary}>Apply</UiTitle>
+            </UiButton>
+          </View>
+        </View>
+      }
+    >
       <View style={styles.content}>
 
         {/* ── Type ─────────────────────────────────────── */}
@@ -216,21 +235,6 @@ export default function FiltersPopup({ initialFilters, onApply, onClear }: Props
             />
           </View>
         </View>
-
-        {/* ── Footer ───────────────────────────────────── */}
-        <View style={styles.footer}>
-          <View style={styles.footerButtonWrapper}>
-            <UiButton secondary onPress={handleClear} style={styles.footerButton}>
-              <UiTitle sizeS style={styles.buttonLabel__secondary}>Clear all</UiTitle>
-            </UiButton>
-          </View>
-          <View style={styles.footerButtonWrapper}>
-            <UiButton onPress={handleApply} style={styles.footerButton}>
-              <UiTitle sizeS style={styles.buttonLabel__primary}>Apply</UiTitle>
-            </UiButton>
-          </View>
-        </View>
-
       </View>
     </UiPopup>
   );

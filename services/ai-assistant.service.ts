@@ -19,6 +19,13 @@ export const aiAssistantService = {
     );
   },
 
+  /** QA-35: deletes one of the caller's sessions and its messages. */
+  deleteSession(sessionId: string): Observable<{ deleted: boolean }> {
+    return httpService.delete<{ deleted: boolean }>(
+      `ai-assistant/sessions/${sessionId}`,
+    );
+  },
+
   chat(request: ChatRequest): Observable<ChatResponse> {
     return httpService.post<ChatResponse>('ai-assistant/chat', request);
   },

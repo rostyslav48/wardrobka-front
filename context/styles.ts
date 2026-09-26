@@ -2,6 +2,12 @@ import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
 import { radius, spacing } from '@/theme/layout';
 
+const GRABBER_HEIGHT = 4;
+const GRABBER_MARGIN_TOP = spacing.sm;
+
+/** The grabber's share of the sheet's height, above the sheet's content. */
+export const GRABBER_BLOCK_HEIGHT = GRABBER_HEIGHT + GRABBER_MARGIN_TOP;
+
 export const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
@@ -26,10 +32,10 @@ export const styles = StyleSheet.create({
   grabber: {
     alignSelf: 'center',
     width: 36,
-    height: 4,
+    height: GRABBER_HEIGHT,
     borderRadius: radius.hair,
     backgroundColor: colors.border,
-    marginTop: spacing.sm,
+    marginTop: GRABBER_MARGIN_TOP,
   },
 });
 

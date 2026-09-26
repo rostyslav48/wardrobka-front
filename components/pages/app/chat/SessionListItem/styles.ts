@@ -17,6 +17,38 @@ export const styles = StyleSheet.create({
     gap: spacing.lg,
     borderBottomWidth: border.hairline,
     borderBottomColor: colors.hairline,
+    // Opaque, so the swipe's Delete action stays hidden behind a closed row.
+    backgroundColor: colors.background,
+  },
+  // QA-35: the action a left swipe reveals. No spec surface; uses the app's
+  // destructive colour and the row's own body type role.
+  deleteAction: {
+    width: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.micro,
+    backgroundColor: colors.statusMissing,
+  },
+  deleteLabel: {
+    ...typography.body,
+    letterSpacing: tracking.body,
+    color: colors.textPrimary,
+  },
+  // QA-35 web: the row plus a trailing Delete button that continues the
+  // row's hairline.
+  webRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  webRowBody: {
+    flex: 1,
+  },
+  webDeleteButton: {
+    justifyContent: 'center',
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.hair,
+    borderBottomWidth: border.hairline,
+    borderBottomColor: colors.hairline,
   },
   body: {
     flex: 1,

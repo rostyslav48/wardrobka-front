@@ -75,6 +75,10 @@ export const testIds = Object.freeze({
     newSessionButton: 'chat-new-session-button',
     attachButton: 'chat-attach-button',
     pickerConfirmButton: 'chat-picker-confirm-button',
+    // QA-35: swipe-to-delete on the sessions list.
+    sessionRow: (id: string) => `chat-session-row-${id}`,
+    sessionDelete: (id: string) => `chat-session-delete-${id}`,
+    deleteErrorBanner: 'chat-delete-error-banner',
   }),
   modal: Object.freeze({
     // Set once on `ModalContext`'s own sheet `Animated.View`, so it's shared
