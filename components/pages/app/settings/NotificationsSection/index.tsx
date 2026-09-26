@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, Switch, Text, View } from 'react-native';
 import DateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from '@react-native-community/datetimepicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCalendar } from '@/context/CalendarContext';
@@ -107,9 +107,8 @@ export default function NotificationsSection({ onNotify }: Props) {
   );
 
   const handleTimeChange = useCallback(
-    (event: DateTimePickerEvent, date?: Date) => {
+    (_event: DateTimePickerChangeEvent, date: Date) => {
       if (Platform.OS === 'android') setIsPickerOpen(false);
-      if (event.type === 'dismissed' || !date) return;
 
       void persist({
         ...prefs,
@@ -186,7 +185,7 @@ export default function NotificationsSection({ onNotify }: Props) {
               mode="time"
               display="compact"
               value={timeToDate(prefs.time)}
-              onChange={handleTimeChange}
+              onValueChange={handleTimeChange}
               themeVariant="dark"
               // QA-13: without this the selected time uses iOS's system blue
               // instead of the app's brand accent.
@@ -205,7 +204,8 @@ export default function NotificationsSection({ onNotify }: Props) {
           mode="time"
           display="default"
           value={timeToDate(prefs.time)}
-          onChange={handleTimeChange}
+          onValueChange={handleTimeChange}
+          onDismiss={() => setIsPickerOpen(false)}
         />
       )}
 

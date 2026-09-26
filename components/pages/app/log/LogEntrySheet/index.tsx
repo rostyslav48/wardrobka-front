@@ -23,7 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import DateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from '@react-native-community/datetimepicker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -202,9 +202,9 @@ export default function LogEntrySheet({
     ]);
   };
 
-  const onDateChange = (_event: DateTimePickerEvent, selected?: Date) => {
+  const onDateChange = (_event: DateTimePickerChangeEvent, selected: Date) => {
     if (Platform.OS === 'android') setShowAndroidPicker(false);
-    if (selected) setDate(selected);
+    setDate(selected);
   };
 
   const selectedItems = selectedIds
@@ -316,7 +316,8 @@ export default function LogEntrySheet({
                         value={date}
                         mode="date"
                         maximumDate={new Date()}
-                        onChange={onDateChange}
+                        onValueChange={onDateChange}
+                        onDismiss={() => setShowAndroidPicker(false)}
                       />
                     )}
                   </>
@@ -326,7 +327,7 @@ export default function LogEntrySheet({
                     mode="date"
                     display="spinner"
                     maximumDate={new Date()}
-                    onChange={onDateChange}
+                    onValueChange={onDateChange}
                     textColor={colors.textPrimary}
                     style={styles.iosPicker}
                   />
