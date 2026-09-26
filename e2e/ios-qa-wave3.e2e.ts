@@ -524,7 +524,8 @@ test('QA-73: the Filters footer buttons are 50 tall by default and grow with a l
   const grown = await boxes();
   for (const { label, button, text } of grown) {
     expect(text.height, `${label} label height`).toBeGreaterThanOrEqual(43);
-    // The label sits inside its button with the 15 px padding kept.
+    // The label sits inside its button with the 14 px padding kept
+    // (`UiButton`'s 15 less one hairline, see FiltersPopup `footerButton`).
     expect(text.y, `${label} label top`).toBeGreaterThanOrEqual(button.y + 14);
     expect(text.y + text.height, `${label} label bottom`).toBeLessThanOrEqual(
       button.y + button.height - 14,

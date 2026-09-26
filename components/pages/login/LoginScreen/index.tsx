@@ -84,11 +84,11 @@ export default function LoginScreen() {
     confirmPassword: confirmPasswordInputRef,
   };
 
-  const measureSubmitBelowField = () => {
+  const measureSubmitBelowField = (fieldName: AuthField | null = focusedField) => {
     // The keyboard, and so this offset, only exist on a device.
-    if (Platform.OS === 'web' || !focusedField) return;
+    if (Platform.OS === 'web' || !fieldName) return;
     const form = formRef.current;
-    const field = fieldRefs[focusedField].current;
+    const field = fieldRefs[fieldName].current;
     const submit = submitRef.current;
     if (!form || !field || !submit) return;
     field.measureLayout(form, (_x, fieldY, _w, height) => {
@@ -99,10 +99,13 @@ export default function LoginScreen() {
     });
   };
 
-  // Re-measured after every render: the banner and the field errors move the
-  // button while a field keeps focus. The state setters bail out when the
-  // numbers are unchanged, so this settles after one extra render.
-  useEffect(measureSubmitBelowField);
+  // Measured when a field gains focus, and again from the form's `onLayout`:
+  // the banner and the field errors move the button while a field keeps
+  // focus, and they do it by changing the form's height.
+  const onFieldFocus = (field: AuthField) => {
+    setFocusedField(field);
+    measureSubmitBelowField(field);
+  };
 
   // The button is only worth chasing while the focused field stays on screen:
   // on a short screen with every field showing an error, the whole run from
@@ -217,11 +220,15 @@ export default function LoginScreen() {
             };
 
             return (
-            <View ref={formRef} style={styles.formContent}>
+            <View
+              ref={formRef}
+              style={styles.formContent}
+              onLayout={() => measureSubmitBelowField()}
+            >
               <UiFormField errorMessage={errors.email}>
                 <UiInput
                   ref={emailInputRef}
-                  onFocus={() => setFocusedField('email')}
+                  onFocus={() => onFieldFocus('email')}
                   value={values.email}
                   onChange={onFieldChange('email')}
                   placeholder="Email"
@@ -243,7 +250,7 @@ export default function LoginScreen() {
                 <UiFormField errorMessage={errors.name}>
                   <UiInput
                     ref={nameInputRef}
-                    onFocus={() => setFocusedField('name')}
+                    onFocus={() => onFieldFocus('name')}
                     value={values.name}
                     onChange={onFieldChange('name')}
                     placeholder="Name"
@@ -261,7 +268,7 @@ export default function LoginScreen() {
               <UiFormField errorMessage={errors.password}>
                 <UiInput
                   ref={passwordInputRef}
-                  onFocus={() => setFocusedField('password')}
+                  onFocus={() => onFieldFocus('password')}
                   value={values.password}
                   onChange={onFieldChange('password')}
                   placeholder="Password"
@@ -288,7 +295,7 @@ export default function LoginScreen() {
                   <UiFormField errorMessage={errors.confirmPassword}>
                     <UiInput
                       ref={confirmPasswordInputRef}
-                      onFocus={() => setFocusedField('confirmPassword')}
+                      onFocus={() => onFieldFocus('confirmPassword')}
                       value={values.confirmPassword}
                       onChange={onFieldChange('confirmPassword')}
                       placeholder="Confirm password"
