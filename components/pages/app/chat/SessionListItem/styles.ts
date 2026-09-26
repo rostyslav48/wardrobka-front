@@ -34,6 +34,22 @@ export const styles = StyleSheet.create({
     letterSpacing: tracking.body,
     color: colors.textPrimary,
   },
+  // QA-35 web: the row plus a trailing Delete button that continues the
+  // row's hairline.
+  webRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  webRowBody: {
+    flex: 1,
+  },
+  webDeleteButton: {
+    justifyContent: 'center',
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.hair,
+    borderBottomWidth: border.hairline,
+    borderBottomColor: colors.hairline,
+  },
   body: {
     flex: 1,
     gap: spacing.micro,

@@ -12,7 +12,13 @@
 import { test, expect, Page } from '@playwright/test';
 import { createApiUser, loginThroughUi, openApp, WebUser } from './support/app';
 import { testIds } from './support/testIds';
-import { ImageStatus, ItemStatus, ItemType, Season, WardrobeItem } from '@/types/wardrobe';
+import {
+  ImageStatus,
+  ItemStatus,
+  ItemType,
+  Season,
+  WardrobeItem,
+} from '@/types/wardrobe';
 import { AssistantSessionDto } from '@/types/ai-assistant';
 
 let user: WebUser;
@@ -28,7 +34,10 @@ test.beforeEach(async ({ page }) => {
     .getByTestId(testIds.login.heading)
     .isVisible({ timeout: 45_000 })
     .catch(() => false);
-  test.skip(!booted, 'blocked by BUG-F01 — the web build crashes before login renders');
+  test.skip(
+    !booted,
+    'blocked by BUG-F01 — the web build crashes before login renders',
+  );
 });
 
 const ITEMS: WardrobeItem[] = [
@@ -104,10 +113,9 @@ test('BUG-iOS-02: register fields carry email / name / new-password autocomplete
     'autocomplete',
     'new-password',
   );
-  await expect(page.getByTestId(testIds.login.confirmPasswordInput)).toHaveAttribute(
-    'autocomplete',
-    'new-password',
-  );
+  await expect(
+    page.getByTestId(testIds.login.confirmPasswordInput),
+  ).toHaveAttribute('autocomplete', 'new-password');
 });
 
 // ─── QA-66: a failed login is handled, not re-thrown out of submitForm ───────
@@ -135,73 +143,81 @@ test('QA-66: a failed login shows the banner without Formik logging an unhandled
   // Let any async rejection surface before checking the log.
   await page.waitForTimeout(500);
   expect(
-    messages.filter((m) => /unhandled error was caught from submitForm/i.test(m)),
+    messages.filter((m) =>
+      /unhandled error was caught from submitForm/i.test(m),
+    ),
   ).toEqual([]);
+});
+
+// ─── QA-34: attachment-only messages ─────────────────────────────────────
+
+test('QA-34: Send is enabled with only an attachment, and sends an empty prompt with the item ids', async ({
+  page,
+}) => {
+  const sessionId = '00000000-0000-4000-8000-0000000000a1';
+  // Stubbed before login: WardrobeContext loads the items the picker offers
+  // once, when the signed-in app mounts.
+  await stubWardrobe(page, ITEMS);
+  await page.route('**/ai-assistant/sessions', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  let chatBody: Record<string, unknown> | null = null;
+  await page.route('**/ai-assistant/chat', async (route) => {
+    chatBody = route.request().postDataJSON();
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ sessionId, assistantMessageId: 'm2' }),
+    });
+  });
+  await page.route(`**/ai-assistant/sessions/${sessionId}/messages`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 'm1',
+          role: 'user',
+          content: 'Attached 1 item',
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'm2',
+          role: 'assistant',
+          content: 'What would you like to know about this jacket?',
+          createdAt: new Date().toISOString(),
+        },
+      ]),
+    }),
+  );
+
+  await loginThroughUi(page, user);
+  await page.getByTestId(testIds.tabs.chat).click();
+  await page.getByTestId(testIds.chat.newSessionButton).click();
+
+  const send = page.getByRole('button', { name: 'Send message' });
+  await expect(
+    send,
+    'no text and no attachment: nothing to send',
+  ).toBeDisabled();
+
+  await page.getByTestId(testIds.chat.attachButton).click();
+  await page.getByRole('button', { name: 'Blue Denim Jacket' }).click();
+  await page.getByTestId(testIds.chat.pickerConfirmButton).click();
+  await expect(page.getByTestId(testIds.modal.sheet)).not.toBeVisible();
+
+  await expect(send, 'one attached item and no text is sendable').toBeEnabled();
+  await send.click();
+
+  await expect(
+    page.getByText('What would you like to know about this jacket?'),
+  ).toBeVisible();
+  expect(chatBody).toEqual({ prompt: '', contextItemIds: [1] });
 });
 
 test.describe('signed in', () => {
   test.beforeEach(async ({ page }) => {
     await loginThroughUi(page, user);
-  });
-
-  // ─── QA-34: attachment-only messages ─────────────────────────────────────
-
-  test('QA-34: Send is enabled with only an attachment, and sends an empty prompt with the item ids', async ({
-    page,
-  }) => {
-    const sessionId = '00000000-0000-4000-8000-0000000000a1';
-    await stubWardrobe(page, ITEMS);
-    await page.route('**/ai-assistant/sessions', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
-    );
-    let chatBody: Record<string, unknown> | null = null;
-    await page.route('**/ai-assistant/chat', async (route) => {
-      chatBody = route.request().postDataJSON();
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({ sessionId, assistantMessageId: 'm2' }),
-      });
-    });
-    await page.route(`**/ai-assistant/sessions/${sessionId}/messages`, (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            id: 'm1',
-            role: 'user',
-            content: 'Attached 1 item',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'm2',
-            role: 'assistant',
-            content: 'What would you like to know about this jacket?',
-            createdAt: new Date().toISOString(),
-          },
-        ]),
-      }),
-    );
-
-    await page.getByTestId(testIds.tabs.chat).click();
-    await page.getByTestId(testIds.chat.newSessionButton).click();
-
-    const send = page.getByRole('button', { name: 'Send message' });
-    await expect(send, 'no text and no attachment: nothing to send').toBeDisabled();
-
-    await page.getByTestId(testIds.chat.attachButton).click();
-    await page.getByRole('button', { name: 'Blue Denim Jacket' }).click();
-    await page.getByTestId(testIds.chat.pickerConfirmButton).click();
-    await expect(page.getByTestId(testIds.modal.sheet)).not.toBeVisible();
-
-    await expect(send, 'one attached item and no text is sendable').toBeEnabled();
-    await send.click();
-
-    await expect(
-      page.getByText('What would you like to know about this jacket?'),
-    ).toBeVisible();
-    expect(chatBody).toEqual({ prompt: '', contextItemIds: [1] });
   });
 
   test('QA-34: whitespace-only text with no attachment still cannot be sent', async ({
@@ -211,10 +227,12 @@ test.describe('signed in', () => {
     await page.getByTestId(testIds.chat.newSessionButton).click();
 
     await page.getByPlaceholder('Message your stylist…').fill('   ');
-    await expect(page.getByRole('button', { name: 'Send message' })).toBeDisabled();
+    await expect(
+      page.getByRole('button', { name: 'Send message' }),
+    ).toBeDisabled();
   });
 
-  // ─── QA-35: swipe-to-delete on the sessions list ─────────────────────────
+  // ─── QA-35: delete (swipe on native) on the sessions list ─────────────────────────
 
   const SESSIONS: AssistantSessionDto[] = [
     {
@@ -244,7 +262,9 @@ test.describe('signed in', () => {
       await route.fulfill({
         status: deleteStatus,
         contentType: 'application/json',
-        body: JSON.stringify(deleteStatus === 200 ? { deleted: true } : { statusCode: 500 }),
+        body: JSON.stringify(
+          deleteStatus === 200 ? { deleted: true } : { statusCode: 500 },
+        ),
       });
     });
     await page.getByTestId(testIds.tabs.chat).click();
@@ -252,28 +272,24 @@ test.describe('signed in', () => {
     return deleted;
   }
 
-  // A left swipe on the row reveals its Delete action.
-  async function swipeOpen(page: Page, id: string) {
-    const row = page.getByTestId(testIds.chat.sessionRow(id));
-    const box = await row.boundingBox();
-    if (!box) throw new Error('expected a bounding box for the session row');
-    const y = box.y + box.height / 2;
-    await page.mouse.move(box.x + box.width - 20, y);
-    await page.mouse.down();
-    for (let step = 1; step <= 10; step++) {
-      await page.mouse.move(box.x + box.width - 20 - step * 20, y);
-    }
-    await page.mouse.up();
-    await expect(page.getByTestId(testIds.chat.sessionDelete(id))).toBeInViewport();
+  // On native a left swipe reveals the row's Delete action. The swipe is a
+  // react-native-gesture-handler pan that mouse events on web never open, so
+  // the web build shows Delete as a trailing button on each row; the swipe
+  // itself is checked in the iOS pass, not here.
+  async function revealDelete(page: Page, id: string) {
+    await expect(page.getByTestId(testIds.chat.sessionRow(id))).toBeVisible();
+    await expect(
+      page.getByTestId(testIds.chat.sessionDelete(id)),
+    ).toBeInViewport();
   }
 
-  test('QA-35: swipe, confirm, and the session is deleted and leaves the list', async ({
+  test('QA-35: Delete, confirm, and the session is deleted and leaves the list', async ({
     page,
   }) => {
     const [target, other] = SESSIONS;
     const deleted = await openSessions(page, 200);
 
-    await swipeOpen(page, target.id);
+    await revealDelete(page, target.id);
     let dialogMessage = '';
     page.once('dialog', (dialog) => {
       dialogMessage = dialog.message();
@@ -292,7 +308,7 @@ test.describe('signed in', () => {
     const [target] = SESSIONS;
     const deleted = await openSessions(page, 200);
 
-    await swipeOpen(page, target.id);
+    await revealDelete(page, target.id);
     page.once('dialog', (dialog) => void dialog.dismiss());
     await page.getByTestId(testIds.chat.sessionDelete(target.id)).click();
 
@@ -301,15 +317,19 @@ test.describe('signed in', () => {
     await expect(page.getByText(target.topic)).toBeVisible();
   });
 
-  test('QA-35: a failed delete keeps the row and shows the error banner', async ({ page }) => {
+  test('QA-35: a failed delete keeps the row and shows the error banner', async ({
+    page,
+  }) => {
     const [target] = SESSIONS;
     const deleted = await openSessions(page, 500);
 
-    await swipeOpen(page, target.id);
+    await revealDelete(page, target.id);
     page.once('dialog', (dialog) => void dialog.accept());
     await page.getByTestId(testIds.chat.sessionDelete(target.id)).click();
 
-    await expect(page.getByTestId(testIds.chat.deleteErrorBanner)).toBeVisible();
+    await expect(
+      page.getByTestId(testIds.chat.deleteErrorBanner),
+    ).toBeVisible();
     expect(deleted).toEqual([target.id]);
     await expect(page.getByText(target.topic)).toBeVisible();
   });
@@ -326,14 +346,14 @@ test.describe('signed in', () => {
     // The vertical scroller inside the Settings screen - react-native-web
     // renders a ScrollView as a div with `overflow-y: auto|scroll`.
     const geometry = await screen.evaluate((root) => {
-      const scroller = Array.from(root.querySelectorAll<HTMLElement>('div')).find((el) =>
-        /(auto|scroll)/.test(getComputedStyle(el).overflowY),
-      );
+      const scroller = Array.from(
+        root.querySelectorAll<HTMLElement>('div'),
+      ).find((el) => /(auto|scroll)/.test(getComputedStyle(el).overflowY));
       if (!scroller) return null;
       const scrollerBox = scroller.getBoundingClientRect();
-      const title = Array.from(root.querySelectorAll<HTMLElement>('div, span')).find(
-        (el) => el.textContent === 'Settings' && el.children.length === 0,
-      );
+      const title = Array.from(
+        root.querySelectorAll<HTMLElement>('div, span'),
+      ).find((el) => el.textContent === 'Settings' && el.children.length === 0);
       const titleBox = title?.getBoundingClientRect();
       return {
         viewportWidth: document.documentElement.clientWidth,
@@ -342,7 +362,8 @@ test.describe('signed in', () => {
         titleLeft: titleBox?.left ?? null,
       };
     });
-    if (!geometry) throw new Error('expected a vertical scroller on the Settings screen');
+    if (!geometry)
+      throw new Error('expected a vertical scroller on the Settings screen');
 
     // The scroller - and so its vertical indicator - runs edge to edge.
     expect(geometry.scrollerLeft).toBe(0);
@@ -354,7 +375,7 @@ test.describe('signed in', () => {
 
 // ─── QA-67: the Filters sheet on an iPhone SE-sized screen ───────────────────
 
-test('QA-67: at 375x667 the Filters footer stays on screen and the body scrolls inside the cap', async ({
+test('QA-67: at 375x667 the Filters footer stays on screen, and the body scrolls inside the cap when it overflows', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 667 });
@@ -388,21 +409,61 @@ test('QA-67: at 375x667 the Filters footer stays on screen and the body scrolls 
     );
   }
 
-  // The body is what scrolls: it is shorter than its content at this size, and
-  // scrolling it brings the last section (FAVOURITE) fully into the sheet.
+  // The body is the bounded part: its scroller ends inside the sheet, above
+  // the footer, whatever the content's height.
   const favourite = page.getByText('Show favourites only', { exact: true });
-  const scrolled = await favourite.evaluate((el) => {
+  const bodyScroller = async () =>
+    favourite.evaluate((el) => {
+      let node: HTMLElement | null = el as HTMLElement;
+      while (node && !/(auto|scroll)/.test(getComputedStyle(node).overflowY)) {
+        node = node.parentElement;
+      }
+      if (!node) return null;
+      const box = node.getBoundingClientRect();
+      return {
+        bottom: box.bottom,
+        overflows: node.scrollHeight > node.clientHeight + 1,
+      };
+    });
+  const applyBox = async () => {
+    const box = await page.getByText('Apply', { exact: true }).boundingBox();
+    if (!box) throw new Error('expected a bounding box for Apply');
+    return box;
+  };
+  const at667 = await bodyScroller();
+  if (!at667)
+    throw new Error('expected the Filters body to be a vertical scroller');
+  expect(at667.bottom).toBeLessThanOrEqual((await applyBox()).y);
+
+  // Web fonts are a little shorter than iOS's, so at 375x667 the Filters body
+  // just fits on web. A shorter window makes it overflow, which exercises the
+  // scroll-inside-the-cap path the SE hits on device: the footer stays on
+  // screen and scrolling the body brings the last section (FAVOURITE) in.
+  await page.setViewportSize({ width: 375, height: 480 });
+  await expect
+    .poll(async () => {
+      const box = await sheet.boundingBox();
+      return box ? Math.round(box.height) <= Math.round(480 * 0.88) + 1 : null;
+    })
+    .toBe(true);
+  const at480 = await bodyScroller();
+  expect(
+    at480?.overflows,
+    'the Filters body should overflow its bounded height at 375x480',
+  ).toBe(true);
+  const short = await applyBox();
+  expect(short.y + short.height, 'Apply bottom at 375x480').toBeLessThanOrEqual(
+    480,
+  );
+  await favourite.evaluate((el) => {
     let node: HTMLElement | null = el as HTMLElement;
     while (node && !/(auto|scroll)/.test(getComputedStyle(node).overflowY)) {
       node = node.parentElement;
     }
-    if (!node) return null;
-    const overflows = node.scrollHeight > node.clientHeight;
-    node.scrollTop = node.scrollHeight;
-    return overflows;
+    if (node) node.scrollTop = node.scrollHeight;
   });
-  expect(scrolled, 'the Filters body should overflow its bounded height at 375x667').toBe(true);
   await expect(favourite).toBeInViewport();
+  await page.setViewportSize({ width: 375, height: 667 });
 
   // Still a working sheet.
   await page.getByText('jacket', { exact: true }).click();
