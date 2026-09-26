@@ -107,8 +107,13 @@ test('re-picking the same unchanged photo does not trigger a second analysis cal
   page,
 }) => {
   let calls = 0;
+  // Hold the first response until the test has seen the spinner, so the
+  // transient indicator cannot come and go before Playwright looks.
+  let release!: () => void;
+  const released = new Promise<void>((resolve) => (release = resolve));
   await page.route('**/wardrobe/analyze-image', async (route) => {
     calls += 1;
+    await released;
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -118,6 +123,7 @@ test('re-picking the same unchanged photo does not trigger a second analysis cal
 
   await pickPhoto(page);
   await expect(page.getByTestId(testIds.item.photoAnalyzing)).toBeVisible();
+  release();
   await expect(page.getByTestId(testIds.item.photoAnalyzing)).toBeHidden({ timeout: 15_000 });
   expect(calls).toBe(1);
 
