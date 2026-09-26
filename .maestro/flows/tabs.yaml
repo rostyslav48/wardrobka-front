@@ -1,0 +1,29 @@
+# Smoke: every tab opens its screen. A new user has an empty wardrobe.
+appId: com.rostyslav48.wardrobka
+name: Tab navigation
+tags:
+  - smoke
+---
+- runFlow: ../subflows/register-new-user.yaml
+- tapOn:
+    id: tab-items
+- assertVisible:
+    id: items-screen
+- assertVisible:
+    id: items-empty-state
+- tapOn:
+    id: tab-chat
+- assertVisible:
+    id: chat-screen
+- tapOn:
+    id: tab-log
+- assertVisible:
+    id: log-screen
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: settings-screen
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-greeting

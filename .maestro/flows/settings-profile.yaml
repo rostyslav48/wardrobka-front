@@ -1,0 +1,22 @@
+# The profile name saved in Settings shows up in the Home greeting.
+appId: com.rostyslav48.wardrobka
+name: Edit profile name
+tags:
+  - settings
+---
+- runFlow: ../subflows/register-new-user.yaml
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-profile-name-input
+- eraseText: 40
+- inputText: Renamed Maestro
+- pressKey: Enter
+- tapOn:
+    id: settings-profile-save-button
+- tapOn:
+    id: tab-home
+- extendedWaitUntil:
+    visible: .*Renamed.*
+    timeout: 10000
+- takeScreenshot: settings-profile-home

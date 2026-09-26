@@ -1,0 +1,35 @@
+# Signs out by clearing the keychain (the auth token lives in expo-secure-store),
+# then registers a new user. Ends on the Home tab.
+# Not clearState: it would also wipe RCT_jsLocation, the app's pointer to Metro.
+appId: com.rostyslav48.wardrobka
+---
+- launchApp:
+    stopApp: true
+    clearKeychain: true
+- runScript: ../scripts/new-user.js
+- extendedWaitUntil:
+    visible:
+      id: login-heading
+    timeout: 30000
+- tapOn:
+    id: login-switch-mode-link
+- assertVisible: Create Account
+- tapOn:
+    id: login-email-input
+- inputText: ${output.user.email}
+- tapOn:
+    id: login-name-input
+- inputText: ${output.user.name}
+- tapOn:
+    id: login-password-input
+- inputText: ${output.user.password}
+- tapOn:
+    id: login-confirm-password-input
+- inputText: ${output.user.password}
+# Return on the last field submits the form (onSubmitEditing). Maestro's
+# hideKeyboard hangs on this screen.
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      id: home-greeting
+    timeout: 20000

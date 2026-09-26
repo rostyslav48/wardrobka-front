@@ -6,9 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/context/AuthContext';
-import { Alert, Platform } from 'react-native';
+import { Alert, LogBox, Platform } from 'react-native';
 import { ModalProvider } from '@/context/ModalContext';
 import { colors } from '@/theme/colors';
+
+// Maestro runs (EXPO_PUBLIC_E2E=1): dev-only LogBox toasts sit over the tab
+// bar, so a tap meant for a tab opens the debugger instead.
+if (process.env.EXPO_PUBLIC_E2E) LogBox.ignoreAllLogs();
 
 // The app ships one dark palette (theme/colors.ts) and has no light theme
 // (redesign-spec.md 7.2: "Light theme - does not exist and must not be
