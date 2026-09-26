@@ -122,7 +122,7 @@ export default function ItemsScreen() {
           />
         }
       >
-        {/* Spec 6.3: "Wardrobe" 28/400 Newsreader left, "N ITEMS" right. */}
+        {/* Spec 6.3: "Wardrobe" 28/400 left, "N ITEMS" right. */}
         <View style={styles.titleRow}>
           <UiTitle sizeL>Wardrobe</UiTitle>
           <UiTitle style={styles.itemCount}>

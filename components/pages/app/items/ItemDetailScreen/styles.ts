@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
   backButton: {
     marginRight: spacing['3xs'],
   },
-  // Sheet-title role (22/400 Newsreader) - `UiTitle`'s own default.
+  // Sheet-title role (22/400) - `UiTitle`'s own default.
   title: {
     flex: 1,
     textAlign: 'center',
