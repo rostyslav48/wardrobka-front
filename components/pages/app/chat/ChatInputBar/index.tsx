@@ -99,7 +99,9 @@ export default function ChatInputBar({
             placeholder="Message your stylist…"
             placeholderTextColor={colors.placeholder}
             multiline
-            editable={!isSending}
+            // QA-74: no `editable={!isSending}` here. Turning `editable` off
+            // drops focus, so every send closed the keyboard. `canSend`
+            // already blocks a second send while one is in flight.
             returnKeyType="send"
             onSubmitEditing={canSend ? onSend : undefined}
             // QA-29: for a multiline TextInput, RN only fires `onSubmitEditing`
