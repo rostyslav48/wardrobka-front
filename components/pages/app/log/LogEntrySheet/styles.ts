@@ -1,66 +1,98 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { pageInlineIntent } from '@/theme/layout';
+import { border, fontFamily, pageInlineIntent, radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec section 6.7's shared bottom-sheet shell, applied to the one sheet in
+ * this phase that stays a raw `Modal` rather than `UiPopup` (it needs a
+ * second sub-view, a reanimated slide-up and a `KeyboardAvoidingView` that
+ * `UiPopup` doesn't offer): scrim `colors.scrim`, sheet ground `colors.sheet`,
+ * `radius.sheet` on the top corners only, a 36 x 4 grabber, header padding
+ * 10/20/12/20 with a 30 x 30 circular close button, body padding 18/20/28/20
+ * with `spacing.sheetSection` between sections. The "Log entry" sub-pattern
+ * (6.7's third bullet) supplies the DATE/ITEMS/NOTES section vocabulary.
+ */
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.scrim,
   },
   sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.sheet,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
     maxHeight: '88%',
+  },
+  // Snap table 8.7: §3 maps both 1 and 2px radii to `radius.hair`, whose
+  // token carries 1 - so the grabber's authored r2 renders at 1px here.
+  grabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: radius.hair,
+    backgroundColor: colors.border,
+    marginTop: spacing.sm,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: pageInlineIntent,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   sheetTitle: {
-    fontSize: 17,
-    fontWeight: '600',
+    ...typography.sheetTitle,
+    letterSpacing: tracking.sheetTitle,
     color: colors.textPrimary,
   },
   sheetSubtitle: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.hair,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.round,
+    borderWidth: border.hairline,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   formContent: {
     paddingHorizontal: pageInlineIntent,
-    paddingBottom: 12,
-    gap: 20,
+    paddingBottom: spacing.lg,
+    gap: spacing.sheetSection,
   },
 
   section: {
-    gap: 8,
+    gap: spacing.sm,
   },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  // Spec 4.3's section-eyebrow role names "DATE" among the strings it covers.
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
+  // Spec 4.3: "actionable eyebrow - 'CLEAR ALL', 'CHANGE'" (10/600 ls 1.4 `brand`).
   changeLink: {
-    fontSize: 14,
-    color: colors.accent,
-    fontWeight: '500',
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
+    color: colors.brand,
+    textTransform: 'uppercase',
   },
 
   iosPicker: {
@@ -70,104 +102,117 @@ export const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderRadius: radius.control,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.cardPad,
   },
+  // Spec 4.3: "settings row label, log-sheet date value" role, verbatim.
   dateButtonText: {
-    fontSize: 15,
+    ...typography.rowLabel,
+    letterSpacing: tracking.rowLabel,
     color: colors.textPrimary,
   },
 
   loadingText: {
-    fontSize: 14,
+    ...typography.rowLabel,
+    letterSpacing: tracking.rowLabel,
     color: colors.textSecondary,
   },
   selectedRow: {
-    gap: 8,
-    paddingVertical: 4,
+    gap: spacing.sm,
+    paddingVertical: spacing['3xs'],
   },
   selectedThumb: {
     width: 60,
     alignItems: 'center',
-    gap: 4,
+    gap: spacing['3xs'],
   },
   selectedThumbImage: {
     width: 60,
     height: 90,
-    borderRadius: 8,
+    borderRadius: radius.tile,
   },
   selectedThumbPlaceholder: {
     width: 60,
     height: 90,
-    borderRadius: 8,
+    borderRadius: radius.tile,
     backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectedThumbName: {
-    fontSize: 10,
+    ...typography.meta,
     color: colors.textSecondary,
     textAlign: 'center',
     width: 60,
   },
+  // Spec 6.7: the one dashed control in the design - 88 tall, `radius.control`,
+  // 1px dashed `hairlineDashed`, a 16px plus centred. Re-derived here for the
+  // "no items yet" state; the log-entry grid's own dashed "add another" cell
+  // is `ItemPickerSheet`'s, out of this component's scope.
   emptyItemsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingVertical: spacing.cardPad,
+    paddingHorizontal: spacing.cardPad,
+    borderWidth: border.hairline,
+    borderColor: colors.hairlineDashed,
     borderStyle: 'dashed',
   },
   emptyItemsText: {
-    fontSize: 14,
+    ...typography.rowLabel,
+    letterSpacing: tracking.rowLabel,
     color: colors.textSecondary,
   },
 
+  // Spec 4.3's "log-entry notes textarea" role: 16/400, native family - left
+  // untokenised, the one text role the mockup keeps on the system font.
   notesInput: {
     backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    fontSize: 15,
+    borderRadius: radius.control,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.cardPad,
+    fontFamily: fontFamily.body,
+    fontSize: 16,
     color: colors.textPrimary,
     minHeight: 80,
   },
 
   errorText: {
-    fontSize: 13,
+    ...typography.overflowChip,
     color: colors.error,
     textAlign: 'center',
   },
 
+  // Snap table 8.2: the pre-existing 12px radius here maps to `radius.tileLg`,
+  // not `radius.control` - the sweep found no separate 12px button role.
   saveButton: {
     backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: radius.tileLg,
+    paddingVertical: spacing.cardPad,
     alignItems: 'center',
   },
   saveButtonDisabled: {
+    // Not a design value - snap table 8.6.
     opacity: 0.5,
   },
   saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
+    letterSpacing: tracking.button,
     color: colors.accentText,
   },
 
   deleteButton: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.lg,
   },
   deleteButtonText: {
-    fontSize: 15,
+    ...typography.valueEmphasis,
     color: colors.error,
-    fontWeight: '500',
   },
 });

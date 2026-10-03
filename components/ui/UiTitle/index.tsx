@@ -9,9 +9,10 @@ type Props = PropsWithChildren<{
   sizeL?: boolean;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  testID?: string;
 }>;
 
-export default function UiTitle({ children, sizeXS, sizeS, sizeM, sizeL, style, numberOfLines }: Props) {
+export default function UiTitle({ children, sizeXS, sizeS, sizeM, sizeL, style, numberOfLines, testID }: Props) {
   const sizeStyle =
     sizeXS ? styles.sizeXS :
     sizeS  ? styles.sizeS  :
@@ -20,7 +21,7 @@ export default function UiTitle({ children, sizeXS, sizeS, sizeM, sizeL, style, 
     styles.sizeDefault;
 
   return (
-    <Text style={[styles.base, sizeStyle, style]} numberOfLines={numberOfLines}>
+    <Text style={[styles.base, sizeStyle, style]} numberOfLines={numberOfLines} testID={testID}>
       {children}
     </Text>
   );

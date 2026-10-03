@@ -1,17 +1,19 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { border, radius, spacing, tracking, typography } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   container: {
-    padding: 15,
+    padding: spacing.rowY,
     width: '100%',
     backgroundColor: colors.errorBackground,
     borderColor: colors.error,
-    borderWidth: 1,
-    borderRadius: 15,
+    borderWidth: border.hairline,
+    borderRadius: radius.card,
   },
   errorText: {
+    ...typography.valueEmphasis,
+    letterSpacing: tracking.valueEmphasis,
     color: colors.error,
-    fontWeight: '500',
   },
 });

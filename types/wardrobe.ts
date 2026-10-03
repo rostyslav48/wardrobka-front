@@ -43,6 +43,25 @@ export enum Season {
   Autumn = 'autumn',
 }
 
+/**
+ * Generation state of the item's product image. Unrelated to `ItemStatus` —
+ * an item can be `active` and still have a `pending` image.
+ */
+export enum ImageStatus {
+  Pending = 'pending',
+  Ready = 'ready',
+  Failed = 'failed',
+}
+
+/**
+ * Error code the retry endpoint answers with when the original photo it would
+ * re-run from is no longer in storage. Mirrors
+ * `IMAGE_ORIGINAL_EXPIRED_CODE` in the backend's
+ * `apps/wardrobe/src/constants/image-generation.ts` — keyed on rather than the
+ * message text, which is free to change.
+ */
+export const IMAGE_ORIGINAL_EXPIRED_CODE = 'IMAGE_ORIGINAL_EXPIRED';
+
 export enum Size {
   S = 's',
   M = 'm',
@@ -67,6 +86,7 @@ export interface WardrobeItem {
   style?: string;
   size?: Size;
   brand?: string;
+  image_status?: ImageStatus;
 }
 
 export interface WardrobeFilters {

@@ -1,0 +1,10 @@
+# Smoke: a new user can register and lands on Home.
+appId: com.rostyslav48.wardrobka
+name: Register a new user
+tags:
+  - smoke
+---
+- runFlow: ../subflows/register-new-user.yaml
+- assertVisible:
+    id: home-greeting-subtitle
+- takeScreenshot: register-home

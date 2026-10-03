@@ -1,20 +1,21 @@
 {
   "expo": {
-    "name": "wardrobe-assistant-front",
+    "name": "Wardropka",
     "slug": "wardrobe-assistant-front",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "wardrobeassistantfront",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rostyslav48.wardrobka"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#111111"
       },
       "edgeToEdgeEnabled": true
     },
@@ -31,11 +32,37 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#111111"
         }
       ],
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-font",
+        {
+          "ios": {
+            "fonts": [
+              "./public/fonts/Archivo-Regular.ttf",
+              "./public/fonts/Archivo-Medium.ttf",
+              "./public/fonts/Archivo-SemiBold.ttf",
+              "./public/fonts/Archivo-Bold.ttf"
+            ]
+          },
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Archivo",
+                "fontDefinitions": [
+                  { "path": "./public/fonts/Archivo-Regular.ttf", "weight": 400 },
+                  { "path": "./public/fonts/Archivo-Medium.ttf", "weight": 500 },
+                  { "path": "./public/fonts/Archivo-SemiBold.ttf", "weight": 600 },
+                  { "path": "./public/fonts/Archivo-Bold.ttf", "weight": 700 }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

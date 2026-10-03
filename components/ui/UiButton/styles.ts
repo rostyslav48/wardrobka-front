@@ -1,17 +1,21 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { border, radius, spacing } from '@/theme/layout';
 
 export const styles = StyleSheet.create({
   button: {
     width: '100%',
-    padding: 15,
-    borderRadius: 8,
+    padding: spacing.rowY,
+    borderRadius: radius.control,
     alignItems: 'center',
     backgroundColor: colors.accent,
   },
   button__secondary: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: border.hairline,
     borderColor: colors.border,
+  },
+  button__disabled: {
+    opacity: 0.5,
   },
 });

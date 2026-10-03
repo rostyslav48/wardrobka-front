@@ -1,4 +1,12 @@
 import { StyleSheet } from 'react-native';
+import { colors } from '@/theme/colors';
+import { radius, spacing } from '@/theme/layout';
+
+const GRABBER_HEIGHT = 4;
+const GRABBER_MARGIN_TOP = spacing.sm;
+
+/** The grabber's share of the sheet's height, above the sheet's content. */
+export const GRABBER_BLOCK_HEIGHT = GRABBER_HEIGHT + GRABBER_MARGIN_TOP;
 
 export const styles = StyleSheet.create({
   keyboardAvoidingView: {
@@ -9,13 +17,25 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  scrollView: {
-    overflow: 'visible',
-    maxHeight: '100%',
+  // Same shell `LogEntrySheet` draws by hand (`colors.sheet`, `radius.sheet`
+  // on the top corners, a 36x4 grabber) - this is the generic version every
+  // `useModal()` consumer gets. `maxHeight` is deliberately absent here -
+  // QA-63 found `'88%'` resolves against this sheet's own indefinite-height
+  // wrapper, not the screen, so it's applied inline in `ModalContext.tsx` as
+  // a concrete pixel value instead.
+  sheet: {
+    backgroundColor: colors.sheet,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    overflow: 'hidden',
   },
-  scrollViewContent: {
-    flexGrow: 1,
-    justifyContent: 'flex-end',
+  grabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: GRABBER_HEIGHT,
+    borderRadius: radius.hair,
+    backgroundColor: colors.border,
+    marginTop: GRABBER_MARGIN_TOP,
   },
 });
 

@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useModal } from '@/context/ModalContext';
@@ -9,19 +9,32 @@ import { colors } from '@/theme/colors';
 type Props = PropsWithChildren<{
   fullScreen?: boolean;
   title?: string;
+  /**
+   * Pinned below the scrolling body, e.g. a sheet's Apply / Clear all row -
+   * it stays on screen however tall the body is (QA-67).
+   */
+  footer?: ReactNode;
 }>;
 
-export default function UiPopup({ children, fullScreen = true, title }: Props) {
+export default function UiPopup({ children, fullScreen = true, title, footer }: Props) {
   const insets = useSafeAreaInsets();
 
-  const { hide } = useModal();
+  const { hide, contentMaxHeight } = useModal();
 
   return (
     <View
       style={[
         styles.content,
-        fullScreen && styles.content__fullScreen,
-        { paddingBottom: insets.bottom, marginTop: insets.top },
+        { paddingBottom: insets.bottom },
+        // QA-68: the top inset is for a popup that covers the whole screen,
+        // status bar included. Inside the bottom sheet it only opened an empty
+        // band under the grabber.
+        fullScreen
+          ? [styles.content__fullScreen, { marginTop: insets.top }]
+          : // QA-67: bounded by the sheet's cap right here, one level above the
+            // `ScrollView`, so the body scrolls inside the cap and the footer
+            // stays visible.
+            [styles.content__sheet, { maxHeight: contentMaxHeight }],
       ]}
     >
       <View style={styles.top_bar}>
@@ -31,13 +44,15 @@ export default function UiPopup({ children, fullScreen = true, title }: Props) {
         </Pressable>
       </View>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        style={fullScreen ? styles.scroll__fullScreen : styles.scroll__sheet}
+        contentContainerStyle={[styles.scrollContent, fullScreen && styles.scrollContent__fullScreen]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
         {children}
       </ScrollView>
+      {footer ? <View style={styles.footer}>{footer}</View> : null}
     </View>
   );
 }

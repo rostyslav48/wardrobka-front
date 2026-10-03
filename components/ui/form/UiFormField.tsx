@@ -1,5 +1,6 @@
 import { Text, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/colors';
+import { spacing, tracking, typography } from '@/theme/layout';
 import { ReactNode } from 'react';
 
 interface Props {
@@ -21,9 +22,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   errorText: {
-    marginTop: 5,
-    marginLeft: 15,
+    ...typography.valueEmphasis,
+    letterSpacing: tracking.valueEmphasis,
+    marginTop: spacing['2xs'],
+    marginLeft: spacing.rowY,
     color: colors.error,
-    fontWeight: '500',
   },
 });

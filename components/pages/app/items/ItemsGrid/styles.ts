@@ -1,45 +1,16 @@
 import { StyleSheet } from 'react-native';
-import { pageInlineIntent } from '@/theme/layout';
-import { colors } from '@/theme/colors';
+import { spacing } from '@/theme/layout';
 
-export const GRID_GAP = 12;
-
+/** Spec section 6.3: item grid, margin-top 16 (`ItemsScreen` owns that), `gap 12`. */
 export const styles = StyleSheet.create({
-  list: {
-    flex: 1,
+  grid: {
+    gap: spacing.lg,
   },
-  columnWrapper: {
-    gap: GRID_GAP,
-    paddingHorizontal: pageInlineIntent,
-  },
-  contentContainer: {
-    gap: GRID_GAP,
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    gap: 16,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  skeletonRow: {
+  row: {
     flexDirection: 'row',
-    gap: GRID_GAP,
-    paddingHorizontal: pageInlineIntent,
+    gap: spacing.lg,
   },
-  skeletonContainer: {
-    gap: GRID_GAP,
-    paddingBottom: 100,
+  cell: {
+    flex: 1,
   },
 });

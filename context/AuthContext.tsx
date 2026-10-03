@@ -36,6 +36,8 @@ interface AuthProps {
   ) => Observable<UserData>;
   onLogin: (email: string, password: string) => Observable<UserData>;
   onLogout: () => Observable<void>;
+  /** Merges a profile change (e.g. a settings rename) into the cached user data. */
+  updateUserData: (patch: Partial<Pick<UserData, 'name'>>) => void;
 }
 
 const AuthContext = createContext<AuthProps | null>(null);
@@ -104,6 +106,18 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       }),
     );
 
+  // QA-02: SettingsScreen.handleSave only updated its own local `profile`
+  // state, leaving AuthContext.userData (Home's greeting, the notification
+  // reminder) stale after a rename until the next login.
+  const updateUserData = (patch: Partial<Pick<UserData, 'name'>>) => {
+    setUserData((current) => {
+      if (!current) return current;
+      const next = { ...current, ...patch };
+      void Storage.setItemAsync(USER_DATA_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const logout = (): Observable<void> => {
     setToken(null);
     setUserData(null);
@@ -122,6 +136,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         onRegister: register,
         onLogin: login,
         onLogout: logout,
+        updateUserData,
       }}
     >
       {children}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, Switch, Text, View } from 'react-native';
 import DateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from '@react-native-community/datetimepicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCalendar } from '@/context/CalendarContext';
 import { notificationsService } from '@/services/notifications.service';
 import {
   DEFAULT_NOTIFICATION_PREFS,
@@ -29,6 +30,7 @@ function timeToDate(time: string): Date {
 
 export default function NotificationsSection({ onNotify }: Props) {
   const { userData } = useAuth();
+  const { status: calendarStatus } = useCalendar();
 
   const [prefs, setPrefs] = useState<NotificationPrefs>(
     DEFAULT_NOTIFICATION_PREFS,
@@ -60,9 +62,13 @@ export default function NotificationsSection({ onNotify }: Props) {
     async (next: NotificationPrefs) => {
       setPrefs(next);
       await notificationsService.savePrefs(next);
-      await notificationsService.applyPrefs(next, userData?.name);
+      await notificationsService.applyPrefs(
+        next,
+        userData?.name,
+        calendarStatus === 'active',
+      );
     },
-    [userData?.name],
+    [userData?.name, calendarStatus],
   );
 
   const handleToggle = useCallback(
@@ -93,10 +99,16 @@ export default function NotificationsSection({ onNotify }: Props) {
     [prefs, persist, onNotify],
   );
 
+  const handleIncludeOccasionsToggle = useCallback(
+    async (includeOccasions: boolean) => {
+      await persist({ ...prefs, includeOccasions });
+    },
+    [prefs, persist],
+  );
+
   const handleTimeChange = useCallback(
-    (event: DateTimePickerEvent, date?: Date) => {
+    (_event: DateTimePickerChangeEvent, date: Date) => {
       if (Platform.OS === 'android') setIsPickerOpen(false);
-      if (event.type === 'dismissed' || !date) return;
 
       void persist({
         ...prefs,
@@ -106,11 +118,25 @@ export default function NotificationsSection({ onNotify }: Props) {
     [prefs, persist],
   );
 
-  if (!isReady) return null;
+  // QA-55: this used to `return null` while `loadPrefs`/`hasPermission`
+  // resolved, so the section popped into existence (and pushed Calendar/Sign
+  // out down) once ready. Reserving the two always-present rows' height keeps
+  // the page's layout stable across that load - the Time row below is real,
+  // state-dependent content (only ever shown once `prefs.enabled` is known),
+  // not a loading artifact, so it isn't part of this placeholder.
+  if (!isReady) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
+        <View style={styles.rowSkeleton} />
+        <View style={styles.rowSkeleton} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Notifications</Text>
+      <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
 
       <View style={styles.row}>
         <View style={styles.rowLabel}>
@@ -120,9 +146,32 @@ export default function NotificationsSection({ onNotify }: Props) {
           </Text>
         </View>
         <Switch
+          testID="settings-notifications-daily-switch"
           value={prefs.enabled}
           onValueChange={handleToggle}
-          trackColor={{ false: colors.border, true: colors.statusActive }}
+          trackColor={{ false: colors.border, true: colors.brand }}
+          thumbColor={colors.textPrimary}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.rowLabel}>
+          <Text style={styles.label}>
+            Mention calendar events in the reminder
+          </Text>
+          <Text style={styles.hint}>
+            Turn off to keep event titles off your lock screen
+          </Text>
+        </View>
+        <Switch
+          testID="settings-notifications-include-occasions-switch"
+          // QA-10: an ON-and-disabled switch read as active even while the
+          // parent reminder was off; show it off (not just dimmed) whenever
+          // there is no reminder for it to gate, instead of the stored value.
+          value={prefs.enabled && prefs.includeOccasions}
+          onValueChange={handleIncludeOccasionsToggle}
+          disabled={!prefs.enabled}
+          trackColor={{ false: colors.border, true: colors.brand }}
           thumbColor={colors.textPrimary}
         />
       </View>
@@ -136,8 +185,11 @@ export default function NotificationsSection({ onNotify }: Props) {
               mode="time"
               display="compact"
               value={timeToDate(prefs.time)}
-              onChange={handleTimeChange}
+              onValueChange={handleTimeChange}
               themeVariant="dark"
+              // QA-13: without this the selected time uses iOS's system blue
+              // instead of the app's brand accent.
+              accentColor={colors.brand}
             />
           ) : (
             <Pressable onPress={() => setIsPickerOpen(true)} hitSlop={8}>
@@ -152,7 +204,8 @@ export default function NotificationsSection({ onNotify }: Props) {
           mode="time"
           display="default"
           value={timeToDate(prefs.time)}
-          onChange={handleTimeChange}
+          onValueChange={handleTimeChange}
+          onDismiss={() => setIsPickerOpen(false)}
         />
       )}
 

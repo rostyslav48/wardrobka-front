@@ -1,29 +1,260 @@
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-import { PropsWithChildren } from 'react';
+import {
+  ForwardedRef,
+  forwardRef,
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+  useImperativeHandle,
+  useRef,
+} from 'react';
+import {
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  RefreshControlProps,
+  StyleProp,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import { styles } from './styles';
+import { spacing } from '@/theme/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KEYBOARD_TOOLBAR_HEIGHT } from '@/components/ui/UiKeyboardToolbar';
+import { INPUT_HEIGHT_BELOW_CARET } from '@/components/ui/form/UiInput';
 
 type Props = PropsWithChildren<{
-  indented?: boolean;
+  /**
+   * Extra top padding above the safe-area inset. Defaults to the scroll
+   * region's measured top padding in spec section 6.1.
+   */
+  topInset?: number;
+  /** Passed straight through to the underlying scroll view. */
+  refreshControl?: ReactElement<RefreshControlProps>;
+  /**
+   * Clear the bottom tab bar. Off by default because `useBottomTabBarHeight()`
+   * throws outside a bottom-tab navigator.
+   */
+  tabBarInset?: boolean;
+  /** Applied to the scroll content container, after the defaults. */
+  contentStyle?: StyleProp<ViewStyle>;
+  /**
+   * Rendered above the scroll view, inside the same top-padded frame, so it
+   * stays fixed while the body scrolls. For the back-button + title bar a
+   * pushed route (e.g. the item form) needs; tab-root screens have none.
+   */
+  header?: ReactNode;
+  /**
+   * Fires once when the scroll position gets within `onEndReachedThreshold`
+   * (a fraction of the viewport height, default 0.3) of the bottom, and is
+   * also re-checked whenever the content's own intrinsic height changes, so
+   * a page that doesn't overflow the viewport still triggers - the same
+   * shape and semantics as `FlatList`'s own prop, for a screen that
+   * paginates but can't use a `FlatList` because it lives inside this scroll
+   * view (nesting one virtualized list inside another is invalid RN).
+   */
+  onEndReached?: () => void;
+  onEndReachedThreshold?: number;
+  /**
+   * QA-64/QA-06: set on form screens. The page scrolls with the keyboard
+   * (react-native-keyboard-controller's `KeyboardAwareScrollView`), keeping the
+   * focused field this many points above the keyboard, and adds the keyboard's
+   * height to the scrollable range so every field and the submit button below
+   * it stay reachable. Leave unset on screens without text inputs.
+   * Such a page is expected to mount `UiKeyboardToolbar` (QA-06); the
+   * toolbar's height is added on top of this offset and of the scroll range.
+   * So is the part of a `UiInput` the library does not count as the field
+   * (QA-72, see `INPUT_HEIGHT_BELOW_CARET`), so this offset is the gap
+   * between the whole field and the toolbar.
+   */
+  keyboardBottomOffset?: number;
 }>;
 
-export default function UiPage({ children, indented = true }: Props) {
+/** Imperative handle for screens that need to reset scroll position, e.g. on
+ * tab focus (QA-11: tab screens stay mounted, so a screen left mid-scroll
+ * shows that same offset - with the scrollable title gone - on return). */
+export interface UiPageHandle {
+  scrollToTop: () => void;
+}
+
+type ScrollProps = Omit<Props, 'tabBarInset'> & {
+  bottomInset: number;
+  innerRef: ForwardedRef<UiPageHandle>;
+};
+
+function PageScrollView({
+  children,
+  topInset = spacing.statusBar,
+  refreshControl,
+  contentStyle,
+  bottomInset,
+  header,
+  onEndReached,
+  onEndReachedThreshold = 0.3,
+  keyboardBottomOffset,
+  innerRef,
+}: ScrollProps) {
   const insets = useSafeAreaInsets();
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const keyboardScrollRef = useRef<KeyboardAwareScrollViewRef>(null);
+
+  useImperativeHandle(innerRef, () => ({
+    scrollToTop: () =>
+      (keyboardScrollRef.current ?? scrollRef.current)?.scrollTo({
+        y: 0,
+        animated: false,
+      }),
+  }));
+  const hasFiredRef = useRef(false);
+  // Mirrors FlatList's own onEndReached, which also fires on content-size
+  // change (not only on scroll) - a page of results short enough not to
+  // overflow the viewport would otherwise never trigger the next page.
+  const layoutHeightRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const scrollYRef = useRef(0);
+
+  const checkEndReached = () => {
+    if (!onEndReached) return;
+    const distanceFromEnd =
+      contentHeightRef.current - layoutHeightRef.current - scrollYRef.current;
+    const nearEnd = distanceFromEnd <= layoutHeightRef.current * onEndReachedThreshold;
+
+    if (nearEnd && !hasFiredRef.current) {
+      hasFiredRef.current = true;
+      onEndReached();
+    } else if (!nearEnd) {
+      hasFiredRef.current = false;
+    }
+  };
+
+  const handleScroll = onEndReached
+    ? (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+        scrollYRef.current = contentOffset.y;
+        contentHeightRef.current = contentSize.height;
+        layoutHeightRef.current = layoutMeasurement.height;
+        checkEndReached();
+      }
+    : undefined;
+
+  const handleLayout = onEndReached
+    ? (event: LayoutChangeEvent) => {
+        layoutHeightRef.current = event.nativeEvent.layout.height;
+        checkEndReached();
+      }
+    : undefined;
+
+  // The scroll view's own `contentSize` (what `onScroll`/`onContentSizeChange`
+  // report) is the flexGrow:1 content container's *rendered* height, which is
+  // stretched to fill the viewport whenever real content is shorter than it -
+  // see `styles.ts`'s note on why `content` uses flexGrow. That means it can
+  // never be measured as "shorter than the viewport", which defeats this
+  // check for exactly the case it exists for. This inner wrapper has no
+  // flexGrow, so its `onLayout` reports children's true intrinsic height -
+  // content/layout changes are rare, unlike scroll, so each one re-evaluates
+  // fresh rather than the scroll path's "fired once, wait for nearEnd to
+  // clear" coalescing.
+  const handleInnerLayout = onEndReached
+    ? (event: LayoutChangeEvent) => {
+        contentHeightRef.current = event.nativeEvent.layout.height;
+        hasFiredRef.current = false;
+        checkEndReached();
+      }
+    : undefined;
+
+  // QA-69: the horizontal page padding lives on the scroll *content*, not on
+  // a wrapper around the scroll view - on the wrapper it pulled the scroll
+  // view (and so its vertical indicator) ~20px in from the screen edge. The
+  // content keeps the same inset either way. It is still not on the scroll
+  // view's own `style`: react-native-web clones a `refreshControl` with
+  // `style: props.style` and keeps it on the scroll view too, so anything put
+  // there is applied twice on web.
+  const scrollProps = {
+    style: styles.scroll,
+    contentContainerStyle: [
+      styles.content,
+      { paddingBottom: insets.bottom + bottomInset },
+      contentStyle,
+    ],
+    refreshControl,
+    onScroll: handleScroll,
+    scrollEventThrottle: handleScroll ? 100 : undefined,
+    onLayout: handleLayout,
+    keyboardDismissMode: 'on-drag' as const,
+    // Not React Native's 'never' default, under which a child does not
+    // receive the tap that dismisses the keyboard. Every screen built on
+    // UiPage puts its inputs and buttons in this scroll view, so the first
+    // tap on a send button would otherwise be swallowed on iOS/Android.
+    keyboardShouldPersistTaps: 'handled' as const,
+  };
+
+  // The inner-height wrapper only mounts for onEndReached callers - it would
+  // otherwise sit between the flexGrow content container and its direct
+  // children for every screen, breaking any `contentStyle` that uses `gap`
+  // between multiple children (ItemDetailScreen and NewItemScreen's `form`
+  // style both do).
+  const body = onEndReached ? (
+    <View onLayout={handleInnerLayout}>{children}</View>
+  ) : (
+    children
+  );
 
   return (
-    <Animated.ScrollView
-      ref={scrollRef}
-      style={[
-        styles.container,
-        indented && styles.container__indented,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-      contentContainerStyle={styles.content}
-      keyboardDismissMode="on-drag"
-    >
-      {children}
-    </Animated.ScrollView>
+    // The top offset stays outside the scroller - it must not scroll away
+    // under the content. The bottom inset belongs to the content, so it
+    // scrolls in.
+    <View style={[styles.container, { paddingTop: insets.top + topInset }]}>
+      {header ? <View style={styles.header}>{header}</View> : null}
+      {keyboardBottomOffset !== undefined ? (
+        <KeyboardAwareScrollView
+          ref={keyboardScrollRef}
+          bottomOffset={
+            keyboardBottomOffset + KEYBOARD_TOOLBAR_HEIGHT + INPUT_HEIGHT_BELOW_CARET
+          }
+          extraKeyboardSpace={KEYBOARD_TOOLBAR_HEIGHT}
+          {...scrollProps}
+          // QA-71: with 'on-drag' a drag to reach the submit button under the
+          // keyboard dismissed the keyboard instead of scrolling. On iOS
+          // 'interactive' scrolls the form and only takes the keyboard down
+          // when the finger drags into it. Taps outside a field still dismiss
+          // it (QA-06): that comes from `keyboardShouldPersistTaps`, not from
+          // this mode.
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        >
+          {body}
+        </KeyboardAwareScrollView>
+      ) : (
+        <Animated.ScrollView ref={scrollRef} {...scrollProps}>
+          {body}
+        </Animated.ScrollView>
+      )}
+    </View>
   );
 }
+
+// Hooks cannot be called conditionally, and `useBottomTabBarHeight()` throws
+// outside a bottom-tab navigator - so it lives in its own component that is
+// only ever mounted when `tabBarInset` is set.
+function TabBarInsetPage(props: Omit<ScrollProps, 'bottomInset'>) {
+  return <PageScrollView {...props} bottomInset={useBottomTabBarHeight()} />;
+}
+
+function UiPage(
+  { tabBarInset = false, ...rest }: Props,
+  ref: ForwardedRef<UiPageHandle>,
+) {
+  return tabBarInset ? (
+    <TabBarInsetPage {...rest} innerRef={ref} />
+  ) : (
+    <PageScrollView {...rest} bottomInset={0} innerRef={ref} />
+  );
+}
+
+export default forwardRef(UiPage);

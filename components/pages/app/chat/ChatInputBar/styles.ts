@@ -1,15 +1,22 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { pageInlineIntent } from '@/theme/layout';
+import { border, fontFamily, pageInlineIntent, radius, spacing, typography } from '@/theme/layout';
 
+/**
+ * Spec 7.2: compose with the Home ask-input verbatim (`QuickChatInput`'s own
+ * `r10` 51px field + 48px `r24` accent send button); the context-picker
+ * button and selected-item chip row are this screen's own addition, not in
+ * the mockup, so they borrow the same chip vocabulary `ChatInputBar` already
+ * used pre-redesign.
+ */
 export const styles = StyleSheet.create({
   wrapper: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: border.hairline,
+    borderTopColor: colors.hairline,
     backgroundColor: colors.background,
-    paddingTop: 10,
+    paddingTop: spacing.md,
     paddingHorizontal: pageInlineIntent,
-    gap: 8,
+    gap: spacing.sm,
   },
 
   // Context chips
@@ -17,21 +24,20 @@ export const styles = StyleSheet.create({
     flexGrow: 0,
   },
   chipsContent: {
-    gap: 8,
+    gap: spacing.sm,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing['2xs'],
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing['2xs'],
     maxWidth: 160,
   },
   chipLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...typography.chipLabel,
     color: colors.textPrimary,
     flexShrink: 1,
   },
@@ -40,36 +46,41 @@ export const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: spacing.sm,
   },
   iconButton: {
     width: 36,
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: spacing.hair,
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.control,
+    borderWidth: border.hairline,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.cardPad,
+    paddingVertical: spacing.md,
+    minHeight: 51,
+    maxHeight: 120,
+    justifyContent: 'center',
   },
   input: {
-    flex: 1,
-    minHeight: 36,
-    maxHeight: 120,
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 8,
-    fontSize: 15,
+    // Size only: a `lineHeight` on a multiline `TextInput` clips descenders.
+    fontFamily: fontFamily.body,
+    fontSize: typography.rowLabel.fontSize,
     color: colors.textPrimary,
-    lineHeight: 20,
+    padding: 0,
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: radius.round,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 0,
   },
   sendButtonActive: {
     backgroundColor: colors.accent,

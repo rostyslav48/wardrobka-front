@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 import React from 'react';
 import { Platform } from 'react-native';
 
@@ -17,6 +17,12 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
+        // QA-06: `tabBarStyle: { position: 'absolute' }` (below) means the
+        // tab bar never responds to keyboard height on its own, so an open
+        // keyboard slides up over it - a tap meant for a tab lands on the
+        // keyboard instead. Hiding the bar while the keyboard is shown is
+        // the vendored bottom-tabs' own built-in fix for exactly this.
+        tabBarHideOnKeyboard: true,
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
@@ -29,6 +35,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarButtonTestID: 'tab-home',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="home" color={color} />
           ),
@@ -38,6 +45,7 @@ export default function TabLayout() {
         name="items"
         options={{
           title: 'Items',
+          tabBarButtonTestID: 'tab-items',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="tshirt.fill" color={color} />
           ),
@@ -47,6 +55,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: 'Chat',
+          tabBarButtonTestID: 'tab-chat',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="bubble.left.and.bubble.right.fill" color={color} />
           ),
@@ -56,6 +65,7 @@ export default function TabLayout() {
         name="log"
         options={{
           title: 'Log',
+          tabBarButtonTestID: 'tab-log',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="calendar-today" color={color} />
           ),
@@ -65,6 +75,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          tabBarButtonTestID: 'tab-settings',
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="settings" color={color} />
           ),

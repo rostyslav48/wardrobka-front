@@ -62,6 +62,25 @@ export interface ItemFormValues {
   size:        Size | '';
   description: string;
   favourite:   boolean;
+  // "Generate clean product image". On by default: the uploaded photo is
+  // treated as the *input* to a generation job instead of the item's image.
+  generate_image: boolean;
+}
+
+// Attribute set returned by POST /wardrobe/analyze-image. Every field is
+// optional — the backend fills in only what it could confidently detect from
+// the photo and omits the rest, never invents a value.
+export interface AnalyzedItemAttributes {
+  type?: ItemType;
+  color?: string;
+  season?: Season;
+  size?: Size;
+  fit_type?: FitType;
+  name?: string;
+  brand?: string;
+  material?: string;
+  style?: string;
+  description?: string;
 }
 
 export const EMPTY_FORM_VALUES: ItemFormValues = {
@@ -77,6 +96,7 @@ export const EMPTY_FORM_VALUES: ItemFormValues = {
   size:        '',
   description: '',
   favourite:   false,
+  generate_image: true,
 };
 
 // ─── Validation ───────────────────────────────────────────────────────────────

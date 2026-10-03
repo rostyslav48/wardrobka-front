@@ -1,49 +1,61 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec 6.6: "NOTIFICATIONS" 10/600 eyebrow, "Daily reminder" row (label
+ * 14/400, help 11.5/400), "Time" row value 14/500 `brand`. The blocked-notice
+ * card and its link have no mockup surface - extrapolated onto the same
+ * `surface` ground `UiButton secondary` uses elsewhere.
+ */
 export const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
+    color: colors.textSecondary,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    minHeight: 40,
+    gap: spacing.xl,
   },
   rowLabel: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hair,
   },
   label: {
-    fontSize: 16,
+    ...typography.rowLabel,
     color: colors.textPrimary,
   },
   hint: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
-    lineHeight: 18,
   },
   timeValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.valueEmphasis,
+    color: colors.brand,
+  },
+  // QA-55: placeholder for a `row` while prefs/permission load - same
+  // approximate height as a label+hint row with a switch, so the section
+  // doesn't grow once real content replaces it.
+  rowSkeleton: {
+    height: 44,
+    borderRadius: radius.control,
+    backgroundColor: colors.surface,
   },
   blockedNotice: {
-    gap: 6,
-    padding: 12,
-    borderRadius: 10,
+    gap: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: radius.control,
     backgroundColor: colors.surface,
   },
   link: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.rowLabel,
     color: colors.textPrimary,
     textDecorationLine: 'underline',
   },

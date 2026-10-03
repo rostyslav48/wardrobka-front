@@ -1,8 +1,29 @@
-import { Pressable, TextInput, View } from 'react-native';
+import {
+  KeyboardTypeOptions,
+  TextInputProps,
+  Pressable,
+  ReturnKeyTypeOptions,
+  TextInput,
+  View,
+} from 'react-native';
 import { colors } from '@/theme/colors';
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { border, spacing } from '@/theme/layout';
 import { styles } from './styles';
+
+/**
+ * QA-72: how much of a focused `UiInput` a keyboard-aware page must clear on
+ * top of its own offset. react-native-keyboard-controller's
+ * `KeyboardAwareScrollView` does not keep the field's bottom above the
+ * keyboard: once a selection event has arrived it replaces the field's height
+ * with the caret's bottom (`selection.end.y`, from `caretRect(for:)`, clamped
+ * to the field's height). On iOS that point came out 16 pt below the top of
+ * the 45 pt field, so 29 pt of it (the text's padding and the border) was not
+ * counted and ended up under the toolbar. Padding on both sides plus the
+ * border (32) covers that remainder with the text line included.
+ */
+export const INPUT_HEIGHT_BELOW_CARET = spacing.rowY * 2 + border.hairline * 2;
 
 interface Props {
   value: string;
@@ -10,20 +31,62 @@ interface Props {
   placeholder?: string;
   isSecureText?: boolean;
   readonly?: boolean;
+  testID?: string;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: KeyboardTypeOptions;
+  maxLength?: number;
+  /** QA-08: marks the border red without needing the caller to pass a style. */
+  hasError?: boolean;
+  /** QA-64: lets a caller chain Return through a multi-field form. */
+  returnKeyType?: ReturnKeyTypeOptions;
+  onSubmitEditing?: () => void;
+  /** Keeps the keyboard up across a Return-driven focus handoff; defaults to
+   * RN's own default (true) when omitted. */
+  blurOnSubmit?: boolean;
+  /** BUG-iOS-02: tells iOS AutoFill (and the browser) what the field holds, so
+   * a Strong Password suggestion lands on the password fields, not on name. */
+  textContentType?: TextInputProps['textContentType'];
+  autoComplete?: TextInputProps['autoComplete'];
+  /** QA-71: lets a form react to which of its fields has focus. */
+  onFocus?: () => void;
 }
 
-export default function UiInput({
-  value,
-  onChange,
-  placeholder,
-  isSecureText,
-  readonly,
-}: Props) {
+function UiInput(
+  {
+    value,
+    onChange,
+    placeholder,
+    isSecureText,
+    readonly,
+    testID,
+    autoCapitalize,
+    keyboardType,
+    maxLength,
+    hasError,
+    returnKeyType,
+    onSubmitEditing,
+    blurOnSubmit,
+    textContentType,
+    autoComplete,
+    onFocus,
+  }: Props,
+  ref: React.ForwardedRef<TextInput>,
+) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  // QA-09: focused input looked identical to unfocused - same grey border.
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <View style={[styles.container, readonly && styles.container__readonly]}>
+    <View
+      style={[
+        styles.container,
+        isFocused && styles.container__focused,
+        hasError && styles.container__error,
+        readonly && styles.container__readonly,
+      ]}
+    >
       <TextInput
+        ref={ref}
         style={[styles.input, readonly && styles.input__readonly]}
         placeholder={placeholder}
         placeholderTextColor={colors.placeholder}
@@ -31,11 +94,28 @@ export default function UiInput({
         onChangeText={onChange}
         secureTextEntry={isSecureText && !isPasswordVisible}
         editable={!readonly}
+        testID={testID}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
+        autoCorrect={autoCapitalize === 'none' ? false : undefined}
+        maxLength={maxLength}
+        onFocus={() => {
+          setIsFocused(true);
+          onFocus?.();
+        }}
+        onBlur={() => setIsFocused(false)}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
+        blurOnSubmit={blurOnSubmit}
+        textContentType={textContentType}
+        autoComplete={autoComplete}
       />
       {isSecureText && (
         <Pressable
           onPress={() => setIsPasswordVisible(!isPasswordVisible)}
           style={styles.icon}
+          accessibilityRole="button"
+          accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
         >
           <IconSymbol
             name={isPasswordVisible ? 'eye.slash' : 'eye'}
@@ -47,3 +127,5 @@ export default function UiInput({
     </View>
   );
 }
+
+export default forwardRef(UiInput);

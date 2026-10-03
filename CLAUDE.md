@@ -4,8 +4,8 @@
 React Native / Expo app for wardrobe management. Targets iOS, Android, and Web via Expo Router.
 
 ## Tech Stack
-- **Framework**: Expo 54 + React Native 0.81.5 + React 19.1.0
-- **Routing**: Expo Router 6 (file-based, `app/` directory)
+- **Framework**: Expo 57 + React Native 0.86.3 + React 19.2.3
+- **Routing**: Expo Router 57 (file-based, `app/` directory)
 - **State**: React Context + RxJS Observables (no Redux/Zustand)
 - **Forms**: Formik + Yup validation
 - **HTTP**: RxJS Ajax (`services/http.service.ts`)
@@ -24,8 +24,9 @@ expo start --ios     # iOS simulator
 expo start --android # Android emulator
 expo start --web     # browser
 expo lint            # ESLint (eslint-config-expo, flat config)
+npm run test:e2e     # Playwright e2e against the web build (see Testing)
 ```
-No build/test scripts defined yet. `scripts/reset-project.js` resets to a clean Expo scaffold.
+No build script defined yet. `scripts/reset-project.js` resets to a clean Expo scaffold.
 
 ## Directory Structure
 ```
@@ -38,7 +39,7 @@ components/
 context/      # React Context providers (AuthContext, ModalContext)
 services/     # API layer (http.service.ts, auth.service.ts)
 theme/        # app-wide design tokens (colors.ts, layout.ts)
-constants/    # Colors.ts (light/dark scheme — legacy, prefer theme/)
+constants/    # app constants (e.g. notifications.ts)
 hooks/        # custom hooks; platform variants use `.web.ts` suffix
 assets/       # fonts, images
 config.ts     # reads EXPO_PUBLIC_* env vars
@@ -61,7 +62,9 @@ config.ts     # reads EXPO_PUBLIC_* env vars
 - Each UI component lives in its own folder: `components/ui/ComponentName/index.tsx` + `styles.ts`
 - Styles are always in a co-located `styles.ts` using `StyleSheet.create()`
 - Use `theme/colors.ts` for all color values — do not hardcode hex strings
-- `theme/layout.ts` holds spacing constants (e.g. `pageInlineIntent`)
+- `theme/layout.ts` holds the full redesign scale — spacing, radius, type
+  (`typography`/`tracking`/`fontFamily`), `border` and `iconSize` — transcribed
+  from `.design-sync/redesign-spec.md`; `pageInlineIntent` is the page gutter
 - Props type named `Props` or `PropsWithChildren<Props>`, defined locally in the component file
 - Platform-specific files: use `.ios.tsx` / `.web.ts` suffixes
 
@@ -77,22 +80,33 @@ config.ts     # reads EXPO_PUBLIC_* env vars
 - Expo Router file-based: `app/(app)/(tabs)/index.tsx` → home tab
 - Auth guard lives in `app/(app)/_layout.tsx` — redirects unauthenticated users to `(auth)/login`
 - Typed routes enabled (`experiments.typedRoutes: true` in `app.json`)
+- Expo Router 57 vendors React Navigation — import `Tabs`, `useBottomTabBarHeight`,
+  `BottomTabBarHeightContext` and `BottomTabBarButtonProps` from `expo-router/js-tabs`,
+  and `PlatformPressable` / `ThemeProvider` / `DarkTheme` from `expo-router/react-navigation`.
+  Do **not** add `@react-navigation/*` packages back: their contexts are separate instances
+  from the ones Expo Router renders, so hooks read from them return nothing at runtime.
 
 ## State & Context
 - `useAuth()` — auth state + login/register/logout (Observables)
 - `useModal()` — show/hide animated bottom sheet modal
 
 ## Testing
-No tests exist yet. No test runner is configured. *(Fill in when tests are added.)*
+End-to-end tests drive the Expo Router **web** build with Playwright
+(`playwright.config.ts`, specs in `e2e/*.e2e.ts`). Run with `npm run test:e2e`
+(`npm run test:e2e:report` opens the last HTML report). They require the
+backend stack running and read `EXPO_WEB_PORT`/`API_BASE_URL` — see
+`e2e/README.md`. No unit test runner is configured for this repo.
 
 ## Environment Variables
 Copy `.env.example` → `.env.local` and set `EXPO_PUBLIC_API_BASE_URL`.
 Only `EXPO_PUBLIC_*` variables are exposed to the client bundle by Expo.
 
 ## Gotchas & Things to Avoid
-- `constants/Colors.ts` is a legacy file from the Expo template; prefer `theme/colors.ts` for new code
 - `react-native-worklets` is in deps — likely required by `react-native-reanimated`; do not remove
 - `newArchEnabled: true` — avoid libraries that are not compatible with the React Native New Architecture
+- `StyleSheet.absoluteFillObject` was removed in RN 0.86 — use `StyleSheet.absoluteFill`, which is now the plain object
+- `expo lint` currently reports pre-existing `react-hooks` errors (`refs`, `set-state-in-effect`,
+  `immutability`) newly enabled by eslint-plugin-react-hooks 7 in SDK 57; they predate the SDK 57 upgrade
 - The app is **portrait-only** (`"orientation": "portrait"` in `app.json`)
 - No global error boundary is set up yet — RxJS errors must be caught per-subscription
 - No CI/CD or build pipeline is configured yet *(fill in if added)*

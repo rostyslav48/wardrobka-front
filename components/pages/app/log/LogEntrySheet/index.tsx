@@ -4,12 +4,14 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
+  UIManager,
   View,
 } from 'react-native';
 import Animated, {
@@ -21,7 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import DateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from '@react-native-community/datetimepicker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,11 +33,27 @@ import { outfitLogService } from '@/services/outfit-log.service';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import ItemPickerSheet from '@/components/ui/ItemPickerSheet';
 import { colors } from '@/theme/colors';
+import { iconSize, spacing } from '@/theme/layout';
 import { styles } from './styles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// QA-59: the "New entry" form <-> "Select items worn" picker swap was a bare
+// conditional render - content changed and the sheet height jumped in one
+// frame. LayoutAnimation on the surrounding view swap gives it a transition
+// without restructuring the two content branches into a crossfade.
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function animateViewSwap() {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+}
 
 function toUnixSeconds(date: Date): number {
   const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -184,9 +202,9 @@ export default function LogEntrySheet({
     ]);
   };
 
-  const onDateChange = (_event: DateTimePickerEvent, selected?: Date) => {
+  const onDateChange = (_event: DateTimePickerChangeEvent, selected: Date) => {
     if (Platform.OS === 'android') setShowAndroidPicker(false);
-    if (selected) setDate(selected);
+    setDate(selected);
   };
 
   const selectedItems = selectedIds
@@ -212,10 +230,13 @@ export default function LogEntrySheet({
         <Animated.View
           style={[
             styles.sheet,
-            { paddingBottom: insets.bottom + 8 },
+            { paddingBottom: insets.bottom + spacing.sm },
             animatedSheetStyle,
           ]}
         >
+          {/* Spec 6.7's shared sheet chrome: a centred grabber above the header. */}
+          <View style={styles.grabber} />
+
           {/* Header */}
           <View style={styles.topBar}>
             <View>
@@ -231,10 +252,12 @@ export default function LogEntrySheet({
               )}
             </View>
             <Pressable
+              style={styles.closeButton}
               onPress={
                 view === 'items'
                   ? () => {
                       setSelectedIds(pendingItemIdsRef.current);
+                      animateViewSwap();
                       setView('form');
                     }
                   : handleClose
@@ -243,7 +266,7 @@ export default function LogEntrySheet({
             >
               <IconSymbol
                 name={view === 'items' ? 'chevron.left' : 'xmark'}
-                size={20}
+                size={iconSize.xs}
                 color={colors.textPrimary}
               />
             </Pressable>
@@ -257,6 +280,8 @@ export default function LogEntrySheet({
               onSelectionChange={(ids) => { pendingItemIdsRef.current = ids; }}
               onConfirm={(ids) => {
                 setSelectedIds(ids);
+                if (ids.length > 0) setError(null);
+                animateViewSwap();
                 setView('form');
               }}
             />
@@ -279,7 +304,7 @@ export default function LogEntrySheet({
                     >
                       <MaterialIcons
                         name="calendar-today"
-                        size={16}
+                        size={iconSize.mdPlus}
                         color={colors.textSecondary}
                       />
                       <Text style={styles.dateButtonText}>
@@ -291,7 +316,8 @@ export default function LogEntrySheet({
                         value={date}
                         mode="date"
                         maximumDate={new Date()}
-                        onChange={onDateChange}
+                        onValueChange={onDateChange}
+                        onDismiss={() => setShowAndroidPicker(false)}
                       />
                     )}
                   </>
@@ -301,7 +327,7 @@ export default function LogEntrySheet({
                     mode="date"
                     display="spinner"
                     maximumDate={new Date()}
-                    onChange={onDateChange}
+                    onValueChange={onDateChange}
                     textColor={colors.textPrimary}
                     style={styles.iosPicker}
                   />
@@ -315,7 +341,7 @@ export default function LogEntrySheet({
                     Items{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
                   </Text>
                   <Pressable
-                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; animateViewSwap(); setView('items'); }}
                     hitSlop={8}
                   >
                     <Text style={styles.changeLink}>
@@ -344,7 +370,7 @@ export default function LogEntrySheet({
                           <View style={styles.selectedThumbPlaceholder}>
                             <IconSymbol
                               name="tshirt.fill"
-                              size={18}
+                              size={iconSize.lg}
                               color={colors.textSecondary}
                             />
                           </View>
@@ -358,9 +384,9 @@ export default function LogEntrySheet({
                 ) : (
                   <Pressable
                     style={styles.emptyItemsButton}
-                    onPress={() => { pendingItemIdsRef.current = selectedIds; setView('items'); }}
+                    onPress={() => { pendingItemIdsRef.current = selectedIds; animateViewSwap(); setView('items'); }}
                   >
-                    <IconSymbol name="plus" size={16} color={colors.textSecondary} />
+                    <IconSymbol name="plus" size={iconSize.mdPlus} color={colors.textSecondary} />
                     <Text style={styles.emptyItemsText}>Tap to select items worn</Text>
                   </Pressable>
                 )}

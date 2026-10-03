@@ -1,0 +1,6 @@
+# Maestro workspace config. Start Metro with LogBox toasts off (they cover the
+# tab bar), then run everything:
+#   EXPO_PUBLIC_E2E=1 npx expo start --clear
+#   maestro --device <simulator udid> test .maestro/
+flows:
+  - flows/*

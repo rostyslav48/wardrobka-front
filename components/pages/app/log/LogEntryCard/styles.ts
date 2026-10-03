@@ -1,13 +1,23 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
+import { border, radius, spacing, tracking, typography } from '@/theme/layout';
 
+/**
+ * Spec 6.5: card padding 14 (`radius.card`, 1px `hairline`, ground
+ * `surfaceRaised`); date header is the "log date header" role (10/600
+ * textPrimary, distinct from the generic eyebrow's textSecondary); overflow
+ * tile is the "+2 overflow chip" role; the note is the "body" role spec
+ * 4.3 names for "log summary" verbatim.
+ */
 export const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    gap: 10,
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.card,
+    borderWidth: border.hairline,
+    borderColor: colors.hairline,
+    padding: spacing.cardPad,
+    marginBottom: spacing.lg,
+    gap: spacing.md,
   },
   header: {
     flexDirection: 'row',
@@ -15,18 +25,19 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   date: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.eyebrow,
+    letterSpacing: tracking.eyebrow,
     color: colors.textPrimary,
   },
   thumbRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
+    marginTop: spacing.mdPlus,
   },
   thumb: {
-    width: 64,
-    height: 96,
-    borderRadius: 8,
+    flex: 1,
+    height: 84,
+    borderRadius: radius.tile,
     overflow: 'hidden',
     backgroundColor: colors.border,
   },
@@ -44,12 +55,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   overflowText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.overflowChip,
+    color: colors.textPrimary,
+  },
+  itemNames: {
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textPrimary,
   },
   note: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },

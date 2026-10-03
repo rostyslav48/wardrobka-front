@@ -1,47 +1,66 @@
 import { Dimensions, StyleSheet } from 'react-native';
 import { colors } from '@/theme/colors';
-import { pageInlineIntent } from '@/theme/layout';
+import {
+  border,
+  pageInlineIntent,
+  radius,
+  spacing,
+  tracking,
+  typography,
+} from '@/theme/layout';
 
-const CELL_GAP = 8;
+const CELL_GAP = spacing.sm;
+const COLUMNS = 3;
 const LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.52;
+// Fixed pixel width, not a flex/percentage split - RN has no `calc()`, and a
+// percentage `flexBasis` plus a `gap` together overflow the row width. This
+// mirrors `LIST_MAX_HEIGHT` above in deriving straight from the window.
+const CELL_WIDTH =
+  (Dimensions.get('window').width - pageInlineIntent * 2 - CELL_GAP * (COLUMNS - 1)) / COLUMNS;
 
 export const styles = StyleSheet.create({
   container: {
-    paddingBottom: 8,
+    paddingBottom: spacing.sm,
   },
   list: {
     maxHeight: LIST_MAX_HEIGHT,
   },
   header: {
     paddingHorizontal: pageInlineIntent,
-    paddingTop: 4,
-    paddingBottom: 16,
-    gap: 4,
+    paddingTop: spacing['3xs'],
+    paddingBottom: spacing.xl,
+    gap: spacing['3xs'],
   },
+  // This is a bottom sheet, so its heading is section 4.3's sheet-title role
+  // rather than 8.3's by-the-number 17px row. Recorded in 8.8.
   title: {
-    fontSize: 17,
-    fontWeight: '600',
+    ...typography.sheetTitle,
+    letterSpacing: tracking.sheetTitle,
     color: colors.textPrimary,
   },
   subtitle: {
-    fontSize: 13,
+    ...typography.body,
+    letterSpacing: tracking.body,
     color: colors.textSecondary,
   },
 
   grid: {
     paddingHorizontal: pageInlineIntent,
-    paddingBottom: 16,
+    paddingBottom: spacing.xl,
   },
   row: {
     gap: CELL_GAP,
     marginBottom: CELL_GAP,
   },
+  // Fixed width, not `flex: 1` - a short last row (e.g. a single item in a
+  // 3-column grid) would otherwise stretch that one cell across the whole
+  // row instead of leaving the remaining columns empty.
   cell: {
-    flex: 1,
-    borderRadius: 10,
+    width: CELL_WIDTH,
+    borderRadius: radius.tile,
     overflow: 'hidden',
     backgroundColor: colors.surface,
-    borderWidth: 2,
+    borderWidth: border.hairline,
     borderColor: 'transparent',
   },
   cellSelected: {
@@ -60,42 +79,45 @@ export const styles = StyleSheet.create({
   },
   checkOverlay: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    top: spacing.xs,
+    right: spacing.xs,
+    // 22 x 22 is box geometry (8.5); the radius is `round` because the badge is
+    // a circle by construction, the same reading 8.2 gives its 17/22/28/32 rows.
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: radius.round,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   itemName: {
-    fontSize: 11,
-    fontWeight: '500',
+    ...typography.cardName,
+    letterSpacing: tracking.cardName,
     color: colors.textPrimary,
-    padding: 6,
+    padding: spacing.xs,
   },
 
   empty: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: spacing['3xl'],
   },
   emptyText: {
-    fontSize: 14,
+    ...typography.rowLabel,
+    letterSpacing: tracking.rowLabel,
     color: colors.textSecondary,
   },
 
   confirmButton: {
     marginHorizontal: pageInlineIntent,
-    marginTop: 4,
+    marginTop: spacing['3xs'],
     backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: radius.tileLg,
+    paddingVertical: spacing.cardPad,
     alignItems: 'center',
   },
   confirmLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
+    letterSpacing: tracking.button,
     color: colors.accentText,
   },
 });

@@ -1,24 +1,29 @@
 import { TextInput, View } from 'react-native';
-import React, { useState } from 'react';
+import React from 'react';
 import { colors } from '@/theme/colors';
+import { iconSize } from '@/theme/layout';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { styles } from './styles';
 
-export default function SearchBar() {
-  const [searchString, setSearchString] = useState('');
+interface Props {
+  value: string;
+  onChangeText: (value: string) => void;
+}
 
+export default function SearchBar({ value, onChangeText }: Props) {
   return (
     <View style={styles.container}>
       <TextInput
+        testID="items-search-input"
         placeholder={'Search...'}
         style={styles.input}
-        value={searchString}
+        value={value}
         clearButtonMode={'always'}
-        onChangeText={(value) => setSearchString(value)}
+        onChangeText={onChangeText}
         placeholderTextColor={colors.placeholder}
       />
       <IconSymbol
-        size={20}
+        size={iconSize.xl}
         name="magnifyingglass"
         color={colors.placeholder}
         style={styles.icon}

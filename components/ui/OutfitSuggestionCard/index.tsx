@@ -53,7 +53,11 @@ export default function OutfitSuggestionCard({
   };
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable
+      style={styles.card}
+      onPress={onPress}
+      testID={`outfit-suggestion-card-${suggestion.id}`}
+    >
       <View style={styles.header}>
         {suggestion.sessionTopic ? (
           <Text style={styles.topic} numberOfLines={1}>
